@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  backend:
+    image: nokmaster/backend
+    container_name: backend
+    hostname: backend
+    env_file:
+      - .env
+    expose:
+      - "8080"
+
+  nginx:
+    image: nokmaster/nginx
+    depends_on:
+      - backend
+    restart: always
+    ports:
+      - "80:80"
