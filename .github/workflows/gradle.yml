@@ -80,13 +80,14 @@ jobs:
           username: ubuntu #  ec2-user 에서 변경
           key: ${{ secrets.EC2_KEY }}
           script: |
+            sudo touch docker-compose.yml
+            echo "${{ secrets.DOCKER_COMPOSE_YML }}" | sudo tee docker-compose.yml > /dev/null
+            
             cd /home/ubuntu/studiox
             
             sudo touch .env
             echo "${{ secrets.ENV }}" | sudo tee .env > /dev/null
             
-            sudo touch docker-compose.yml
-            echo "${{ secrets.DOCKER_COMPOSE_YML }}" | sudo tee docker-compose.yml > /dev/null
             
             sudo chmod 666 /var/run/docker.sock
             sudo docker rm -f $(docker ps -qa)
