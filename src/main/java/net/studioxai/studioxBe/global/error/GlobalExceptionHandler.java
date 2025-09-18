@@ -1,5 +1,6 @@
-package net.studioxai.studioxBe.global.exception;
+package net.studioxai.studioxBe.global.error;
 
+import net.studioxai.studioxBe.global.dto.ErrorReason;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;

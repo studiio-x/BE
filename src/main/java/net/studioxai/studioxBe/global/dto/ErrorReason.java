@@ -1,4 +1,4 @@
-package net.studioxai.studioxBe.global.exception;
+package net.studioxai.studioxBe.global.dto;
 
 import lombok.Builder;
 import lombok.Getter;

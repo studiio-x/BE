@@ -1,10 +1,13 @@
-package net.studioxai.studioxBe.global.exception;
+package net.studioxai.studioxBe.global.error;
 
+import net.studioxai.studioxBe.global.dto.ErrorReason;
 import lombok.Builder;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+@Getter
 public class ErrorResponse {
     private final String timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
     private final boolean success = false;

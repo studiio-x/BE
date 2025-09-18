@@ -1,5 +1,6 @@
-package net.studioxai.studioxBe.global.exception;
+package net.studioxai.studioxBe.global.error;
 
+import net.studioxai.studioxBe.global.dto.ErrorReason;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
