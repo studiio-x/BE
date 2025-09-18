@@ -9,6 +9,8 @@ services:
       - .env
     expose:
       - "8080"
+    environment:
+      - MANAGEMENT_METRICS_BINDERS_PROCESSOR_ENABLED=false
 
   nginx:
     image: 010709min/nginx
