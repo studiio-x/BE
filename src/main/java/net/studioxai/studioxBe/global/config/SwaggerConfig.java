@@ -20,9 +20,9 @@ public class SwaggerConfig {
     @Bean
     public OpenAPI open() {
         Info info = new Info()
-                .title("Runway")
+                .title("Studio-X")
                 .version("1.0")
-                .description("Runway API");
+                .description("tudio-X API");
 
         // jwt 설정
         String jwtScheme = "jwtAuth";
