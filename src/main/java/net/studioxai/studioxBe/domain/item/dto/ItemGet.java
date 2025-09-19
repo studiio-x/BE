@@ -2,10 +2,16 @@ package net.studioxai.studioxBe.domain.item.dto;
 
 import lombok.Getter;
 import net.studioxai.studioxBe.domain.item.entity.Item;
+import net.studioxai.studioxBe.global.entity.PageInfo;
 
-public record ItemGet(String url) {
+import java.util.List;
 
-    public static ItemGet toDto(String url) {
-        return new ItemGet(url);
+public record ItemGet(
+        List<String> urls,
+        PageInfo pageInfo
+) {
+
+    public static ItemGet toDto(List<String> urls, PageInfo pageInfo) {
+        return new ItemGet(urls, pageInfo);
     }
 }

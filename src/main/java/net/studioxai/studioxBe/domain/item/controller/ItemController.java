@@ -16,10 +16,14 @@ public class ItemController {
     private final ItemService itemService;
 
     @GetMapping("")
-    public List<ItemGet> getItems(
+    public ItemGet getItems(
             @RequestParam(required = false)
-            String category
+            String category,
+            @RequestParam(required = true)
+            int pageNum,
+            @RequestParam(required = true)
+            int limit
     ){
-        return itemService.itemGets(category);
+        return itemService.itemGets(category, pageNum-1, limit);
     }
 }

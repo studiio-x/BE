@@ -1,13 +1,31 @@
 package net.studioxai.studioxBe.global.entity;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-@AllArgsConstructor
 public class PageInfo {
-    private int page;
-    private int size;
-    private int totalElements;
+    private int pageNum;
+    private int limit;
     private int totalPages;
+    private long totalElements;
+
+
+    @Builder
+    private PageInfo(int pageNum, int limit, int totalPages, long totalElements) {
+        this.pageNum = pageNum;
+        this.limit = limit;
+        this.totalPages = totalPages;
+        this.totalElements = totalElements;
+    }
+
+    public static PageInfo of(int pageNum, int limit, int totalPages, long totalElements) {
+        return PageInfo.builder()
+                .pageNum(pageNum)
+                .limit(limit)
+                .totalPages(totalPages)
+                .totalElements(totalElements)
+                .build();
+    }
 }
