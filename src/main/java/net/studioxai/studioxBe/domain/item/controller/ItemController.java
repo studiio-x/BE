@@ -24,6 +24,6 @@ public class ItemController {
             @RequestParam(required = true)
             int limit
     ){
-        return itemService.itemGets(category, pageNum-1, limit);
+        return itemService.itemGets(category, pageNum, limit);
     }
 }
