@@ -8,6 +8,7 @@ import net.studioxai.studioxBe.domain.item.repository.ItemRepository;
 import net.studioxai.studioxBe.global.entity.PageInfo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
 public class ItemService {
     private final ItemRepository itemRepository;
     public ItemGet itemGets(String category, int pageNum, int limit) {
-        PageRequest pageRequest = PageRequest.of(pageNum, limit);
+        PageRequest pageRequest = PageRequest.of(pageNum, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
         if(category == null){
             Page<Item> items = itemRepository.findAll(pageRequest);
             PageInfo pageInfo = PageInfo.of(pageNum, limit, items.getTotalPages(), items.getTotalElements());
