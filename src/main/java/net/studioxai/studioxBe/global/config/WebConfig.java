@@ -16,22 +16,37 @@ public class WebConfig implements WebMvcConfigurer {
     @Value("${server.server-url}")
     private String SERVER_URL;
 
-    @Value("${server.front-url}")
-    private String FRONT_URL;
+    @Value("${server.front-urls}")
+    private String[] FRONT_URLS;
+
+    private static final String[] LOCALHOSTS = {
+            "http://localhost:3000",
+            "http://localhost:8080",
+            "https://localhost:3000",
+            "https://localhost:8080"
+    };
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOriginPatterns(
-                        SERVER_URL,
-                        FRONT_URL,
-                        "http://localhost:3000",
-                        "http://localhost:8080",
-                        "https://localhost:3000",
-                        "https://localhost:8080"
-                )
+                .allowedOriginPatterns(mergeOrigins())
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
     }
+
+    private String[] mergeOrigins() {
+        String[] merged = new String[1 + FRONT_URLS.length + LOCALHOSTS.length];
+
+        int idx = 0;
+        merged[idx++] = SERVER_URL;
+
+        System.arraycopy(FRONT_URLS, 0, merged, idx, FRONT_URLS.length);
+        idx += FRONT_URLS.length;
+
+        System.arraycopy(LOCALHOSTS, 0, merged, idx, LOCALHOSTS.length);
+
+        return merged;
+    }
+
 }
