@@ -13,6 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.Arrays;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -20,8 +22,8 @@ public class SecurityConfig {
     @Value("${server.server-url}")
     private String SERVER_URL;
 
-    @Value("${server.front-url}")
-    private String FRONT_URL;
+    @Value("${server.front-urls}")
+    private String[] FRONT_URLS;
 
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -61,10 +63,10 @@ public class SecurityConfig {
         cfg.setAllowedOrigins(java.util.List.of(
                 "http://localhost:3000",
                 "http://localhost:8080",
-                SERVER_URL,
-                FRONT_URL
+                SERVER_URL
 
         ));
+        cfg.getAllowedOrigins().addAll(Arrays.asList(FRONT_URLS));
         // 브라우저가 보낼/보려는 헤더를 명시 (Authorization 꼭 포함)
         cfg.setAllowedHeaders(java.util.List.of("Authorization","Content-Type","X-Requested-With"));
         cfg.setExposedHeaders(java.util.List.of("Location","Content-Disposition"));
