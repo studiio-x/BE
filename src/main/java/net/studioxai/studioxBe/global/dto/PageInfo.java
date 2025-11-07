@@ -1,6 +1,5 @@
-package net.studioxai.studioxBe.global.entity;
+package net.studioxai.studioxBe.global.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
