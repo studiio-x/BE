@@ -1,11 +1,18 @@
 package net.studioxai.studioxBe.global.jwt;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import net.studioxai.studioxBe.global.dto.ErrorReason;
+import net.studioxai.studioxBe.global.error.ErrorResponse;
+import net.studioxai.studioxBe.global.error.GlobalErrorCode;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,6 +25,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
@@ -44,11 +52,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(auth);
                     }
+                } catch (ExpiredJwtException e) {
+                    log.info("만료된 토큰", e);
+                    writeErrorResponse(response, GlobalErrorCode.EXPIRED_TOKEN);
+                    return;
+                } catch (JwtException | IllegalArgumentException e) {
+                    log.info("유효하지 않은 토큰", e);
+                    writeErrorResponse(response, GlobalErrorCode.INVALID_TOKEN);
+                    return;
                 } catch (Exception e) {
-                    // 토큰이 있지만 유효하지 않으면 바로 401 리턴(원하면 주석 처리하고 체인 계속 타도 됨)
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json;charset=UTF-8");
-                    response.getWriter().write("{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Invalid or expired token\"}");
+                    log.error("JWT 필터에서 처리되지 않은 예외", e);
+                    writeErrorResponse(response, GlobalErrorCode.UNCAUGHT_EXCEPTION);
                     return;
                 }
             }
@@ -71,5 +85,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
         return null;
+    }
+
+    private void writeErrorResponse(HttpServletResponse response, GlobalErrorCode errorCode) throws IOException {
+        ErrorReason errorReason = errorCode.getErrorReason();      // status, code, reason
+        ErrorResponse errorResponse = ErrorResponse.from(errorReason);
+
+        response.setStatus(errorCode.getStatus().value());
+        response.setContentType("application/json;charset=UTF-8");
+
+        new ObjectMapper().writeValue(response.getWriter(), errorResponse);
     }
 }

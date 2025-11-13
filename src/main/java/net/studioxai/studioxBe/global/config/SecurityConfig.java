@@ -63,17 +63,19 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         var cfg = new CorsConfiguration();
+
         cfg.setAllowedOrigins(java.util.List.of(
                 "http://localhost:3000",
                 "http://localhost:8080",
                 SERVER_URL
-
         ));
+
         cfg.getAllowedOrigins().addAll(Arrays.asList(FRONT_URLS));
-        // 브라우저가 보낼/보려는 헤더를 명시 (Authorization 꼭 포함)
+
         cfg.setAllowedHeaders(java.util.List.of("Authorization","Content-Type","X-Requested-With"));
         cfg.setExposedHeaders(java.util.List.of("Location","Content-Disposition"));
         cfg.setAllowedMethods(java.util.List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
+
         cfg.setAllowCredentials(true);
         cfg.setMaxAge(1800L);
 
