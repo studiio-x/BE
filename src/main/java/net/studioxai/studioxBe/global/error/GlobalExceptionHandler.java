@@ -9,7 +9,6 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.lang.Nullable;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -17,8 +16,6 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
@@ -32,11 +29,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             HttpHeaders headers,
             HttpStatusCode statusCode,
             WebRequest request) {
-        log.error("HandleInternalException", ex);
-        final HttpStatus status = (HttpStatus) statusCode;
-        final ErrorReason errorReason =
-                ErrorReason.of(status.value(), status.name(), ex.getMessage());
+
+        final HttpStatus status = HttpStatus.valueOf(statusCode.value());
+        GlobalErrorCode globalErrorCode = mapToGlobalErrorCode(status);
+        final ErrorReason errorReason = globalErrorCode.getErrorReason();
         final ErrorResponse errorResponse = ErrorResponse.from(errorReason);
+
+        log.error("HandleInternalException - status: {}, globalCode: {}, uri: {}, message: {}",
+                status.value(),
+                globalErrorCode.name(),
+                request.getDescription(false),
+                ex.getMessage(),
+                ex);
+
         return super.handleExceptionInternal(ex, errorResponse, headers, status, request);
     }
 
@@ -48,21 +53,25 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             HttpHeaders headers,
             HttpStatusCode status,
             WebRequest request) {
-        final HttpStatus httpStatus = (HttpStatus) status;
-        final List<FieldError> errors = ex.getBindingResult().getFieldErrors();
-        final Map<String, Object> fieldAndErrorMessages =
-                errors.stream()
-                        .collect(
-                                Collectors.toMap(
-                                        FieldError::getField, FieldError::getDefaultMessage));
-        final String errorsToJsonString =
-                fieldAndErrorMessages.entrySet().stream()
-                        .map(e -> e.getKey() + " : " + e.getValue())
-                        .collect(Collectors.joining("|"));
-        final ErrorReason errorReason =
-                ErrorReason.of(status.value(), httpStatus.name(), errorsToJsonString);
-        final ErrorResponse errorResponse = ErrorResponse.from(errorReason);
-        return ResponseEntity.status(HttpStatus.valueOf(errorReason.getStatus()))
+
+        List<FieldErrorDetail> errorDetails =
+                ex.getBindingResult().getFieldErrors().stream()
+                        .map(err -> new FieldErrorDetail(
+                                err.getField(),
+                                err.getDefaultMessage() == null ? "" : err.getDefaultMessage()
+                        ))
+                        .toList();
+
+        GlobalErrorCode globalErrorCode = GlobalErrorCode.INVALID_INPUT;
+        final ErrorReason errorReason = globalErrorCode.getErrorReason();
+        final ErrorResponse errorResponse = ErrorResponse.from(errorReason, errorDetails);
+
+        log.warn("MethodArgumentNotValid - status: {}, uri: {}, errors: {}",
+                globalErrorCode.getStatus().value(),
+                request.getDescription(false),
+                errorDetails);
+
+        return ResponseEntity.status(globalErrorCode.getStatus())
                 .body(errorResponse);
     }
 
@@ -74,18 +83,31 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             HttpHeaders headers,
             HttpStatusCode status,
             WebRequest request) {
-        log.error("HttpMessageNotReadableException", ex);
+
         final GlobalErrorCode globalErrorCode = GlobalErrorCode.WRONG_FORMAT_VALUE;
         final ErrorReason errorReason = globalErrorCode.getErrorReason();
         final ErrorResponse errorResponse = ErrorResponse.from(errorReason);
-        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(errorResponse);
+
+        log.warn("HttpMessageNotReadable - uri: {}, message: {}",
+                request.getDescription(false),
+                ex.getMessage(),
+                ex);
+
+        return ResponseEntity.status(globalErrorCode.getStatus()).body(errorResponse);
     }
 
     // 비즈니스 로직 에러 처리
     @ExceptionHandler(BaseErrorException.class)
     public ResponseEntity<ErrorResponse> handleBaseErrorException(
             BaseErrorException e, HttpServletRequest request) {
-        log.error("BaseErrorException", e);
+
+        log.warn("BaseErrorException - uri: {}, method: {}, code: {}, message: {}",
+                request.getRequestURI(),
+                request.getMethod(),
+                e.getErrorCode().toString(),
+                e.getMessage(),
+                e);
+
         final ErrorReason errorReason = e.getErrorCode().getErrorReason();
         final ErrorResponse errorResponse = ErrorResponse.from(errorReason);
         return ResponseEntity.status(HttpStatus.valueOf(errorReason.getStatus()))
@@ -96,11 +118,27 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<ErrorResponse> handleException(
             Exception e, HttpServletRequest request) {
-        log.error("Exception", e);
 
         final GlobalErrorCode globalErrorCode = GlobalErrorCode.UNCAUGHT_EXCEPTION;
         final ErrorReason errorReason = globalErrorCode.getErrorReason();
         final ErrorResponse errorResponse = ErrorResponse.from(errorReason);
+
+        log.error("Uncaught exception - uri: {}, method: {}, message: {}",
+                request.getRequestURI(),
+                request.getMethod(),
+                e.getMessage(),
+                e);
+
         return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(errorResponse);
+    }
+
+    private GlobalErrorCode mapToGlobalErrorCode(HttpStatus status) {
+        return switch (status) {
+            case NOT_FOUND -> GlobalErrorCode.GLOBAL_NOT_FOUND;
+            case METHOD_NOT_ALLOWED -> GlobalErrorCode.GLOBAL_METHOD_NOT_ALLOWED;
+            case UNSUPPORTED_MEDIA_TYPE -> GlobalErrorCode.GLOBAL_UNSUPPORTED_MEDIA_TYPE;
+            case BAD_REQUEST -> GlobalErrorCode.INVALID_INPUT; // 기본
+            default -> GlobalErrorCode.UNCAUGHT_EXCEPTION;
+        };
     }
 }
