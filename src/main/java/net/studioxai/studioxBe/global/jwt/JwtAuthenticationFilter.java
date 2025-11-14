@@ -76,14 +76,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (auth != null && auth.startsWith("Bearer ")) {
             return auth.substring(7);
         }
-        // 쿠키 사용 시(선택)
-        if (req.getCookies() != null) {
-            for (Cookie c : req.getCookies()) {
-                if ("ACCESS_TOKEN".equals(c.getName())) {
-                    return c.getValue();
-                }
-            }
-        }
         return null;
     }
 
