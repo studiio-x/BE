@@ -3,7 +3,6 @@ package net.studioxai.studioxBe.global.jwt;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -14,13 +13,15 @@ import java.util.Map;
 
 @Component
 public class JwtProvider {
-
     private final SecretKey signingKey;
     private final long accessExpSeconds;
+    private final long refreshExpSeconds;
 
-    public JwtProvider(@Value("${spring.jwt.secret-key}") String secret,@Value("${spring.jwt.expiration-ms}") long accessExpSeconds) {
-        this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.accessExpSeconds = accessExpSeconds;
+    public JwtProvider(JwtProperties props) {
+        this.signingKey =
+                Keys.hmacShaKeyFor(props.secretKey().getBytes(StandardCharsets.UTF_8));
+        this.accessExpSeconds = props.accessTokenExpirationMs();
+        this.refreshExpSeconds = props.refreshTokenExpirationMs();
     }
 
     public String createAccessToken(String subject, Map<String, Object> claims) {
@@ -32,6 +33,10 @@ public class JwtProvider {
                 .setExpiration(Date.from(now.plusSeconds(accessExpSeconds)))
                 .signWith(signingKey, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public String createRefreshToken(Long id, String accessToken) {
+        return "";
     }
 
     public boolean validate(String token) {
