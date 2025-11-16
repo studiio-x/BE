@@ -42,6 +42,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (token != null) {
                 try {
                     if (jwtProvider.validate(token)) {
+                        if (jwtProvider.getCategory(token).equals("refresh")) {
+                            log.info("리프레시 토큰으로 접근 시도");
+                            writeErrorResponse(response, GlobalErrorCode.INVALID_TOKEN);
+                            return;
+                        }
                         String subject = jwtProvider.getSubject(token); // 로그인 시 subject = userId 로 발급했어야 함
                         Long userId = Long.parseLong(subject);
 
@@ -52,14 +57,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         SecurityContextHolder.getContext().setAuthentication(auth);
                     }
+
                 } catch (ExpiredJwtException e) {
                     log.info("만료된 토큰", e);
                     writeErrorResponse(response, GlobalErrorCode.EXPIRED_TOKEN);
                     return;
+
                 } catch (JwtException | IllegalArgumentException e) {
                     log.info("유효하지 않은 토큰", e);
                     writeErrorResponse(response, GlobalErrorCode.INVALID_TOKEN);
                     return;
+
                 } catch (Exception e) {
                     log.error("JWT 필터에서 처리되지 않은 예외", e);
                     writeErrorResponse(response, GlobalErrorCode.UNCAUGHT_EXCEPTION);
