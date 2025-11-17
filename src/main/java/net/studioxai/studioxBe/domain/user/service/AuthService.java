@@ -27,12 +27,18 @@ public class AuthService {
         User user = getUserByEmailOrThrow(loginRequest.email());
         validatePassword(loginRequest.password(), user.getPassword());
 
-        // TODO: 토큰 발급 서비스 중복 예상 - 분리하기
-        String accessToken = jwtProvider.createAccessToken(user.getId());
-        String refreshToken = jwtProvider.createRefreshToken(user.getId());
-
-        return LoginResponse.create(user.getId(), user.getEmail(), user.getProfileImage(), accessToken, refreshToken);
+        return buildLoginResponse(user);
     }
+//
+//    @Transactional
+//    public LoginResponse signUp(LoginRequest loginRequest) {
+//        // TODO: 이메일 검증 됐는지 확인
+//
+//        // TODO: 회원가입
+//
+//        // TODO: dto 반환
+//
+//    }
 
     private User getUserByEmailOrThrow(String email) {
         return userRepository.findByEmail(email).orElseThrow(
@@ -44,6 +50,19 @@ public class AuthService {
         if (!passwordEncoder.matches(inputPassword, dbPassword)) {
             throw new UserExceptionHandler(UserErrorCode.WRONG_ID_OR_PASSWORD);
         };
+    }
+
+    private LoginResponse buildLoginResponse(User user) {
+        String accessToken = jwtProvider.createAccessToken(user.getId());
+        String refreshToken = jwtProvider.createRefreshToken(user.getId());
+
+        return LoginResponse.create(
+                user.getId(),
+                user.getEmail(),
+                user.getProfileImage(),
+                accessToken,
+                refreshToken
+        );
     }
 
 }
