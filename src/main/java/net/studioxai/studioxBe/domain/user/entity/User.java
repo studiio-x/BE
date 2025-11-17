@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,13 +41,23 @@ public class User extends BaseEntity {
     @Column(name = "username", nullable = false)
     private String username;
 
-    @Builder
-    public User(RegisterPath registerPath, String email, String password, String profileImage, String username) {
+    @Builder(access = AccessLevel.PRIVATE)
+    private User(RegisterPath registerPath, String email, String password, String profileImage, String username) {
         this.registerPath = registerPath;
         this.email = email;
         this.password = password;
         this.profileImage = profileImage;
         this.username = username;
+    }
+
+    public static User create(RegisterPath registerPath, String email, String password, String profileImage, String username) {
+        return User.builder()
+                .registerPath(registerPath)
+                .email(email)
+                .password(password)
+                .profileImage(profileImage)
+                .username(username)
+                .build();
     }
 
 }
