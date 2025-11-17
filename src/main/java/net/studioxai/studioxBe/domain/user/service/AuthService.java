@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.user.dto.LoginRequest;
 import net.studioxai.studioxBe.domain.user.dto.LoginResponse;
+import net.studioxai.studioxBe.domain.user.entity.RegisterPath;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
 import net.studioxai.studioxBe.domain.user.exception.UserExceptionHandler;
@@ -29,16 +30,25 @@ public class AuthService {
 
         return buildLoginResponse(user);
     }
-//
-//    @Transactional
-//    public LoginResponse signUp(LoginRequest loginRequest) {
-//        // TODO: 이메일 검증 됐는지 확인
-//
-//        // TODO: 회원가입
-//
-//        // TODO: dto 반환
-//
-//    }
+
+    @Transactional
+    public LoginResponse signUp(LoginRequest loginRequest) {
+        // TODO: 이메일 검증 됐는지 확인
+
+        // TODO: default profile url 삽입
+        String encodedPassword = passwordEncoder.encode(loginRequest.password());
+
+        User user = User.create(
+                RegisterPath.CUSTOM,
+                loginRequest.email(),
+                encodedPassword,
+                "profile-example.com",
+                extractUsernameFromEmail(loginRequest.email()));
+
+        userRepository.save(user);
+
+        return buildLoginResponse(user);
+    }
 
     private User getUserByEmailOrThrow(String email) {
         return userRepository.findByEmail(email).orElseThrow(
@@ -46,8 +56,8 @@ public class AuthService {
         );
     }
 
-    private void validatePassword(String inputPassword, String dbPassword) {
-        if (!passwordEncoder.matches(inputPassword, dbPassword)) {
+    private void validatePassword(String rawPassword, String encodedPassword) {
+        if (!passwordEncoder.matches(rawPassword, encodedPassword)) {
             throw new UserExceptionHandler(UserErrorCode.WRONG_ID_OR_PASSWORD);
         };
     }
@@ -63,6 +73,11 @@ public class AuthService {
                 accessToken,
                 refreshToken
         );
+    }
+
+    private String extractUsernameFromEmail(String email) {
+        int index = email.indexOf("@");
+        return (index > 0) ? email.substring(0, index) : email;
     }
 
 }

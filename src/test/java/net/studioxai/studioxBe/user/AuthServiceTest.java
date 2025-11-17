@@ -37,6 +37,9 @@ public class AuthServiceTest {
     @InjectMocks
     private AuthService authService;
 
+    @Captor
+    private ArgumentCaptor<User> userCaptor;
+
     @Test
     @DisplayName("로그인 성공 - 이메일/비밀번호 일치 시 토큰과 유저 정보 반환")
     void login_success() {
@@ -131,5 +134,56 @@ public class AuthServiceTest {
         Mockito.verify(passwordEncoder).matches(rawPassword, encodedPassword);
         Mockito.verify(jwtProvider, Mockito.never()).createAccessToken(ArgumentMatchers.anyLong());
         Mockito.verify(jwtProvider, Mockito.never()).createRefreshToken(ArgumentMatchers.anyLong());
+    }
+
+    @Test
+    @DisplayName("회원가입 성공 - 비밀번호는 인코딩되고, username은 이메일 @ 앞부분으로 저장된다")
+    void signUp_success() {
+        // given
+        String email = "newuser@example.com";
+        String rawPassword = "plain-password";
+        String encodedPassword = "encoded-password";
+        String expectedUsername = "newuser";
+        String defaultProfileUrl = "profile-example.com";
+        Long generatedUserId = 10L;
+        String accessToken = "access-token";
+        String refreshToken = "refresh-token";
+
+        LoginRequest signUpRequest = new LoginRequest(email, rawPassword);
+
+        BDDMockito.given(passwordEncoder.encode(rawPassword)).willReturn(encodedPassword);
+
+        BDDMockito.given(userRepository.save(Mockito.any(User.class)))
+                .willAnswer(invocation -> {
+                    User saved = invocation.getArgument(0);
+                    ReflectionTestUtils.setField(saved, "id", generatedUserId);
+                    return saved;
+                });
+
+        BDDMockito.given(jwtProvider.createAccessToken(generatedUserId)).willReturn(accessToken);
+        BDDMockito.given(jwtProvider.createRefreshToken(generatedUserId)).willReturn(refreshToken);
+
+        // when
+        LoginResponse response = authService.signUp(signUpRequest);
+
+        // then: 반환 DTO 검증
+        Assertions.assertThat(response.userId()).isEqualTo(generatedUserId);
+        Assertions.assertThat(response.email()).isEqualTo(email);
+        Assertions.assertThat(response.accessToken()).isEqualTo(accessToken);
+        Assertions.assertThat(response.refreshToken()).isEqualTo(refreshToken);
+
+        Mockito.verify(passwordEncoder).encode(rawPassword);
+
+        Mockito.verify(userRepository).save(userCaptor.capture());
+        User savedUser = userCaptor.getValue();
+
+        Assertions.assertThat(savedUser.getEmail()).isEqualTo(email);
+        Assertions.assertThat(savedUser.getPassword()).isEqualTo(encodedPassword);
+        Assertions.assertThat(savedUser.getUsername()).isEqualTo(expectedUsername);
+        Assertions.assertThat(savedUser.getProfileImage()).isEqualTo(defaultProfileUrl);
+        Assertions.assertThat(savedUser.getRegisterPath()).isEqualTo(RegisterPath.CUSTOM);
+
+        Mockito.verify(jwtProvider).createAccessToken(generatedUserId);
+        Mockito.verify(jwtProvider).createRefreshToken(generatedUserId);
     }
 }

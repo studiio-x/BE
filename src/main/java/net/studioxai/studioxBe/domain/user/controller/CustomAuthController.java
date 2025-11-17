@@ -23,11 +23,11 @@ public class CustomAuthController {
         return authService.login(loginRequest);
     }
 
-//    @PostMapping("/v1/auth/signup")
-//    public LoginResponse signup(
-//            @RequestBody @Valid LoginRequest loginRequest
-//    ) {
-//        return authService.signUp(loginRequest);
-//    }
+    @PostMapping("/v1/auth/signup")
+    public LoginResponse signup(
+            @RequestBody @Valid LoginRequest loginRequest
+    ) {
+        return authService.signUp(loginRequest);
+    }
 
 }
