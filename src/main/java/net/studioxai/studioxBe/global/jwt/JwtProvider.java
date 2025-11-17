@@ -34,11 +34,7 @@ public class JwtProvider {
     }
 
     public String createRefreshToken(Long userId) {
-        String refreshToken = createToken(String.valueOf(userId), "refresh", refreshExpSeconds);
-        RefreshToken refresh = RefreshToken.create(refreshToken, userId, refreshExpSeconds);
-        refreshTokenRepository.save(refresh);
-
-        return refreshToken;
+        return createToken(String.valueOf(userId), "refresh", refreshExpSeconds);
     }
 
     public boolean validate(String token) {
