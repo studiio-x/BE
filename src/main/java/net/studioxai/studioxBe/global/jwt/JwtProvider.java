@@ -4,6 +4,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import net.studioxai.studioxBe.infra.redis.entity.RefreshToken;
+import net.studioxai.studioxBe.infra.redis.repository.RefreshTokenRepository;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -17,21 +19,26 @@ public class JwtProvider {
     private final SecretKey signingKey;
     private final long accessExpSeconds;
     private final long refreshExpSeconds;
+    private final RefreshTokenRepository refreshTokenRepository;
 
-    public JwtProvider(JwtProperties props) {
+    public JwtProvider(JwtProperties props, RefreshTokenRepository refreshTokenRepository) {
         this.signingKey =
                 Keys.hmacShaKeyFor(props.secretKey().getBytes(StandardCharsets.UTF_8));
         this.accessExpSeconds = props.accessTokenExpirationMs();
         this.refreshExpSeconds = props.refreshTokenExpirationMs();
+        this.refreshTokenRepository = refreshTokenRepository;
     }
 
-    public String createAccessToken(String userId) {
-        return createToken(userId, "access", accessExpSeconds);
+    public String createAccessToken(Long userId) {
+        return createToken(String.valueOf(userId), "access", accessExpSeconds);
     }
 
-    public String createRefreshToken(String userId) {
-        return createToken(userId, "refresh", refreshExpSeconds);
+    public String createRefreshToken(Long userId) {
+        String refreshToken = createToken(String.valueOf(userId), "refresh", refreshExpSeconds);
+        RefreshToken refresh = RefreshToken.create(refreshToken, userId, refreshExpSeconds);
+        refreshTokenRepository.save(refresh);
 
+        return refreshToken;
     }
 
     public boolean validate(String token) {
@@ -65,11 +72,11 @@ public class JwtProvider {
     private String createToken(String userId, String category, Long expirationSeconds) {
         Instant now = Instant.now();
         return Jwts.builder()
-                .setSubject(userId)
-                .setClaims(Map.of("category", category))
-                .setIssuedAt(Date.from(now))
-                .setExpiration(Date.from(now.plusSeconds(expirationSeconds)))
-                .signWith(signingKey, SignatureAlgorithm.HS256)
+                .subject(userId)
+                .claim("category", category)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusSeconds(expirationSeconds)))
+                .signWith(signingKey, Jwts.SIG.HS256)
                 .compact();
     }
 }
