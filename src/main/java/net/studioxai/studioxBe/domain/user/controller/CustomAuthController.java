@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import net.studioxai.studioxBe.domain.user.dto.EmailVerificationRequest;
 import net.studioxai.studioxBe.domain.user.dto.LoginRequest;
 import net.studioxai.studioxBe.domain.user.dto.LoginResponse;
+import net.studioxai.studioxBe.domain.user.dto.TokenResponse;
 import net.studioxai.studioxBe.domain.user.service.AuthService;
 import net.studioxai.studioxBe.domain.user.service.EmailVerificationService;
 import org.springframework.http.HttpStatus;
@@ -51,6 +52,13 @@ public class CustomAuthController {
                 .status(HttpStatus.SEE_OTHER)
                 .header("Location", callbackUrl)
                 .build();
+    }
+
+    @PostMapping("/v1/auth/token")
+    public TokenResponse tokenReissue(
+            @RequestParam String refreshToken
+    ) {
+        return authService.reissue(refreshToken);
     }
 
 }

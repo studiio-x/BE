@@ -4,16 +4,21 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.user.dto.LoginRequest;
 import net.studioxai.studioxBe.domain.user.dto.LoginResponse;
+import net.studioxai.studioxBe.domain.user.dto.TokenResponse;
 import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
 import net.studioxai.studioxBe.domain.user.exception.UserExceptionHandler;
 import net.studioxai.studioxBe.domain.user.repository.UserRepository;
 import net.studioxai.studioxBe.global.jwt.JwtProvider;
+import net.studioxai.studioxBe.infra.redis.entity.Token;
 import net.studioxai.studioxBe.infra.redis.service.TokenService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @Transactional(readOnly = true)
@@ -56,6 +61,17 @@ public class AuthService {
         return buildLoginResponse(user);
     }
 
+    @Transactional
+    public TokenResponse reissue(String refreshToken) {
+        Token token = tokenService.findByRefreshTokenOrThrow(refreshToken);
+        Map<String, String> tokens = buildToken(token.getUserId());
+
+        return TokenResponse.create(
+                tokens.get("accessToken"),
+                tokens.get("refreshToken")
+        );
+    }
+
     private User getUserByEmailOrThrow(String email) {
         return userRepository.findByEmail(email).orElseThrow(
                 () -> new UserExceptionHandler(UserErrorCode.WRONG_ID_OR_PASSWORD)
@@ -65,21 +81,31 @@ public class AuthService {
     private void validatePassword(String rawPassword, String encodedPassword) {
         if (!passwordEncoder.matches(rawPassword, encodedPassword)) {
             throw new UserExceptionHandler(UserErrorCode.WRONG_ID_OR_PASSWORD);
-        };
+        }
     }
 
     private LoginResponse buildLoginResponse(User user) {
-        String accessToken = jwtProvider.createAccessToken(user.getId());
-        String refreshToken = jwtProvider.createRefreshToken(user.getId());
-        tokenService.saveRefreshToken(refreshToken, user.getId());
+        Map<String, String> tokens = buildToken(user.getId());
 
         return LoginResponse.create(
                 user.getId(),
                 user.getEmail(),
                 user.getProfileImage(),
-                accessToken,
-                refreshToken
+                tokens.get("accessToken"),
+                tokens.get("refreshToken")
         );
+    }
+
+    private Map<String, String> buildToken(Long userId) {
+        String accessToken = jwtProvider.createAccessToken(userId);
+        String refreshToken = jwtProvider.createRefreshToken(userId);
+        tokenService.saveRefreshToken(refreshToken, userId);
+
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("accessToken", accessToken);
+        tokens.put("refreshToken", refreshToken);
+
+        return tokens;
     }
 
     private String extractUsernameFromEmail(String email) {

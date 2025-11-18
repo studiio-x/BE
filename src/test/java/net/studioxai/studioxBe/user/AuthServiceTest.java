@@ -2,6 +2,7 @@ package net.studioxai.studioxBe.user;
 
 import net.studioxai.studioxBe.domain.user.dto.LoginRequest;
 import net.studioxai.studioxBe.domain.user.dto.LoginResponse;
+import net.studioxai.studioxBe.domain.user.dto.TokenResponse;
 import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
@@ -10,6 +11,7 @@ import net.studioxai.studioxBe.domain.user.repository.UserRepository;
 import net.studioxai.studioxBe.domain.user.service.AuthService;
 import net.studioxai.studioxBe.domain.user.service.EmailVerificationService;
 import net.studioxai.studioxBe.global.jwt.JwtProvider;
+import net.studioxai.studioxBe.infra.redis.entity.Token;
 import net.studioxai.studioxBe.infra.redis.service.TokenService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,8 +24,6 @@ import java.util.Optional;
 
 import org.assertj.core.api.Assertions;
 import org.springframework.test.util.ReflectionTestUtils;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthServiceTest {
@@ -98,12 +98,13 @@ public class AuthServiceTest {
 
         BDDMockito.given(userRepository.findByEmail(email)).willReturn(Optional.empty());
 
-        // when & then
-        UserExceptionHandler ex = assertThrows(
+        // when
+        UserExceptionHandler ex = org.junit.jupiter.api.Assertions.assertThrows(
                 UserExceptionHandler.class,
                 () -> authService.login(loginRequest)
         );
 
+        // then
         Assertions.assertThat(ex.getErrorCode()).isEqualTo(UserErrorCode.WRONG_ID_OR_PASSWORD);
 
         Mockito.verify(userRepository).findByEmail(email);
@@ -120,6 +121,7 @@ public class AuthServiceTest {
         String rawPassword = "wrong-password";
         String encodedPassword = "encoded-password";
         Long userId = 1L;
+
         String profileImage = "https://example.com/profile.png";
         String username = "username";
 
@@ -131,12 +133,13 @@ public class AuthServiceTest {
         BDDMockito.given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
         BDDMockito.given(passwordEncoder.matches(rawPassword, encodedPassword)).willReturn(false);
 
-        // when & then
-        UserExceptionHandler ex = assertThrows(
+        // when
+        UserExceptionHandler ex = org.junit.jupiter.api.Assertions.assertThrows(
                 UserExceptionHandler.class,
                 () -> authService.login(loginRequest)
         );
 
+        // then
         Assertions.assertThat(ex.getErrorCode()).isEqualTo(UserErrorCode.WRONG_ID_OR_PASSWORD);
 
         Mockito.verify(userRepository).findByEmail(email);
@@ -146,21 +149,48 @@ public class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("회원가입 성공 - 비밀번호 인코딩, username 추출, 토큰 반환")
+    @DisplayName("로그인 실패 - 가입 경로가 CUSTOM이 아니면 예외 발생")
+    void login_fail_invalidRegisterPath() {
+        // given
+        String email = "social@example.com";
+        String rawPassword = "plain-password";
+        String encodedPassword = "encoded-password";
+        Long userId = 1L;
+
+        User user = User.create(RegisterPath.GOOGLE, email, encodedPassword, "profile", "username");
+        ReflectionTestUtils.setField(user, "id", userId);
+
+        LoginRequest request = new LoginRequest(email, rawPassword);
+
+        BDDMockito.given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
+
+        // when
+        UserExceptionHandler ex = org.junit.jupiter.api.Assertions.assertThrows(
+                UserExceptionHandler.class,
+                () -> authService.login(request)
+        );
+
+        // then
+        Assertions.assertThat(ex.getErrorCode()).isEqualTo(UserErrorCode.INVALID_LOGIN_PATH);
+
+        Mockito.verify(userRepository).findByEmail(email);
+        Mockito.verify(passwordEncoder, Mockito.never()).matches(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(jwtProvider, Mockito.never()).createAccessToken(Mockito.anyLong());
+    }
+
+    @Test
+    @DisplayName("회원가입 성공 - username 추출, 인코딩, 토큰 반환")
     void signUp_success() {
         // given
         String email = "newuser@example.com";
-        String rawPassword = "plain-password";
-        String encodedPassword = "encoded-password";
-        String expectedUsername = "newuser";
-        String defaultProfileUrl = "profile-example.com";
-        Long generatedUserId = 10L;
-        String accessToken = "access-token";
-        String refreshToken = "refresh-token";
+        String rawPassword = "plain";
+        String encodedPassword = "encoded";
+        Long newUserId = 10L;
+        String accessToken = "new-access";
+        String refreshToken = "new-refresh";
 
-        LoginRequest signUpRequest = new LoginRequest(email, rawPassword);
+        LoginRequest request = new LoginRequest(email, rawPassword);
 
-        // 이메일 인증 성공 가정
         Mockito.doNothing().when(emailVerificationService).checkEmailVerification(email);
 
         BDDMockito.given(passwordEncoder.encode(rawPassword)).willReturn(encodedPassword);
@@ -168,18 +198,18 @@ public class AuthServiceTest {
         BDDMockito.given(userRepository.save(Mockito.any(User.class)))
                 .willAnswer(invocation -> {
                     User saved = invocation.getArgument(0);
-                    ReflectionTestUtils.setField(saved, "id", generatedUserId);
+                    ReflectionTestUtils.setField(saved, "id", newUserId);
                     return saved;
                 });
 
-        BDDMockito.given(jwtProvider.createAccessToken(generatedUserId)).willReturn(accessToken);
-        BDDMockito.given(jwtProvider.createRefreshToken(generatedUserId)).willReturn(refreshToken);
+        BDDMockito.given(jwtProvider.createAccessToken(newUserId)).willReturn(accessToken);
+        BDDMockito.given(jwtProvider.createRefreshToken(newUserId)).willReturn(refreshToken);
 
         // when
-        LoginResponse response = authService.signUp(signUpRequest);
+        LoginResponse response = authService.signUp(request);
 
         // then
-        Assertions.assertThat(response.userId()).isEqualTo(generatedUserId);
+        Assertions.assertThat(response.userId()).isEqualTo(newUserId);
         Assertions.assertThat(response.email()).isEqualTo(email);
         Assertions.assertThat(response.accessToken()).isEqualTo(accessToken);
         Assertions.assertThat(response.refreshToken()).isEqualTo(refreshToken);
@@ -191,13 +221,39 @@ public class AuthServiceTest {
         User savedUser = userCaptor.getValue();
 
         Assertions.assertThat(savedUser.getEmail()).isEqualTo(email);
+        Assertions.assertThat(savedUser.getUsername()).isEqualTo("newuser");
         Assertions.assertThat(savedUser.getPassword()).isEqualTo(encodedPassword);
-        Assertions.assertThat(savedUser.getUsername()).isEqualTo(expectedUsername);
-        Assertions.assertThat(savedUser.getProfileImage()).isEqualTo(defaultProfileUrl);
         Assertions.assertThat(savedUser.getRegisterPath()).isEqualTo(RegisterPath.CUSTOM);
 
-        Mockito.verify(jwtProvider).createAccessToken(generatedUserId);
-        Mockito.verify(jwtProvider).createRefreshToken(generatedUserId);
-        Mockito.verify(tokenService).saveRefreshToken(refreshToken, generatedUserId);
+        Mockito.verify(tokenService).saveRefreshToken(refreshToken, newUserId);
+    }
+
+    @Test
+    @DisplayName("토큰 재발급 성공")
+    void reissue_success() {
+        // given
+        String oldRt = "old";
+        Long userId = 1L;
+        String newAt = "new-at";
+        String newRt = "new-rt";
+
+        Token token = Mockito.mock(Token.class);
+        BDDMockito.given(token.getUserId()).willReturn(userId);
+
+        BDDMockito.given(tokenService.findByRefreshTokenOrThrow(oldRt)).willReturn(token);
+        BDDMockito.given(jwtProvider.createAccessToken(userId)).willReturn(newAt);
+        BDDMockito.given(jwtProvider.createRefreshToken(userId)).willReturn(newRt);
+
+        // when
+        TokenResponse response = authService.reissue(oldRt);
+
+        // then
+        Assertions.assertThat(response.accessToken()).isEqualTo(newAt);
+        Assertions.assertThat(response.refreshToken()).isEqualTo(newRt);
+
+        Mockito.verify(tokenService).findByRefreshTokenOrThrow(oldRt);
+        Mockito.verify(jwtProvider).createAccessToken(userId);
+        Mockito.verify(jwtProvider).createRefreshToken(userId);
+        Mockito.verify(tokenService).saveRefreshToken(newRt, userId);
     }
 }

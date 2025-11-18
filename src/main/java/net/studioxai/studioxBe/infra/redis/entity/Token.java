@@ -5,6 +5,7 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.TimeToLive;
+import org.springframework.data.redis.core.index.Indexed;
 
 @RedisHash(value = "refreshToken")
 @Getter
@@ -12,6 +13,7 @@ public class Token {
     @Id
     private Long userId;
 
+    @Indexed
     private String refreshToken;
 
     @TimeToLive
