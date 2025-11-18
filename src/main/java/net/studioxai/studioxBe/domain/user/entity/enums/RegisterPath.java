@@ -1,4 +1,4 @@
-package net.studioxai.studioxBe.domain.user.entity;
+package net.studioxai.studioxBe.domain.user.entity.enums;
 
 import lombok.Getter;
 
