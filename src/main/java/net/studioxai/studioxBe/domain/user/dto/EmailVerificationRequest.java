@@ -13,7 +13,7 @@ public record EmailVerificationRequest(
 
         @NotBlank(message = "콜백 URL은 필수입니다.")
         @Pattern(
-                regexp = "^(https?):\\/\\/([a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,}(:[0-9]{1,5})?(\\/.*)?$",
+                regexp = "^(https?):\\/\\/([^:\\/\\s]+)(:([0-9]{1,5}))?(\\/.*)?$",
                 message = "올바른 URL 형식이 아닙니다."
         )
         String callbackUrl
