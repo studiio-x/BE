@@ -10,7 +10,7 @@ import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
 import net.studioxai.studioxBe.domain.user.exception.UserExceptionHandler;
 import net.studioxai.studioxBe.domain.user.repository.UserRepository;
 import net.studioxai.studioxBe.global.jwt.JwtProvider;
-import net.studioxai.studioxBe.infra.redis.service.RefreshTokenService;
+import net.studioxai.studioxBe.infra.redis.service.TokenService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +23,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
-    private final RefreshTokenService refreshTokenService;
+    private final TokenService tokenService;
 
     @Transactional
     public LoginResponse login(LoginRequest loginRequest) {
@@ -67,7 +67,7 @@ public class AuthService {
     private LoginResponse buildLoginResponse(User user) {
         String accessToken = jwtProvider.createAccessToken(user.getId());
         String refreshToken = jwtProvider.createRefreshToken(user.getId());
-        refreshTokenService.saveRefreshToken(refreshToken, user.getId());
+        tokenService.saveRefreshToken(refreshToken, user.getId());
 
         return LoginResponse.create(
                 user.getId(),
