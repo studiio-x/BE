@@ -8,7 +8,9 @@ import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
 import net.studioxai.studioxBe.domain.user.exception.UserExceptionHandler;
 import net.studioxai.studioxBe.domain.user.repository.UserRepository;
 import net.studioxai.studioxBe.domain.user.service.AuthService;
+import net.studioxai.studioxBe.domain.user.service.EmailVerificationService;
 import net.studioxai.studioxBe.global.jwt.JwtProvider;
+import net.studioxai.studioxBe.infra.redis.service.TokenService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +35,12 @@ public class AuthServiceTest {
 
     @Mock
     private JwtProvider jwtProvider;
+
+    @Mock
+    private TokenService tokenService;
+
+    @Mock
+    private EmailVerificationService emailVerificationService;
 
     @InjectMocks
     private AuthService authService;
@@ -77,6 +85,7 @@ public class AuthServiceTest {
         Mockito.verify(passwordEncoder).matches(rawPassword, encodedPassword);
         Mockito.verify(jwtProvider).createAccessToken(userId);
         Mockito.verify(jwtProvider).createRefreshToken(userId);
+        Mockito.verify(tokenService).saveRefreshToken(refreshToken, userId);
     }
 
     @Test
@@ -98,9 +107,9 @@ public class AuthServiceTest {
         Assertions.assertThat(ex.getErrorCode()).isEqualTo(UserErrorCode.WRONG_ID_OR_PASSWORD);
 
         Mockito.verify(userRepository).findByEmail(email);
-        Mockito.verify(passwordEncoder, Mockito.never()).matches(ArgumentMatchers.anyString(), ArgumentMatchers.anyString());
-        Mockito.verify(jwtProvider, Mockito.never()).createAccessToken(ArgumentMatchers.anyLong());
-        Mockito.verify(jwtProvider, Mockito.never()).createRefreshToken(ArgumentMatchers.anyLong());
+        Mockito.verify(passwordEncoder, Mockito.never()).matches(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(jwtProvider, Mockito.never()).createAccessToken(Mockito.anyLong());
+        Mockito.verify(jwtProvider, Mockito.never()).createRefreshToken(Mockito.anyLong());
     }
 
     @Test
@@ -132,12 +141,12 @@ public class AuthServiceTest {
 
         Mockito.verify(userRepository).findByEmail(email);
         Mockito.verify(passwordEncoder).matches(rawPassword, encodedPassword);
-        Mockito.verify(jwtProvider, Mockito.never()).createAccessToken(ArgumentMatchers.anyLong());
-        Mockito.verify(jwtProvider, Mockito.never()).createRefreshToken(ArgumentMatchers.anyLong());
+        Mockito.verify(jwtProvider, Mockito.never()).createAccessToken(Mockito.anyLong());
+        Mockito.verify(jwtProvider, Mockito.never()).createRefreshToken(Mockito.anyLong());
     }
 
     @Test
-    @DisplayName("회원가입 성공 - 비밀번호는 인코딩되고, username은 이메일 @ 앞부분으로 저장된다")
+    @DisplayName("회원가입 성공 - 비밀번호 인코딩, username 추출, 토큰 반환")
     void signUp_success() {
         // given
         String email = "newuser@example.com";
@@ -150,6 +159,9 @@ public class AuthServiceTest {
         String refreshToken = "refresh-token";
 
         LoginRequest signUpRequest = new LoginRequest(email, rawPassword);
+
+        // 이메일 인증 성공 가정
+        Mockito.doNothing().when(emailVerificationService).checkEmailVerification(email);
 
         BDDMockito.given(passwordEncoder.encode(rawPassword)).willReturn(encodedPassword);
 
@@ -166,12 +178,13 @@ public class AuthServiceTest {
         // when
         LoginResponse response = authService.signUp(signUpRequest);
 
-        // then: 반환 DTO 검증
+        // then
         Assertions.assertThat(response.userId()).isEqualTo(generatedUserId);
         Assertions.assertThat(response.email()).isEqualTo(email);
         Assertions.assertThat(response.accessToken()).isEqualTo(accessToken);
         Assertions.assertThat(response.refreshToken()).isEqualTo(refreshToken);
 
+        Mockito.verify(emailVerificationService).checkEmailVerification(email);
         Mockito.verify(passwordEncoder).encode(rawPassword);
 
         Mockito.verify(userRepository).save(userCaptor.capture());
@@ -185,5 +198,6 @@ public class AuthServiceTest {
 
         Mockito.verify(jwtProvider).createAccessToken(generatedUserId);
         Mockito.verify(jwtProvider).createRefreshToken(generatedUserId);
+        Mockito.verify(tokenService).saveRefreshToken(refreshToken, generatedUserId);
     }
 }

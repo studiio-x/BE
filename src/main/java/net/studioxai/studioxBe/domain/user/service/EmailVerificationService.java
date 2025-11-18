@@ -6,7 +6,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.user.dto.EmailVerificationRequest;
 import net.studioxai.studioxBe.domain.user.entity.EmailVerificationToken;
+import net.studioxai.studioxBe.domain.user.entity.VerifiedEmail;
+import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
+import net.studioxai.studioxBe.domain.user.exception.UserExceptionHandler;
 import net.studioxai.studioxBe.domain.user.repository.EmailVerificationTokenRepository;
+import net.studioxai.studioxBe.domain.user.repository.UserRepository;
+import net.studioxai.studioxBe.domain.user.repository.VerifiedEmailRepository;
 import net.studioxai.studioxBe.global.jwt.JwtProperties;
 import net.studioxai.studioxBe.global.jwt.JwtProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,14 +32,51 @@ public class EmailVerificationService {
     private String senderEmail;
 
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
+    private final VerifiedEmailRepository verifiedEmailRepository;
+    private final UserRepository userRepository;
+
     private final JwtProvider jwtProvider;
     private final JwtProperties jwtProperties;
+
     private final JavaMailSender mailSender;
 
-    public void sendEmail(EmailVerificationRequest emailVerificationRequest, String currentUrl) {
-        // TODO: 이미 DB에 등록된 메일은 아닌지 확인
+    public void checkEmailVerification(String email) {
+        verifiedEmailRepository.findById(email).orElseThrow(
+                () -> new UserExceptionHandler(UserErrorCode.EMAIL_NOT_FOUND)
+        );
+    }
 
-        // TODO: 토큰 생성 및 레디스 저장 책임 분리 필요
+    @Transactional
+    public void sendEmail(EmailVerificationRequest emailVerificationRequest, String currentUrl) {
+        validateDuplicateSignup(emailVerificationRequest.email());
+        String token = createEmailToken(emailVerificationRequest);
+        sendEmail(currentUrl, emailVerificationRequest, token);
+    }
+
+    @Transactional
+    public String verifyEmail(String email, String token) {
+        EmailVerificationToken emailVerificationToken = emailVerificationTokenRepository.findById(email)
+                .orElseThrow(
+                        () -> new UserExceptionHandler(UserErrorCode.VERIFICATION_NOT_FOUND)
+                );
+
+        emailVerificationToken.validateToken(token);
+
+        VerifiedEmail verifiedEmail = VerifiedEmail.create(emailVerificationToken.getEmail());
+        verifiedEmailRepository.save(verifiedEmail);
+
+        // TODO: 여기서 callbackURL get해오는게... 냄새가 폴폴나는데 어떻게 수정하는게 좋을까요?
+        return emailVerificationToken.getCallbackUrl();
+
+    }
+
+    private void validateDuplicateSignup(String email) {
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new UserExceptionHandler(UserErrorCode.USER_ALREADY_REGISTERS);
+        }
+    }
+
+    private String createEmailToken(EmailVerificationRequest emailVerificationRequest) {
         String token = jwtProvider.createEmailToken(emailVerificationRequest.email());
 
         EmailVerificationToken emailVerificationToken = EmailVerificationToken.create(
@@ -45,8 +87,12 @@ public class EmailVerificationService {
         );
 
         emailVerificationTokenRepository.save(emailVerificationToken);
+        return token;
+    }
 
-        String url = serverUrl + currentUrl + "?token=" + token;
+    // TODO: 여기 메서드가 너무 긴 거 같아서... 고민됩니다
+    private void sendEmail(String currentUrl, EmailVerificationRequest emailVerificationRequest, String token) {
+        String url = serverUrl + currentUrl + "?email=" + emailVerificationRequest.email() + "?token=" + token;
 
         String subject = "[STUDIO-X] Email Verification";
 
@@ -70,9 +116,8 @@ public class EmailVerificationService {
             helper.setText(body, false);
             mailSender.send(message);
         } catch (MessagingException e) {
-            throw new IllegalStateException("이메일 전송에 실패했습니다.", e);
+            throw new UserExceptionHandler(UserErrorCode.FAIL_SENDING_MAIL);
         }
-
     }
 
 }

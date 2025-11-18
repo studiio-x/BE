@@ -7,6 +7,8 @@ import net.studioxai.studioxBe.domain.user.dto.LoginRequest;
 import net.studioxai.studioxBe.domain.user.dto.LoginResponse;
 import net.studioxai.studioxBe.domain.user.service.AuthService;
 import net.studioxai.studioxBe.domain.user.service.EmailVerificationService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -31,11 +33,24 @@ public class CustomAuthController {
     }
 
     @PostMapping("/v1/auth/email/verification")
-    public void emailVerification(
+    public void emailSend(
             @RequestBody @Valid EmailVerificationRequest emailVerificationRequest
     ) {
         String currentUrl = "/api/v1/auth/email/verification";
         emailVerificationService.sendEmail(emailVerificationRequest, currentUrl);
+    }
+
+    @GetMapping("/v1/auth/email/verification")
+    public ResponseEntity<Void> emailVerify(
+            @RequestParam String email,
+            @RequestParam String token
+    ) {
+        String callbackUrl = emailVerificationService.verifyEmail(email, token);
+
+        return ResponseEntity
+                .status(HttpStatus.SEE_OTHER)
+                .header("Location", callbackUrl)
+                .build();
     }
 
 }

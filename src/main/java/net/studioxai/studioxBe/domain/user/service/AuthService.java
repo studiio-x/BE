@@ -24,10 +24,14 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final TokenService tokenService;
+    private final EmailVerificationService emailVerificationService;
 
     @Transactional
     public LoginResponse login(LoginRequest loginRequest) {
         User user = getUserByEmailOrThrow(loginRequest.email());
+
+        validateRegisterPath(user, RegisterPath.CUSTOM);
+
         validatePassword(loginRequest.password(), user.getPassword());
 
         return buildLoginResponse(user);
@@ -35,7 +39,7 @@ public class AuthService {
 
     @Transactional
     public LoginResponse signUp(LoginRequest loginRequest) {
-        // TODO: 이메일 검증 됐는지 확인
+        emailVerificationService.checkEmailVerification(loginRequest.email());
 
         // TODO: default profile url 삽입
         String encodedPassword = passwordEncoder.encode(loginRequest.password());
@@ -81,6 +85,12 @@ public class AuthService {
     private String extractUsernameFromEmail(String email) {
         int index = email.indexOf("@");
         return (index > 0) ? email.substring(0, index) : email;
+    }
+
+    private void validateRegisterPath(User user, RegisterPath registerPath) {
+        if (user.getRegisterPath() != registerPath) {
+            throw new UserExceptionHandler(UserErrorCode.INVALID_LOGIN_PATH);
+        }
     }
 
 }
