@@ -92,7 +92,7 @@ public class EmailVerificationService {
 
     // TODO: 여기 메서드가 너무 긴 거 같아서... 고민됩니다
     private void sendEmail(String currentUrl, EmailVerificationRequest emailVerificationRequest, String token) {
-        String url = serverUrl + currentUrl + "?email=" + emailVerificationRequest.email() + "?token=" + token;
+        String url = serverUrl + currentUrl + "?email=" + emailVerificationRequest.email() + "&token=" + token;
 
         String subject = "[STUDIO-X] Email Verification";
 
