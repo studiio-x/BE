@@ -2,19 +2,19 @@ package net.studioxai.studioxBe.domain.user.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import net.studioxai.studioxBe.domain.user.dto.EmailVerificationRequest;
 import net.studioxai.studioxBe.domain.user.dto.LoginRequest;
 import net.studioxai.studioxBe.domain.user.dto.LoginResponse;
 import net.studioxai.studioxBe.domain.user.service.AuthService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import net.studioxai.studioxBe.domain.user.service.EmailVerificationService;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class CustomAuthController {
     private final AuthService authService;
+    private final EmailVerificationService emailVerificationService;
 
     @PostMapping("/v1/auth/login")
     public LoginResponse login(
@@ -28,6 +28,14 @@ public class CustomAuthController {
             @RequestBody @Valid LoginRequest loginRequest
     ) {
         return authService.signUp(loginRequest);
+    }
+
+    @PostMapping("/v1/auth/email/verification")
+    public void emailVerification(
+            @RequestBody @Valid EmailVerificationRequest emailVerificationRequest
+    ) {
+        String currentUrl = "/api/v1/auth/email/verification";
+        emailVerificationService.sendEmail(emailVerificationRequest, currentUrl);
     }
 
 }

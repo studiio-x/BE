@@ -2,31 +2,29 @@ package net.studioxai.studioxBe.global.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import net.studioxai.studioxBe.infra.redis.entity.RefreshToken;
-import net.studioxai.studioxBe.infra.redis.repository.RefreshTokenRepository;
+import net.studioxai.studioxBe.infra.redis.repository.TokenRepository;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
-import java.util.Map;
+import java.util.UUID;
 
 @Component
 public class JwtProvider {
     private final SecretKey signingKey;
     private final long accessExpSeconds;
     private final long refreshExpSeconds;
-    private final RefreshTokenRepository refreshTokenRepository;
+    private final long mailExpSeconds;
 
-    public JwtProvider(JwtProperties props, RefreshTokenRepository refreshTokenRepository) {
+    public JwtProvider(JwtProperties props) {
         this.signingKey =
                 Keys.hmacShaKeyFor(props.secretKey().getBytes(StandardCharsets.UTF_8));
         this.accessExpSeconds = props.accessTokenExpirationMs();
         this.refreshExpSeconds = props.refreshTokenExpirationMs();
-        this.refreshTokenRepository = refreshTokenRepository;
+        this.mailExpSeconds = props.mailTokenExpirationMs();
     }
 
     public String createAccessToken(Long userId) {
@@ -35,6 +33,10 @@ public class JwtProvider {
 
     public String createRefreshToken(Long userId) {
         return createToken(String.valueOf(userId), "refresh", refreshExpSeconds);
+    }
+
+    public String createEmailToken(String email) {
+        return createToken(email, "email", accessExpSeconds);
     }
 
     public boolean validate(String token) {

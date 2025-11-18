@@ -2,7 +2,7 @@ package net.studioxai.studioxBe.user;
 
 import net.studioxai.studioxBe.domain.user.dto.LoginRequest;
 import net.studioxai.studioxBe.domain.user.dto.LoginResponse;
-import net.studioxai.studioxBe.domain.user.entity.RegisterPath;
+import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
 import net.studioxai.studioxBe.domain.user.exception.UserExceptionHandler;
