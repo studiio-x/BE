@@ -1,9 +1,9 @@
 package net.studioxai.studioxBe.domain.user.entity;
 
-import jakarta.persistence.Id;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 
 @RedisHash(value = "verifiedEmail", timeToLive = 300 * 1000)
