@@ -91,39 +91,47 @@ public class EmailVerificationService {
         return token;
     }
 
-    // TODO: 여기 메서드가 너무 긴 거 같아서... 고민됩니다
     private void sendEmail(String currentUrl, EmailVerificationRequest emailVerificationRequest, String token) {
-        String url = UriComponentsBuilder.fromUriString(serverUrl)
+        String verificationUrl = buildVerificationUrl(currentUrl, emailVerificationRequest.email(), token);
+        String subject = "[STUDIO-X] Email Verification";
+        String body = createEmailBody(verificationUrl);
+        sendMessage(emailVerificationRequest.email(), subject, body);
+    }
+
+    private String buildVerificationUrl(String currentUrl, String email, String token) {
+        return UriComponentsBuilder.fromUriString(serverUrl)
                 .path(currentUrl)
-                .queryParam("email", emailVerificationRequest.email())
+                .queryParam("email", email)
                 .queryParam("token", token)
                 .build()
                 .toUriString();
+    }
 
-        String subject = "[STUDIO-X] Email Verification";
-
-        String body = """
+    private String createEmailBody(String verificationUrl) {
+        return """
         Hello, this is STUDIO-X.
-    
+
         Please click the link below to complete your email verification.
         Verification link: %s
-    
+
         If you did not request this email, you can safely ignore it.
         This link will expire after a certain period of time.
-        """.formatted(url);
+        """.formatted(verificationUrl);
+    }
 
+    private void sendMessage(String to, String subject, String body) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
 
             helper.setFrom(senderEmail);
-            helper.setTo(emailVerificationRequest.email());
+            helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(body, false);
+
             mailSender.send(message);
         } catch (MessagingException e) {
             throw new UserExceptionHandler(UserErrorCode.FAIL_SENDING_MAIL);
         }
     }
-
 }
