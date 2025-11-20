@@ -15,7 +15,7 @@ public class TokenService {
     private final JwtProperties jwtProperties;
 
     public void saveRefreshToken(String token, Long userId) {
-        Token refreshToken = Token.create(token, userId, jwtProperties.refreshTokenExpirationMs());
+        Token refreshToken = Token.create(token, userId, jwtProperties.refreshTokenExpirationMs() / 1000);
         tokenRepository.save(refreshToken);
     }
 
