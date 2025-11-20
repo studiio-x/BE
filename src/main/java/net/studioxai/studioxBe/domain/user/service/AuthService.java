@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,7 +55,10 @@ public class AuthService {
                 loginRequest.email(),
                 encodedPassword,
                 "profile-example.com",
-                extractUsernameFromEmail(loginRequest.email()));
+                extractUsernameFromEmail(loginRequest.email()),
+                true,
+                LocalDateTime.now()
+        );
 
         userRepository.save(user);
 

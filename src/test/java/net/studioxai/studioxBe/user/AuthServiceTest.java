@@ -20,6 +20,7 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.assertj.core.api.Assertions;
@@ -63,7 +64,7 @@ public class AuthServiceTest {
 
         LoginRequest loginRequest = new LoginRequest(email, rawPassword);
 
-        User user = User.create(RegisterPath.CUSTOM, email, encodedPassword, profileImage, username);
+        User user = User.create(RegisterPath.CUSTOM, email, encodedPassword, profileImage, username, true, LocalDateTime.now());
         ReflectionTestUtils.setField(user, "id", userId);
 
         BDDMockito.given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
@@ -127,7 +128,7 @@ public class AuthServiceTest {
 
         LoginRequest loginRequest = new LoginRequest(email, rawPassword);
 
-        User user = User.create(RegisterPath.CUSTOM, email, encodedPassword, profileImage, username);
+        User user = User.create(RegisterPath.CUSTOM, email, encodedPassword, profileImage, username, true, LocalDateTime.now());
         ReflectionTestUtils.setField(user, "id", userId);
 
         BDDMockito.given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
@@ -157,7 +158,7 @@ public class AuthServiceTest {
         String encodedPassword = "encoded-password";
         Long userId = 1L;
 
-        User user = User.create(RegisterPath.GOOGLE, email, encodedPassword, "profile", "username");
+        User user = User.create(RegisterPath.GOOGLE, email, encodedPassword, "profile", "username", true, LocalDateTime.now());
         ReflectionTestUtils.setField(user, "id", userId);
 
         LoginRequest request = new LoginRequest(email, rawPassword);

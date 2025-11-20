@@ -17,6 +17,8 @@ import lombok.NoArgsConstructor;
 import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
 import net.studioxai.studioxBe.global.entity.BaseEntity;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @NoArgsConstructor
@@ -42,22 +44,32 @@ public class User extends BaseEntity {
     @Column(name = "username", nullable = false)
     private String username;
 
+    @Column(name = "is_email_verified", nullable = false)
+    private boolean isEmailVerified;
+
+    @Column(name = "email_verified_at", nullable = true)
+    private LocalDateTime emailVerifiedAt;
+
     @Builder(access = AccessLevel.PRIVATE)
-    private User(RegisterPath registerPath, String email, String password, String profileImage, String username) {
+    private User(RegisterPath registerPath, String email, String password, String profileImage, String username, boolean isEmailVerified, LocalDateTime emailVerifiedAt) {
         this.registerPath = registerPath;
         this.email = email;
         this.password = password;
         this.profileImage = profileImage;
         this.username = username;
+        this.isEmailVerified = isEmailVerified;
+        this.emailVerifiedAt = emailVerifiedAt;
     }
 
-    public static User create(RegisterPath registerPath, String email, String password, String profileImage, String username) {
+    public static User create(RegisterPath registerPath, String email, String password, String profileImage, String username, boolean isEmailVerified, LocalDateTime emailVerifiedAt) {
         return User.builder()
                 .registerPath(registerPath)
                 .email(email)
                 .password(password)
                 .profileImage(profileImage)
                 .username(username)
+                .isEmailVerified(isEmailVerified)
+                .emailVerifiedAt(emailVerifiedAt)
                 .build();
     }
 
