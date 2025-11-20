@@ -6,7 +6,7 @@ import lombok.Getter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 
-@RedisHash(value = "verifiedEmail", timeToLive = 300 * 1000)
+@RedisHash(value = "verifiedEmail", timeToLive = 300)
 @Getter
 public class VerifiedEmail {
     @Id
