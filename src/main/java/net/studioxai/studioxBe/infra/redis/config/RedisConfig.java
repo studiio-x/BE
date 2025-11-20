@@ -30,7 +30,7 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<?,?> StringRedisTemplate(){
+    public RedisTemplate<?,?> stringSerializedRedisTemplate(){
         RedisTemplate<byte[], byte[]> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory());
 
