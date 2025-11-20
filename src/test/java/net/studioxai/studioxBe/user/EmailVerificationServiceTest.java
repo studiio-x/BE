@@ -82,7 +82,7 @@ public class EmailVerificationServiceTest {
                 () -> emailVerificationService.checkEmailVerification(email)
         );
 
-        Assertions.assertThat(ex.getErrorCode()).isEqualTo(UserErrorCode.EMAIL_NOT_FOUND);
+        Assertions.assertThat(ex.getErrorCode()).isEqualTo(UserErrorCode.EMAIL_NOT_VERIFIED);
     }
 
     @Test

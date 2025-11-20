@@ -42,7 +42,7 @@ public class EmailVerificationService {
 
     public void checkEmailVerification(String email) {
         verifiedEmailRepository.findById(email).orElseThrow(
-                () -> new UserExceptionHandler(UserErrorCode.EMAIL_NOT_FOUND)
+                () -> new UserExceptionHandler(UserErrorCode.EMAIL_NOT_VERIFIED)
         );
     }
 
