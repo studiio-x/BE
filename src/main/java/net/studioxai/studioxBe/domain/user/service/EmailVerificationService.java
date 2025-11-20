@@ -93,7 +93,7 @@ public class EmailVerificationService {
 
     private void sendEmail(String currentUrl, EmailVerificationRequest emailVerificationRequest, String token) {
         String verificationUrl = buildVerificationUrl(currentUrl, emailVerificationRequest.email(), token);
-        String subject = "[STUDIO-X] Email Verification";
+        String subject = "[STUDIO-X] 이메일 인증 안내";
         String body = createEmailBody(verificationUrl);
         sendMessage(emailVerificationRequest.email(), subject, body);
     }
@@ -109,13 +109,13 @@ public class EmailVerificationService {
 
     private String createEmailBody(String verificationUrl) {
         return """
-        Hello, this is STUDIO-X.
-
-        Please click the link below to complete your email verification.
-        Verification link: %s
-
-        If you did not request this email, you can safely ignore it.
-        This link will expire after a certain period of time.
+        안녕하세요, STUDIO-X입니다.
+        
+        아래 링크를 클릭하여 이메일 인증을 완료해 주세요.
+        인증 링크: %s
+        
+        본인이 요청한 인증이 아니라면, 이 메일은 무시하셔도 됩니다.
+        해당 링크는 일정 시간이 지나면 자동으로 만료됩니다.
         """.formatted(verificationUrl);
     }
 
