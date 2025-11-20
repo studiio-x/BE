@@ -19,6 +19,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 @Transactional(readOnly = true)
@@ -92,7 +93,12 @@ public class EmailVerificationService {
 
     // TODO: 여기 메서드가 너무 긴 거 같아서... 고민됩니다
     private void sendEmail(String currentUrl, EmailVerificationRequest emailVerificationRequest, String token) {
-        String url = serverUrl + currentUrl + "?email=" + emailVerificationRequest.email() + "&token=" + token;
+        String url = UriComponentsBuilder.fromUriString(serverUrl)
+                .path(currentUrl)
+                .queryParam("email", emailVerificationRequest.email())
+                .queryParam("token", token)
+                .build()
+                .toUriString();
 
         String subject = "[STUDIO-X] Email Verification";
 
