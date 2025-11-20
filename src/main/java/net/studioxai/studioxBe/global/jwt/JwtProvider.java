@@ -22,9 +22,9 @@ public class JwtProvider {
     public JwtProvider(JwtProperties props) {
         this.signingKey =
                 Keys.hmacShaKeyFor(props.secretKey().getBytes(StandardCharsets.UTF_8));
-        this.accessExpSeconds = props.accessTokenExpirationMs();
-        this.refreshExpSeconds = props.refreshTokenExpirationMs();
-        this.mailExpSeconds = props.mailTokenExpirationMs();
+        this.accessExpSeconds = props.accessTokenExpirationMs() / 1000;
+        this.refreshExpSeconds = props.refreshTokenExpirationMs() / 1000;
+        this.mailExpSeconds = props.mailTokenExpirationMs() / 1000;
     }
 
     public String createAccessToken(Long userId) {
@@ -36,7 +36,7 @@ public class JwtProvider {
     }
 
     public String createEmailToken(String email) {
-        return createToken(email, "email", accessExpSeconds);
+        return createToken(email, "email", mailExpSeconds);
     }
 
     public boolean validate(String token) {
