@@ -56,19 +56,9 @@ public class EmailVerificationService {
 
     @Transactional
     public String verifyEmail(String email, String token) {
-        EmailVerificationToken emailVerificationToken = emailVerificationTokenRepository.findById(email)
-                .orElseThrow(
-                        () -> new UserExceptionHandler(UserErrorCode.VERIFICATION_NOT_FOUND)
-                );
-
-        emailVerificationToken.validateToken(token);
-
-        VerifiedEmail verifiedEmail = VerifiedEmail.create(emailVerificationToken.getEmail());
-        verifiedEmailRepository.save(verifiedEmail);
-
-        // TODO: 여기서 callbackURL get해오는게... 냄새가 폴폴나는데 어떻게 수정하는게 좋을까요?
-        return emailVerificationToken.getCallbackUrl();
-
+        EmailVerificationToken tokenEntity = getAndValidateToken(email, token);
+        createVerifiedEmail(tokenEntity);
+        return tokenEntity.getCallbackUrl();
     }
 
     private void validateDuplicateSignup(String email) {
@@ -133,5 +123,19 @@ public class EmailVerificationService {
         } catch (MessagingException e) {
             throw new UserExceptionHandler(UserErrorCode.FAIL_SENDING_MAIL);
         }
+    }
+
+    private EmailVerificationToken getAndValidateToken(String email, String token) {
+        EmailVerificationToken emailVerificationToken =
+                emailVerificationTokenRepository.findById(email)
+                        .orElseThrow(() -> new UserExceptionHandler(UserErrorCode.VERIFICATION_NOT_FOUND));
+
+        emailVerificationToken.validateToken(token);
+        return emailVerificationToken;
+    }
+
+    private void createVerifiedEmail(EmailVerificationToken tokenEntity) {
+        VerifiedEmail verifiedEmail = VerifiedEmail.create(tokenEntity.getEmail());
+        verifiedEmailRepository.save(verifiedEmail);
     }
 }
