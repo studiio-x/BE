@@ -12,6 +12,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 
@@ -40,9 +43,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(c -> c.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
-                .cors(c -> c.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/signup", "/", "/login", "/Oauth2/**", "/auth/**", "/public/**").permitAll()
@@ -58,23 +61,25 @@ public class SecurityConfig {
     }
 
     @Bean
-    public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
-        var cfg = new org.springframework.web.cors.CorsConfiguration();
+    public CorsConfigurationSource corsConfigurationSource() {
+        var cfg = new CorsConfiguration();
+
         cfg.setAllowedOrigins(java.util.List.of(
                 "http://localhost:3000",
                 "http://localhost:8080",
                 SERVER_URL
-
         ));
+
         cfg.getAllowedOrigins().addAll(Arrays.asList(FRONT_URLS));
-        // 브라우저가 보낼/보려는 헤더를 명시 (Authorization 꼭 포함)
+
         cfg.setAllowedHeaders(java.util.List.of("Authorization","Content-Type","X-Requested-With"));
         cfg.setExposedHeaders(java.util.List.of("Location","Content-Disposition"));
         cfg.setAllowedMethods(java.util.List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
+
         cfg.setAllowCredentials(true);
         cfg.setMaxAge(1800L);
 
-        var source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
+        var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cfg);
         return source;
     }

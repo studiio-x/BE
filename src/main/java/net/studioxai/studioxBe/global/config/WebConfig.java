@@ -1,6 +1,5 @@
 package net.studioxai.studioxBe.global.config;
 
-import net.studioxai.studioxBe.global.jwt.argument_resolver.LoginUserIdArgumentResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
