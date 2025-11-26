@@ -37,7 +37,7 @@ public class SecurityConfig {
     }
 
     private final String[] SwaggerPatterns = {
-            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/images"
+            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/images", "/api/v1/auth/**"
     };
 
     @Bean
