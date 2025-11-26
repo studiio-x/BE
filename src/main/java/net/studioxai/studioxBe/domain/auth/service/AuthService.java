@@ -32,6 +32,7 @@ public class AuthService {
     private final TokenService tokenService;
     private final EmailVerificationService emailVerificationService;
 
+    // TODO: 추후 로직 수정
     public static final String DEFAULT_PROFILE_IMAGE_URL = "profile-example.com";
 
     @Transactional
