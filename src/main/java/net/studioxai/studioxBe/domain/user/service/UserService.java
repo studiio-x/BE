@@ -2,6 +2,7 @@ package net.studioxai.studioxBe.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.studioxai.studioxBe.domain.auth.service.AuthService;
 import net.studioxai.studioxBe.domain.user.dto.request.ProfileUpdateRequest;
 import net.studioxai.studioxBe.domain.user.dto.request.UsernameUpdateRequest;
 import net.studioxai.studioxBe.domain.user.dto.response.MypageResponse;
@@ -37,9 +38,14 @@ public class UserService {
     @Transactional
     public void updateUserProfile(Long userId, ProfileUpdateRequest profileUpdateRequest) {
         User user = getUserByIdOrThrow(userId);
-        user.updateProfileImage(profileUpdateRequest.profileImage());
+        String originProfileImage = user.getProfileImage();
 
-        // TODO: default 이미지가 아니면 S3 버킷에서 삭제
+        if(!originProfileImage.equals(AuthService.DEFAULT_PROFILE_IMAGE_URL)) {
+            user.updateProfileImage(profileUpdateRequest.profileImage());
+        }
+
+        s3UrlHandler.delete(originProfileImage);
+
     }
 
     @Transactional
