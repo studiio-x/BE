@@ -9,10 +9,14 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class S3UrlHandler {
 
-    private final S3UrlGenerator s3UrlGenerator;
+    private final S3UrlService s3UrlService;
 
     public S3Url handle(String prefix) {
-        final String url = s3UrlGenerator.generateUrl(prefix);
+        final String url = s3UrlService.generateUrl(prefix);
         return S3Url.to(url);
+    }
+
+    public void delete(String url) {
+        s3UrlService.deleteUrl(url);
     }
 }

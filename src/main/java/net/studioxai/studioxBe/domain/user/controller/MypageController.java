@@ -8,7 +8,6 @@ import net.studioxai.studioxBe.domain.user.dto.response.MypageResponse;
 import net.studioxai.studioxBe.domain.user.service.UserService;
 import net.studioxai.studioxBe.global.jwt.JwtUserPrincipal;
 import net.studioxai.studioxBe.infra.s3.S3Url;
-import net.studioxai.studioxBe.infra.s3.S3UrlGenerator;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
