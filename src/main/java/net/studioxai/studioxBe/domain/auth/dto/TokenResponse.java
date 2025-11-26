@@ -1,4 +1,4 @@
-package net.studioxai.studioxBe.domain.user.dto;
+package net.studioxai.studioxBe.domain.auth.dto;
 
 public record TokenResponse(
         String accessToken,

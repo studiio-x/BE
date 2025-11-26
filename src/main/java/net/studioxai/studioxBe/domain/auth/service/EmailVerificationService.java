@@ -1,17 +1,17 @@
-package net.studioxai.studioxBe.domain.user.service;
+package net.studioxai.studioxBe.domain.auth.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.studioxai.studioxBe.domain.user.dto.EmailVerificationRequest;
-import net.studioxai.studioxBe.domain.user.entity.EmailVerificationToken;
-import net.studioxai.studioxBe.domain.user.entity.VerifiedEmail;
-import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
-import net.studioxai.studioxBe.domain.user.exception.UserExceptionHandler;
-import net.studioxai.studioxBe.domain.user.repository.EmailVerificationTokenRepository;
-import net.studioxai.studioxBe.domain.user.repository.UserRepository;
-import net.studioxai.studioxBe.domain.user.repository.VerifiedEmailRepository;
+import net.studioxai.studioxBe.domain.auth.dto.EmailVerificationRequest;
+import net.studioxai.studioxBe.domain.auth.entity.EmailVerificationToken;
+import net.studioxai.studioxBe.domain.auth.entity.VerifiedEmail;
+import net.studioxai.studioxBe.domain.auth.exception.UserErrorCode;
+import net.studioxai.studioxBe.domain.auth.exception.UserExceptionHandler;
+import net.studioxai.studioxBe.domain.auth.repository.EmailVerificationTokenRepository;
+import net.studioxai.studioxBe.domain.auth.repository.UserRepository;
+import net.studioxai.studioxBe.domain.auth.repository.VerifiedEmailRepository;
 import net.studioxai.studioxBe.global.jwt.JwtProperties;
 import net.studioxai.studioxBe.global.jwt.JwtProvider;
 import org.springframework.beans.factory.annotation.Value;

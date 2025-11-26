@@ -1,4 +1,4 @@
-package net.studioxai.studioxBe.domain.user.dto;
+package net.studioxai.studioxBe.domain.auth.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

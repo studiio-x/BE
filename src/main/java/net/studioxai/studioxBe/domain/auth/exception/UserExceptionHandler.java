@@ -1,4 +1,4 @@
-package net.studioxai.studioxBe.domain.user.exception;
+package net.studioxai.studioxBe.domain.auth.exception;
 
 import net.studioxai.studioxBe.global.error.BaseErrorCode;
 import net.studioxai.studioxBe.global.error.BaseErrorException;

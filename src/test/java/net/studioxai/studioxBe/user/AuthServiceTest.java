@@ -1,15 +1,15 @@
 package net.studioxai.studioxBe.user;
 
-import net.studioxai.studioxBe.domain.user.dto.LoginRequest;
-import net.studioxai.studioxBe.domain.user.dto.LoginResponse;
-import net.studioxai.studioxBe.domain.user.dto.TokenResponse;
+import net.studioxai.studioxBe.domain.auth.dto.LoginRequest;
+import net.studioxai.studioxBe.domain.auth.dto.LoginResponse;
+import net.studioxai.studioxBe.domain.auth.dto.TokenResponse;
 import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
 import net.studioxai.studioxBe.domain.user.entity.User;
-import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
-import net.studioxai.studioxBe.domain.user.exception.UserExceptionHandler;
-import net.studioxai.studioxBe.domain.user.repository.UserRepository;
-import net.studioxai.studioxBe.domain.user.service.AuthService;
-import net.studioxai.studioxBe.domain.user.service.EmailVerificationService;
+import net.studioxai.studioxBe.domain.auth.exception.UserErrorCode;
+import net.studioxai.studioxBe.domain.auth.exception.UserExceptionHandler;
+import net.studioxai.studioxBe.domain.auth.repository.UserRepository;
+import net.studioxai.studioxBe.domain.auth.service.AuthService;
+import net.studioxai.studioxBe.domain.auth.service.EmailVerificationService;
 import net.studioxai.studioxBe.global.jwt.JwtProvider;
 import net.studioxai.studioxBe.infra.redis.entity.Token;
 import net.studioxai.studioxBe.infra.redis.service.TokenService;

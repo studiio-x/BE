@@ -1,4 +1,4 @@
-package net.studioxai.studioxBe.domain.user.exception;
+package net.studioxai.studioxBe.domain.auth.exception;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package net.studioxai.studioxBe.domain.user.repository;
+package net.studioxai.studioxBe.domain.auth.repository;
 
 import net.studioxai.studioxBe.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
