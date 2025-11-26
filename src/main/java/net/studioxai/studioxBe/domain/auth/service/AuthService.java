@@ -32,6 +32,8 @@ public class AuthService {
     private final TokenService tokenService;
     private final EmailVerificationService emailVerificationService;
 
+    public static final String DEFAULT_PROFILE_IMAGE_URL = "profile-example.com";
+
     @Transactional
     public LoginResponse login(LoginRequest loginRequest) {
         User user = getUserByEmailOrThrow(loginRequest.email());
@@ -54,7 +56,7 @@ public class AuthService {
                 RegisterPath.CUSTOM,
                 loginRequest.email(),
                 encodedPassword,
-                "profile-example.com",
+                DEFAULT_PROFILE_IMAGE_URL,
                 extractUsernameFromEmail(loginRequest.email()),
                 true,
                 LocalDateTime.now()
