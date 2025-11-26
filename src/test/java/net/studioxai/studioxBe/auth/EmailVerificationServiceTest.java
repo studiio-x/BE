@@ -1,4 +1,4 @@
-package net.studioxai.studioxBe.user;
+package net.studioxai.studioxBe.auth;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -133,7 +133,7 @@ public class EmailVerificationServiceTest {
     @Test
     @DisplayName("verifyEmail 성공 - 토큰 검증 후 VerifiedEmail 저장")
     void verifyEmail_success() {
-        String email = "user@example.com";
+        String email = "auth@example.com";
         String token = "valid-token";
         String callbackUrl = "/signup";
 
@@ -167,7 +167,7 @@ public class EmailVerificationServiceTest {
     @Test
     @DisplayName("verifyEmail 실패 - 토큰 불일치")
     void verifyEmail_fail_wrongToken() {
-        String email = "user@example.com";
+        String email = "auth@example.com";
         String wrongToken = "wrong";
 
         EmailVerificationToken savedToken =

@@ -1,4 +1,4 @@
-package net.studioxai.studioxBe.user;
+package net.studioxai.studioxBe.auth;
 
 import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
