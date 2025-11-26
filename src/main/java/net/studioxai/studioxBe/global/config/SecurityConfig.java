@@ -59,7 +59,7 @@ public class SecurityConfig {
                         .requestMatchers(PermitAllPatterns).permitAll()
                         .requestMatchers(SwaggerPatterns).permitAll()
                         .requestMatchers(HttpMethod.GET, GetPermitPatterns).permitAll()
-                        .anyRequest().permitAll()
+                        .anyRequest().authenticated()
                 )
                 .formLogin(AbstractHttpConfigurer::disable);
 

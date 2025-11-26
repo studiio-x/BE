@@ -8,6 +8,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
@@ -20,7 +21,8 @@ public class S3UrlService {
     @Value("${BUCKET_NAME}")
     private String BUCKET;
 
-    private final S3Config s3Config;
+    private final S3Presigner s3Presigner;
+    private final S3Client s3Client;
 
     public String generateUrl(String prefix) {
         String filename = UUID.randomUUID().toString();
@@ -35,18 +37,13 @@ public class S3UrlService {
                         .build();
 
         PresignedPutObjectRequest presignedRequest =
-                s3Config.s3Presigner().presignPutObject(presignRequest);
+                s3Presigner.presignPutObject(presignRequest);
 
         return presignedRequest.url().toString();
     }
 
     public void deleteUrl(String url) {
         String key = extractKeyFromUrl(url);
-
-        S3Client s3Client = S3Client.builder()
-                .region(Region.AP_NORTHEAST_2)
-                .credentialsProvider(DefaultCredentialsProvider.create())
-                .build();
 
         s3Client.deleteObject(DeleteObjectRequest.builder()
                 .bucket(BUCKET)
