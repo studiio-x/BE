@@ -1,4 +1,4 @@
-package net.studioxai.studioxBe.domain.user.entity;
+package net.studioxai.studioxBe.domain.auth.entity;
 
 import lombok.AccessLevel;
 import lombok.Builder;

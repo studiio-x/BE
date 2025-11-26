@@ -2,10 +2,10 @@ package net.studioxai.studioxBe.domain.auth.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import net.studioxai.studioxBe.domain.auth.dto.EmailVerificationRequest;
-import net.studioxai.studioxBe.domain.auth.dto.LoginRequest;
-import net.studioxai.studioxBe.domain.auth.dto.LoginResponse;
-import net.studioxai.studioxBe.domain.auth.dto.TokenResponse;
+import net.studioxai.studioxBe.domain.auth.dto.request.EmailVerificationRequest;
+import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
+import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
+import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
 import net.studioxai.studioxBe.domain.auth.service.AuthService;
 import net.studioxai.studioxBe.domain.auth.service.EmailVerificationService;
 import org.springframework.http.HttpStatus;

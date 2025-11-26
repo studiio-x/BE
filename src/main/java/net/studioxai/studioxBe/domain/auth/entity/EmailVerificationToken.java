@@ -1,10 +1,10 @@
-package net.studioxai.studioxBe.domain.user.entity;
+package net.studioxai.studioxBe.domain.auth.entity;
 
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
-import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
-import net.studioxai.studioxBe.domain.user.exception.UserExceptionHandler;
+import net.studioxai.studioxBe.domain.auth.exception.UserErrorCode;
+import net.studioxai.studioxBe.domain.auth.exception.UserExceptionHandler;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.TimeToLive;

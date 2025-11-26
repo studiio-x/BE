@@ -2,7 +2,7 @@ package net.studioxai.studioxBe.user;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import net.studioxai.studioxBe.domain.auth.dto.EmailVerificationRequest;
+import net.studioxai.studioxBe.domain.auth.dto.request.EmailVerificationRequest;
 import net.studioxai.studioxBe.domain.auth.entity.EmailVerificationToken;
 import net.studioxai.studioxBe.domain.auth.entity.VerifiedEmail;
 import net.studioxai.studioxBe.domain.auth.exception.UserErrorCode;

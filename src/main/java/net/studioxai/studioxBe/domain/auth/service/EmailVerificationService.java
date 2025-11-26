@@ -4,7 +4,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.studioxai.studioxBe.domain.auth.dto.EmailVerificationRequest;
+import net.studioxai.studioxBe.domain.auth.dto.request.EmailVerificationRequest;
 import net.studioxai.studioxBe.domain.auth.entity.EmailVerificationToken;
 import net.studioxai.studioxBe.domain.auth.entity.VerifiedEmail;
 import net.studioxai.studioxBe.domain.auth.exception.UserErrorCode;
