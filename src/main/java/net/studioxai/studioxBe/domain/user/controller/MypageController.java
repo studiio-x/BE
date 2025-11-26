@@ -7,6 +7,8 @@ import net.studioxai.studioxBe.domain.user.dto.request.UsernameUpdateRequest;
 import net.studioxai.studioxBe.domain.user.dto.response.MypageResponse;
 import net.studioxai.studioxBe.domain.user.service.UserService;
 import net.studioxai.studioxBe.global.jwt.JwtUserPrincipal;
+import net.studioxai.studioxBe.infra.s3.S3Url;
+import net.studioxai.studioxBe.infra.s3.S3UrlGenerator;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,6 +39,11 @@ public class MypageController {
             @RequestBody @Valid UsernameUpdateRequest usernameUpdateRequest
     ) {
         userService.updateUsername(principal.userId(), usernameUpdateRequest);
+    }
+
+    @GetMapping("/v1/mypage/profile")
+    public S3Url profileImageUrl() {
+        return userService.getProfileImageUrl();
     }
 
 }

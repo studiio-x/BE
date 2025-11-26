@@ -9,6 +9,8 @@ import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
 import net.studioxai.studioxBe.domain.user.exception.UserExceptionHandler;
 import net.studioxai.studioxBe.domain.user.repository.UserRepository;
+import net.studioxai.studioxBe.infra.s3.S3Url;
+import net.studioxai.studioxBe.infra.s3.S3UrlHandler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class UserService {
-
+    private final S3UrlHandler s3UrlHandler;
     private final UserRepository userRepository;
 
     public User getUserByIdOrThrow(Long userId) {
@@ -36,12 +38,18 @@ public class UserService {
     public void updateUserProfile(Long userId, ProfileUpdateRequest profileUpdateRequest) {
         User user = getUserByIdOrThrow(userId);
         user.updateProfileImage(profileUpdateRequest.profileImage());
+
+        // TODO: default 이미지가 아니면 S3 버킷에서 삭제
     }
 
     @Transactional
     public void updateUsername(Long userId, UsernameUpdateRequest usernameUpdateRequest) {
         User user = getUserByIdOrThrow(userId);
         user.updateUsername(usernameUpdateRequest.username());
+    }
+
+    public S3Url getProfileImageUrl() {
+        return s3UrlHandler.handle("/profile");
     }
 
 }
