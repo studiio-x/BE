@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @RequiredArgsConstructor
-public enum UserErrorCode implements BaseErrorCode {
+public enum AuthErrorCode implements BaseErrorCode {
     INVALID_EMAIL_TOKEN(HttpStatus.BAD_REQUEST, "USER_400_1", "유효하지 않은 토큰입니다."),
     INVALID_LOGIN_PATH(HttpStatus.BAD_REQUEST, "USER_400_2", "잘못된 로그인 방식입니다."),
 
@@ -16,7 +16,6 @@ public enum UserErrorCode implements BaseErrorCode {
 
     EMAIL_NOT_VERIFIED(HttpStatus.FORBIDDEN, "USER_403_1", "이메일 인증이 필요합니다."),
 
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404_1", "해당 사용자를 찾을 수 없습니다."),
     VERIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404_2", "검증을 요청한 내역이 없습니다."),
     EMAIL_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404_3", "이메일이 검증되지 않았습니다."),
 
