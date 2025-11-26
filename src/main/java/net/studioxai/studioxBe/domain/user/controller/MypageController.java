@@ -2,9 +2,8 @@ package net.studioxai.studioxBe.domain.user.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
-import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
-import net.studioxai.studioxBe.domain.user.dto.MypageResponse;
+import net.studioxai.studioxBe.domain.user.dto.request.ProfileUpdateRequest;
+import net.studioxai.studioxBe.domain.user.dto.response.MypageResponse;
 import net.studioxai.studioxBe.domain.user.service.UserService;
 import net.studioxai.studioxBe.global.jwt.JwtUserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,5 +21,16 @@ public class MypageController {
             ) {
         return userService.findUserDetail(principal.userId());
     }
+
+    @PutMapping("/v1/mypage/profile")
+    public void profileModify(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @RequestBody @Valid ProfileUpdateRequest profileUpdateRequest
+    ) {
+        userService.updateUserProfile(principal.userId(), profileUpdateRequest);
+    }
+
+    @PutMapping("/v1/mypage/username")
+    public void
 
 }

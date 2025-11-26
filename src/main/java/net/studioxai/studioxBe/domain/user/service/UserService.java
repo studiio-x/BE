@@ -2,7 +2,8 @@ package net.studioxai.studioxBe.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.studioxai.studioxBe.domain.user.dto.MypageResponse;
+import net.studioxai.studioxBe.domain.user.dto.request.ProfileUpdateRequest;
+import net.studioxai.studioxBe.domain.user.dto.response.MypageResponse;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
 import net.studioxai.studioxBe.domain.user.exception.UserExceptionHandler;
@@ -28,6 +29,18 @@ public class UserService {
         User user = getUserByIdOrThrow(userId);
         return MypageResponse.create(user.getId(), user.getEmail(), user.getUsername(), user.getProfileImage());
 
+    }
+
+    @Transactional
+    public void updateUserProfile(Long userId, ProfileUpdateRequest profileUpdateRequest) {
+        User user = getUserByIdOrThrow(userId);
+        user.updateProfileImage(profileUpdateRequest.profileImage());
+    }
+
+    @Transactional
+    public void updateUsername(Long userId, String username) {
+        User user = getUserByIdOrThrow(userId);
+        user.updateUsername(username);
     }
 
 }

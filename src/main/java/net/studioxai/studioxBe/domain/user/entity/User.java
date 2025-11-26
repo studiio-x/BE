@@ -73,4 +73,12 @@ public class User extends BaseEntity {
                 .build();
     }
 
+    public void updateProfileImage(String profileImage) {
+        this.profileImage = profileImage;
+    }
+
+    public void updateUsername(String username) {
+        this.username = username;
+    }
+
 }

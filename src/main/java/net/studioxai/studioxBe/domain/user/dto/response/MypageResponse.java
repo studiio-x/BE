@@ -1,4 +1,4 @@
-package net.studioxai.studioxBe.domain.user.dto;
+package net.studioxai.studioxBe.domain.user.dto.response;
 
 public record MypageResponse(
         Long userId,
