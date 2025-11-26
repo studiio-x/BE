@@ -7,9 +7,9 @@ import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
 import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
 import net.studioxai.studioxBe.domain.user.entity.User;
-import net.studioxai.studioxBe.domain.auth.exception.UserErrorCode;
-import net.studioxai.studioxBe.domain.auth.exception.UserExceptionHandler;
-import net.studioxai.studioxBe.domain.auth.repository.UserRepository;
+import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
+import net.studioxai.studioxBe.domain.auth.exception.AuthExceptionHandler;
+import net.studioxai.studioxBe.domain.user.repository.UserRepository;
 import net.studioxai.studioxBe.global.jwt.JwtProvider;
 import net.studioxai.studioxBe.infra.redis.entity.Token;
 import net.studioxai.studioxBe.infra.redis.service.TokenService;
@@ -78,13 +78,13 @@ public class AuthService {
 
     private User getUserByEmailOrThrow(String email) {
         return userRepository.findByEmail(email).orElseThrow(
-                () -> new UserExceptionHandler(UserErrorCode.WRONG_ID_OR_PASSWORD)
+                () -> new AuthExceptionHandler(AuthErrorCode.WRONG_ID_OR_PASSWORD)
         );
     }
 
     private void validatePassword(String rawPassword, String encodedPassword) {
         if (!passwordEncoder.matches(rawPassword, encodedPassword)) {
-            throw new UserExceptionHandler(UserErrorCode.WRONG_ID_OR_PASSWORD);
+            throw new AuthExceptionHandler(AuthErrorCode.WRONG_ID_OR_PASSWORD);
         }
     }
 
@@ -119,7 +119,7 @@ public class AuthService {
 
     private void validateRegisterPath(User user, RegisterPath registerPath) {
         if (user.getRegisterPath() != registerPath) {
-            throw new UserExceptionHandler(UserErrorCode.INVALID_LOGIN_PATH);
+            throw new AuthExceptionHandler(AuthErrorCode.INVALID_LOGIN_PATH);
         }
     }
 

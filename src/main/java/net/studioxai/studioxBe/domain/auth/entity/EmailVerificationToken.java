@@ -3,8 +3,8 @@ package net.studioxai.studioxBe.domain.auth.entity;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
-import net.studioxai.studioxBe.domain.auth.exception.UserErrorCode;
-import net.studioxai.studioxBe.domain.auth.exception.UserExceptionHandler;
+import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
+import net.studioxai.studioxBe.domain.auth.exception.AuthExceptionHandler;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.TimeToLive;
@@ -24,7 +24,7 @@ public class EmailVerificationToken {
 
     public void validateToken(String token) {
         if (!this.token.equals(token)) {
-            throw new UserExceptionHandler(UserErrorCode.INVALID_EMAIL_TOKEN);
+            throw new AuthExceptionHandler(AuthErrorCode.INVALID_EMAIL_TOKEN);
         }
     }
 
