@@ -3,6 +3,7 @@ package net.studioxai.studioxBe.domain.user.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import net.studioxai.studioxBe.domain.user.dto.request.ProfileUpdateRequest;
+import net.studioxai.studioxBe.domain.user.dto.request.UsernameUpdateRequest;
 import net.studioxai.studioxBe.domain.user.dto.response.MypageResponse;
 import net.studioxai.studioxBe.domain.user.service.UserService;
 import net.studioxai.studioxBe.global.jwt.JwtUserPrincipal;
@@ -31,6 +32,11 @@ public class MypageController {
     }
 
     @PutMapping("/v1/mypage/username")
-    public void
+    public void usernameModify(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @RequestBody @Valid UsernameUpdateRequest usernameUpdateRequest
+    ) {
+        userService.updateUsername(principal.userId(), usernameUpdateRequest);
+    }
 
 }

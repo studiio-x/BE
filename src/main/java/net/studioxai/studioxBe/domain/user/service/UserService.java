@@ -3,6 +3,7 @@ package net.studioxai.studioxBe.domain.user.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.user.dto.request.ProfileUpdateRequest;
+import net.studioxai.studioxBe.domain.user.dto.request.UsernameUpdateRequest;
 import net.studioxai.studioxBe.domain.user.dto.response.MypageResponse;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
@@ -38,9 +39,9 @@ public class UserService {
     }
 
     @Transactional
-    public void updateUsername(Long userId, String username) {
+    public void updateUsername(Long userId, UsernameUpdateRequest usernameUpdateRequest) {
         User user = getUserByIdOrThrow(userId);
-        user.updateUsername(username);
+        user.updateUsername(usernameUpdateRequest.username());
     }
 
 }
