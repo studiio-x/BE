@@ -120,12 +120,10 @@ public class UserServiceTest {
         Mockito.verify(s3UrlHandler).delete("origin-image");
     }
 
-    @Test
-    @DisplayName("updateUserProfile - 기존 이미지가 기본 이미지이면 프로필 이미지는 변경되지 않는다")
-    void updateUserProfile_whenDefaultImage_doesNotUpdateProfileButDeletesOld() {
+    @DisplayName("updateUserProfile - 기존 이미지가 기본 이미지이면 S3 삭제 없이 새 이미지로 업데이트된다")
+    void updateUserProfile_whenDefaultImage_updatesProfileWithoutDeletingS3() {
         // given
-        User user = createUser(AuthService.DEFAULT_PROFILE_IMAGE_URL);
-
+        User user = createUser(AuthService.DEFAULT_PROFILE_IMAGE_URL); // 기본 이미지
         Mockito.when(userRepository.findById(1L))
                 .thenReturn(Optional.of(user));
 
@@ -135,10 +133,27 @@ public class UserServiceTest {
         userService.updateUserProfile(1L, req);
 
         // then
-        assertEquals(AuthService.DEFAULT_PROFILE_IMAGE_URL, user.getProfileImage());
-
-        Mockito.verify(s3UrlHandler).delete(AuthService.DEFAULT_PROFILE_IMAGE_URL);
+        assertEquals("new-image", user.getProfileImage());
+        Mockito.verify(s3UrlHandler, Mockito.never()).delete(Mockito.anyString());
     }
+
+    @DisplayName("updateUserProfile - 기존 이미지가 기본 이미지가 아니면 S3에서 삭제 후 새 이미지로 변경된다")
+    void updateUserProfile_whenCustomImage_deletesOldAndUpdatesProfile() {
+        // given
+        User user = createUser("old-image-url"); // 기본 이미지가 아님
+        Mockito.when(userRepository.findById(1L))
+                .thenReturn(Optional.of(user));
+
+        ProfileUpdateRequest req = new ProfileUpdateRequest("new-image-url");
+
+        // when
+        userService.updateUserProfile(1L, req);
+
+        // then
+        assertEquals("new-image-url", user.getProfileImage());
+        Mockito.verify(s3UrlHandler).delete("old-image-url");
+    }
+
 
     @Test
     @DisplayName("getProfileImageUrl - S3 presigned URL 발급")
