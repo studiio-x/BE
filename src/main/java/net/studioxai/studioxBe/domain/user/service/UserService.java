@@ -40,12 +40,11 @@ public class UserService {
         User user = getUserByIdOrThrow(userId);
         String originProfileImage = user.getProfileImage();
 
+        user.updateProfileImage(profileUpdateRequest.profileImage());
+
         if(!originProfileImage.equals(AuthService.DEFAULT_PROFILE_IMAGE_URL)) {
             s3UrlHandler.delete(originProfileImage);
-
         }
-
-        user.updateProfileImage(profileUpdateRequest.profileImage());
     }
 
     @Transactional
