@@ -1,17 +1,17 @@
-package net.studioxai.studioxBe.domain.user.service;
+package net.studioxai.studioxBe.domain.auth.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.studioxai.studioxBe.domain.user.dto.EmailVerificationRequest;
-import net.studioxai.studioxBe.domain.user.entity.EmailVerificationToken;
-import net.studioxai.studioxBe.domain.user.entity.VerifiedEmail;
-import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
-import net.studioxai.studioxBe.domain.user.exception.UserExceptionHandler;
-import net.studioxai.studioxBe.domain.user.repository.EmailVerificationTokenRepository;
+import net.studioxai.studioxBe.domain.auth.dto.request.EmailVerificationRequest;
+import net.studioxai.studioxBe.domain.auth.entity.EmailVerificationToken;
+import net.studioxai.studioxBe.domain.auth.entity.VerifiedEmail;
+import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
+import net.studioxai.studioxBe.domain.auth.exception.AuthExceptionHandler;
+import net.studioxai.studioxBe.domain.auth.repository.EmailVerificationTokenRepository;
 import net.studioxai.studioxBe.domain.user.repository.UserRepository;
-import net.studioxai.studioxBe.domain.user.repository.VerifiedEmailRepository;
+import net.studioxai.studioxBe.domain.auth.repository.VerifiedEmailRepository;
 import net.studioxai.studioxBe.global.jwt.JwtProperties;
 import net.studioxai.studioxBe.global.jwt.JwtProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,7 +43,7 @@ public class EmailVerificationService {
 
     public void checkEmailVerification(String email) {
         verifiedEmailRepository.findById(email).orElseThrow(
-                () -> new UserExceptionHandler(UserErrorCode.EMAIL_NOT_VERIFIED)
+                () -> new AuthExceptionHandler(AuthErrorCode.EMAIL_NOT_VERIFIED)
         );
     }
 
@@ -63,7 +63,7 @@ public class EmailVerificationService {
 
     private void validateDuplicateSignup(String email) {
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new UserExceptionHandler(UserErrorCode.USER_ALREADY_REGISTERS);
+            throw new AuthExceptionHandler(AuthErrorCode.USER_ALREADY_REGISTERS);
         }
     }
 
@@ -121,14 +121,14 @@ public class EmailVerificationService {
 
             mailSender.send(message);
         } catch (MessagingException e) {
-            throw new UserExceptionHandler(UserErrorCode.FAIL_SENDING_MAIL);
+            throw new AuthExceptionHandler(AuthErrorCode.FAIL_SENDING_MAIL);
         }
     }
 
     private EmailVerificationToken getAndValidateToken(String email, String token) {
         EmailVerificationToken emailVerificationToken =
                 emailVerificationTokenRepository.findById(email)
-                        .orElseThrow(() -> new UserExceptionHandler(UserErrorCode.VERIFICATION_NOT_FOUND));
+                        .orElseThrow(() -> new AuthExceptionHandler(AuthErrorCode.VERIFICATION_NOT_FOUND));
 
         emailVerificationToken.validateToken(token);
         return emailVerificationToken;

@@ -1,10 +1,9 @@
-package net.studioxai.studioxBe.domain.user.dto;
+package net.studioxai.studioxBe.domain.auth.dto.request;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
-public record LoginRequest(
+public record EmailVerificationRequest(
         @NotBlank(message = "이메일은 필수입니다.")
         @Pattern(
                 regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
@@ -12,7 +11,11 @@ public record LoginRequest(
         )
         String email,
 
-        @NotBlank(message = "비밀번호는 필수입니다.")
-        String password
+        @NotBlank(message = "콜백 URL은 필수입니다.")
+        @Pattern(
+                regexp = "^(https?):\\/\\/([^:\\/\\s]+)(:([0-9]{1,5}))?(\\/.*)?$",
+                message = "올바른 URL 형식이 아닙니다."
+        )
+        String callbackUrl
 ) {
 }

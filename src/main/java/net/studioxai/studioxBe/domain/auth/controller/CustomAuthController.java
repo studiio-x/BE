@@ -1,13 +1,13 @@
-package net.studioxai.studioxBe.domain.user.controller;
+package net.studioxai.studioxBe.domain.auth.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import net.studioxai.studioxBe.domain.user.dto.EmailVerificationRequest;
-import net.studioxai.studioxBe.domain.user.dto.LoginRequest;
-import net.studioxai.studioxBe.domain.user.dto.LoginResponse;
-import net.studioxai.studioxBe.domain.user.dto.TokenResponse;
-import net.studioxai.studioxBe.domain.user.service.AuthService;
-import net.studioxai.studioxBe.domain.user.service.EmailVerificationService;
+import net.studioxai.studioxBe.domain.auth.dto.request.EmailVerificationRequest;
+import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
+import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
+import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
+import net.studioxai.studioxBe.domain.auth.service.AuthService;
+import net.studioxai.studioxBe.domain.auth.service.EmailVerificationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
