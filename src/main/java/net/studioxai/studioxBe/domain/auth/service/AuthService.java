@@ -1,14 +1,14 @@
-package net.studioxai.studioxBe.domain.user.service;
+package net.studioxai.studioxBe.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.studioxai.studioxBe.domain.user.dto.LoginRequest;
-import net.studioxai.studioxBe.domain.user.dto.LoginResponse;
-import net.studioxai.studioxBe.domain.user.dto.TokenResponse;
+import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
+import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
+import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
 import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
 import net.studioxai.studioxBe.domain.user.entity.User;
-import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
-import net.studioxai.studioxBe.domain.user.exception.UserExceptionHandler;
+import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
+import net.studioxai.studioxBe.domain.auth.exception.AuthExceptionHandler;
 import net.studioxai.studioxBe.domain.user.repository.UserRepository;
 import net.studioxai.studioxBe.global.jwt.JwtProvider;
 import net.studioxai.studioxBe.infra.redis.entity.Token;
@@ -32,6 +32,9 @@ public class AuthService {
     private final TokenService tokenService;
     private final EmailVerificationService emailVerificationService;
 
+    // TODO: 추후 로직 수정
+    public static final String DEFAULT_PROFILE_IMAGE_URL = "profile-example.com";
+
     @Transactional
     public LoginResponse login(LoginRequest loginRequest) {
         User user = getUserByEmailOrThrow(loginRequest.email());
@@ -54,7 +57,7 @@ public class AuthService {
                 RegisterPath.CUSTOM,
                 loginRequest.email(),
                 encodedPassword,
-                "profile-example.com",
+                DEFAULT_PROFILE_IMAGE_URL,
                 extractUsernameFromEmail(loginRequest.email()),
                 true,
                 LocalDateTime.now()
@@ -78,13 +81,13 @@ public class AuthService {
 
     private User getUserByEmailOrThrow(String email) {
         return userRepository.findByEmail(email).orElseThrow(
-                () -> new UserExceptionHandler(UserErrorCode.WRONG_ID_OR_PASSWORD)
+                () -> new AuthExceptionHandler(AuthErrorCode.WRONG_ID_OR_PASSWORD)
         );
     }
 
     private void validatePassword(String rawPassword, String encodedPassword) {
         if (!passwordEncoder.matches(rawPassword, encodedPassword)) {
-            throw new UserExceptionHandler(UserErrorCode.WRONG_ID_OR_PASSWORD);
+            throw new AuthExceptionHandler(AuthErrorCode.WRONG_ID_OR_PASSWORD);
         }
     }
 
@@ -119,7 +122,7 @@ public class AuthService {
 
     private void validateRegisterPath(User user, RegisterPath registerPath) {
         if (user.getRegisterPath() != registerPath) {
-            throw new UserExceptionHandler(UserErrorCode.INVALID_LOGIN_PATH);
+            throw new AuthExceptionHandler(AuthErrorCode.INVALID_LOGIN_PATH);
         }
     }
 

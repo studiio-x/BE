@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -40,6 +41,13 @@ public class SecurityConfig {
             "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/images"
     };
 
+    private final String[] PermitAllPatterns = {
+            "/api/v1/auth/**", "/signup", "/", "/login", "/Oauth2/**", "/auth/**", "/actuator/health"
+    };
+
+    private final String[] GetPermitPatterns = {
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -47,11 +55,11 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/signup", "/", "/login", "/Oauth2/**", "/auth/**", "/public/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(PermitAllPatterns).permitAll()
                         .requestMatchers(SwaggerPatterns).permitAll()
-                        .requestMatchers("/actuator/health").permitAll()
-                        .anyRequest().permitAll()
+                        .requestMatchers(HttpMethod.GET, GetPermitPatterns).permitAll()
+                        .anyRequest().authenticated()
                 )
                 .formLogin(AbstractHttpConfigurer::disable);
 

@@ -1,15 +1,15 @@
-package net.studioxai.studioxBe.user;
+package net.studioxai.studioxBe.auth;
 
-import net.studioxai.studioxBe.domain.user.dto.LoginRequest;
-import net.studioxai.studioxBe.domain.user.dto.LoginResponse;
-import net.studioxai.studioxBe.domain.user.dto.TokenResponse;
+import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
+import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
+import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
 import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
 import net.studioxai.studioxBe.domain.user.entity.User;
-import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
-import net.studioxai.studioxBe.domain.user.exception.UserExceptionHandler;
+import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
+import net.studioxai.studioxBe.domain.auth.exception.AuthExceptionHandler;
 import net.studioxai.studioxBe.domain.user.repository.UserRepository;
-import net.studioxai.studioxBe.domain.user.service.AuthService;
-import net.studioxai.studioxBe.domain.user.service.EmailVerificationService;
+import net.studioxai.studioxBe.domain.auth.service.AuthService;
+import net.studioxai.studioxBe.domain.auth.service.EmailVerificationService;
 import net.studioxai.studioxBe.global.jwt.JwtProvider;
 import net.studioxai.studioxBe.infra.redis.entity.Token;
 import net.studioxai.studioxBe.infra.redis.service.TokenService;
@@ -100,13 +100,13 @@ public class AuthServiceTest {
         BDDMockito.given(userRepository.findByEmail(email)).willReturn(Optional.empty());
 
         // when
-        UserExceptionHandler ex = org.junit.jupiter.api.Assertions.assertThrows(
-                UserExceptionHandler.class,
+        AuthExceptionHandler ex = org.junit.jupiter.api.Assertions.assertThrows(
+                AuthExceptionHandler.class,
                 () -> authService.login(loginRequest)
         );
 
         // then
-        Assertions.assertThat(ex.getErrorCode()).isEqualTo(UserErrorCode.WRONG_ID_OR_PASSWORD);
+        Assertions.assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.WRONG_ID_OR_PASSWORD);
 
         Mockito.verify(userRepository).findByEmail(email);
         Mockito.verify(passwordEncoder, Mockito.never()).matches(Mockito.anyString(), Mockito.anyString());
@@ -135,13 +135,13 @@ public class AuthServiceTest {
         BDDMockito.given(passwordEncoder.matches(rawPassword, encodedPassword)).willReturn(false);
 
         // when
-        UserExceptionHandler ex = org.junit.jupiter.api.Assertions.assertThrows(
-                UserExceptionHandler.class,
+        AuthExceptionHandler ex = org.junit.jupiter.api.Assertions.assertThrows(
+                AuthExceptionHandler.class,
                 () -> authService.login(loginRequest)
         );
 
         // then
-        Assertions.assertThat(ex.getErrorCode()).isEqualTo(UserErrorCode.WRONG_ID_OR_PASSWORD);
+        Assertions.assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.WRONG_ID_OR_PASSWORD);
 
         Mockito.verify(userRepository).findByEmail(email);
         Mockito.verify(passwordEncoder).matches(rawPassword, encodedPassword);
@@ -166,13 +166,13 @@ public class AuthServiceTest {
         BDDMockito.given(userRepository.findByEmail(email)).willReturn(Optional.of(user));
 
         // when
-        UserExceptionHandler ex = org.junit.jupiter.api.Assertions.assertThrows(
-                UserExceptionHandler.class,
+        AuthExceptionHandler ex = org.junit.jupiter.api.Assertions.assertThrows(
+                AuthExceptionHandler.class,
                 () -> authService.login(request)
         );
 
         // then
-        Assertions.assertThat(ex.getErrorCode()).isEqualTo(UserErrorCode.INVALID_LOGIN_PATH);
+        Assertions.assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.INVALID_LOGIN_PATH);
 
         Mockito.verify(userRepository).findByEmail(email);
         Mockito.verify(passwordEncoder, Mockito.never()).matches(Mockito.anyString(), Mockito.anyString());

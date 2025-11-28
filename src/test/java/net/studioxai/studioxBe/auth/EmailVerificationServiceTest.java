@@ -1,16 +1,16 @@
-package net.studioxai.studioxBe.user;
+package net.studioxai.studioxBe.auth;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import net.studioxai.studioxBe.domain.user.dto.EmailVerificationRequest;
-import net.studioxai.studioxBe.domain.user.entity.EmailVerificationToken;
-import net.studioxai.studioxBe.domain.user.entity.VerifiedEmail;
-import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
-import net.studioxai.studioxBe.domain.user.exception.UserExceptionHandler;
-import net.studioxai.studioxBe.domain.user.repository.EmailVerificationTokenRepository;
+import net.studioxai.studioxBe.domain.auth.dto.request.EmailVerificationRequest;
+import net.studioxai.studioxBe.domain.auth.entity.EmailVerificationToken;
+import net.studioxai.studioxBe.domain.auth.entity.VerifiedEmail;
+import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
+import net.studioxai.studioxBe.domain.auth.exception.AuthExceptionHandler;
+import net.studioxai.studioxBe.domain.auth.repository.EmailVerificationTokenRepository;
 import net.studioxai.studioxBe.domain.user.repository.UserRepository;
-import net.studioxai.studioxBe.domain.user.repository.VerifiedEmailRepository;
-import net.studioxai.studioxBe.domain.user.service.EmailVerificationService;
+import net.studioxai.studioxBe.domain.auth.repository.VerifiedEmailRepository;
+import net.studioxai.studioxBe.domain.auth.service.EmailVerificationService;
 import net.studioxai.studioxBe.global.jwt.JwtProperties;
 import net.studioxai.studioxBe.global.jwt.JwtProvider;
 
@@ -77,12 +77,12 @@ public class EmailVerificationServiceTest {
         Mockito.when(verifiedEmailRepository.findById(email))
                 .thenReturn(Optional.empty());
 
-        UserExceptionHandler ex = assertThrows(
-                UserExceptionHandler.class,
+        AuthExceptionHandler ex = assertThrows(
+                AuthExceptionHandler.class,
                 () -> emailVerificationService.checkEmailVerification(email)
         );
 
-        Assertions.assertThat(ex.getErrorCode()).isEqualTo(UserErrorCode.EMAIL_NOT_VERIFIED);
+        Assertions.assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.EMAIL_NOT_VERIFIED);
     }
 
     @Test
@@ -93,12 +93,12 @@ public class EmailVerificationServiceTest {
 
         Mockito.when(userRepository.findByEmail(req.email())).thenReturn(Optional.of(Mockito.mock()));
 
-        UserExceptionHandler ex = assertThrows(
-                UserExceptionHandler.class,
+        AuthExceptionHandler ex = assertThrows(
+                AuthExceptionHandler.class,
                 () -> emailVerificationService.sendEmail(req, "/email/verify")
         );
 
-        Assertions.assertThat(ex.getErrorCode()).isEqualTo(UserErrorCode.USER_ALREADY_REGISTERS);
+        Assertions.assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.USER_ALREADY_REGISTERS);
     }
 
     @Test
@@ -133,7 +133,7 @@ public class EmailVerificationServiceTest {
     @Test
     @DisplayName("verifyEmail 성공 - 토큰 검증 후 VerifiedEmail 저장")
     void verifyEmail_success() {
-        String email = "user@example.com";
+        String email = "auth@example.com";
         String token = "valid-token";
         String callbackUrl = "/signup";
 
@@ -156,18 +156,18 @@ public class EmailVerificationServiceTest {
 
         Mockito.when(tokenRepository.findById(email)).thenReturn(Optional.empty());
 
-        UserExceptionHandler ex = assertThrows(
-                UserExceptionHandler.class,
+        AuthExceptionHandler ex = assertThrows(
+                AuthExceptionHandler.class,
                 () -> emailVerificationService.verifyEmail(email, "any-token")
         );
 
-        Assertions.assertThat(ex.getErrorCode()).isEqualTo(UserErrorCode.VERIFICATION_NOT_FOUND);
+        Assertions.assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.VERIFICATION_NOT_FOUND);
     }
 
     @Test
     @DisplayName("verifyEmail 실패 - 토큰 불일치")
     void verifyEmail_fail_wrongToken() {
-        String email = "user@example.com";
+        String email = "auth@example.com";
         String wrongToken = "wrong";
 
         EmailVerificationToken savedToken =
@@ -176,11 +176,11 @@ public class EmailVerificationServiceTest {
         Mockito.when(tokenRepository.findById(email))
                 .thenReturn(Optional.of(savedToken));
 
-        UserExceptionHandler ex = assertThrows(
-                UserExceptionHandler.class,
+        AuthExceptionHandler ex = assertThrows(
+                AuthExceptionHandler.class,
                 () -> emailVerificationService.verifyEmail(email, wrongToken)
         );
 
-        Assertions.assertThat(ex.getErrorCode()).isEqualTo(UserErrorCode.INVALID_EMAIL_TOKEN);
+        Assertions.assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.INVALID_EMAIL_TOKEN);
     }
 }

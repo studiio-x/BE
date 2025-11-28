@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
 public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Long id;
 
     @Enumerated(EnumType.STRING)
@@ -38,7 +39,7 @@ public class User extends BaseEntity {
     @Column(name = "password", nullable = false)
     private String password;
 
-    @Column(name = "profile_image", nullable = false)
+    @Column(name = "profile_image", nullable = false, columnDefinition = "TEXT")
     private String profileImage;
 
     @Column(name = "username", nullable = false)
@@ -71,6 +72,14 @@ public class User extends BaseEntity {
                 .isEmailVerified(isEmailVerified)
                 .emailVerifiedAt(emailVerifiedAt)
                 .build();
+    }
+
+    public void updateProfileImage(String profileImage) {
+        this.profileImage = profileImage;
+    }
+
+    public void updateUsername(String username) {
+        this.username = username;
     }
 
 }

@@ -1,6 +1,4 @@
-package net.studioxai.studioxBe.domain.user.dto;
-
-import net.studioxai.studioxBe.domain.user.entity.User;
+package net.studioxai.studioxBe.domain.auth.dto.response;
 
 public record LoginResponse(
         Long userId,
