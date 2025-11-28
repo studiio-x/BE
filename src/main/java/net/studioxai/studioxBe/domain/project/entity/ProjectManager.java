@@ -1,9 +1,8 @@
-package net.studioxai.studioxBe.domain.project;
+package net.studioxai.studioxBe.domain.project.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import net.studioxai.studioxBe.domain.project.entity.Project;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.global.entity.BaseEntity;
 
