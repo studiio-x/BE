@@ -5,11 +5,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import net.studioxai.studioxBe.domain.image.Image;
 import net.studioxai.studioxBe.domain.project.entity.Project;
 import net.studioxai.studioxBe.global.entity.BaseEntity;
-
-import java.util.List;
 
 @Entity
 @Getter

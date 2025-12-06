@@ -1,4 +1,4 @@
-package net.studioxai.studioxBe.domain.image;
+package net.studioxai.studioxBe.domain.image.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

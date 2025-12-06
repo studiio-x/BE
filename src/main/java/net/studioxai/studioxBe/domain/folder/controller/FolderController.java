@@ -3,10 +3,13 @@ package net.studioxai.studioxBe.domain.folder.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import net.studioxai.studioxBe.domain.folder.dto.FolderCreateRequest;
+import net.studioxai.studioxBe.domain.folder.dto.FolderResponse;
 import net.studioxai.studioxBe.domain.folder.service.FolderService;
 import net.studioxai.studioxBe.global.jwt.JwtUserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
@@ -21,5 +24,13 @@ public class FolderController {
             @RequestBody @Valid FolderCreateRequest folderCreateRequest
     ) {
         folderService.addFolder(principal.userId(), projectId, folderCreateRequest);
+    }
+
+    @GetMapping("/v1/folder/{projectId}")
+    public List<FolderResponse> folderList(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long projectId
+    ) {
+        return folderService.getFolders(principal.userId(), projectId);
     }
 }
