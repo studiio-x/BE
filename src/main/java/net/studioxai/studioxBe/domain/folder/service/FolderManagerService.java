@@ -5,10 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.folder.dto.FolderCreateRequest;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.folder.entity.FolderManager;
+import net.studioxai.studioxBe.domain.folder.repository.FolderManagerBulkRepository;
 import net.studioxai.studioxBe.domain.folder.repository.FolderManagerRepository;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
@@ -16,10 +19,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class FolderManagerService {
     private final FolderManagerRepository folderManagerRepository;
-
+    private final FolderManagerBulkRepository folderManagerBulkRepository;
     @Transactional
     public void addManager(User user, Folder folder) {
         FolderManager folderManager = FolderManager.create(user, folder);
         folderManagerRepository.save(folderManager);
+    }
+
+    @Transactional
+    public void addManagersByBulkInsert(List<User> users, Folder folder) {
+        folderManagerBulkRepository.saveAllByBulk(users, folder);
     }
 }
