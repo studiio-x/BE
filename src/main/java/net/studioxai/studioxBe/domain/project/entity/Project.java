@@ -1,6 +1,8 @@
 package net.studioxai.studioxBe.domain.project.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
@@ -21,6 +23,17 @@ public class Project extends BaseEntity {
 
     @Column(name = "name", nullable = false)
     private String name;
+
+    public static Project create(String name) {
+        return Project.builder()
+                .name(name)
+                .build();
+    }
+
+    @Builder(access = AccessLevel.PRIVATE)
+    private Project(String name) {
+        this.name = name;
+    }
 
 
 }

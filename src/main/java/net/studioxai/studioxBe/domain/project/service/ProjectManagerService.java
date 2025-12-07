@@ -2,10 +2,12 @@ package net.studioxai.studioxBe.domain.project.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.studioxai.studioxBe.domain.project.entity.Project;
 import net.studioxai.studioxBe.domain.project.entity.ProjectManager;
 import net.studioxai.studioxBe.domain.project.exception.ProjectMangerExceptionHandler;
 import net.studioxai.studioxBe.domain.project.exception.ProjectMangerErrorCode;
 import net.studioxai.studioxBe.domain.project.repository.ProjectManagerRepository;
+import net.studioxai.studioxBe.domain.user.entity.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,5 +33,11 @@ public class ProjectManagerService {
             throw new ProjectMangerExceptionHandler(ProjectMangerErrorCode.PROJECT_NOT_FOUND);
         }
         return managers;
+    }
+
+    @Transactional
+    public void addManager(Project project, User user, boolean isAdmin) {
+        ProjectManager projectManager = ProjectManager.create(project, user, isAdmin);
+        projectManagerRepository.save(projectManager);
     }
 }
