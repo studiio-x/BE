@@ -18,14 +18,14 @@ import java.util.List;
 public class ProjectManagerService {
     private final ProjectManagerRepository projectManagerRepository;
 
-    public void existProjectMangersOrThrow(Long userId, List<ProjectManager> managers) {
+    public void existProjectManagersOrThrow(Long userId, List<ProjectManager> managers) {
         boolean exists = managers.stream().anyMatch(manager -> manager.getUser().getId().equals(userId));
         if (!exists) {
             throw new ProjectMangerExceptionHandler(ProjectMangerErrorCode.USER_NO_PROJECT_AUTHORITY);
         }
     }
 
-    public List<ProjectManager> getProjectMangersOrThrow(Long projectId) {
+    public List<ProjectManager> getProjectManagersOrThrow(Long projectId) {
         List<ProjectManager> managers = projectManagerRepository.findByProjectId(projectId);
         if (managers.isEmpty()) {
             throw new ProjectMangerExceptionHandler(ProjectMangerErrorCode.PROJECT_NOT_FOUND);

@@ -43,7 +43,7 @@ class ProjectManagerServiceTest {
 
         // when & then
         assertThatCode(() ->
-                projectManagerService.existProjectMangersOrThrow(userId, managers)
+                projectManagerService.existProjectManagersOrThrow(userId, managers)
         ).doesNotThrowAnyException();
     }
 
@@ -63,7 +63,7 @@ class ProjectManagerServiceTest {
 
         // when & then
         assertThatThrownBy(() ->
-                projectManagerService.existProjectMangersOrThrow(userId, managers)
+                projectManagerService.existProjectManagersOrThrow(userId, managers)
         )
                 .isInstanceOf(ProjectMangerExceptionHandler.class)
                 .extracting("errorCode")
@@ -81,7 +81,7 @@ class ProjectManagerServiceTest {
                 .willReturn(List.of(manager));
 
         // when
-        List<ProjectManager> result = projectManagerService.getProjectMangersOrThrow(projectId);
+        List<ProjectManager> result = projectManagerService.getProjectManagersOrThrow(projectId);
 
         // then
         assertThat(result)
@@ -99,7 +99,7 @@ class ProjectManagerServiceTest {
 
         // when & then
         assertThatThrownBy(() ->
-                projectManagerService.getProjectMangersOrThrow(projectId)
+                projectManagerService.getProjectManagersOrThrow(projectId)
         )
                 .isInstanceOf(ProjectMangerExceptionHandler.class)
                 .extracting("errorCode")

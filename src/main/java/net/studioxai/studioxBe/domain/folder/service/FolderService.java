@@ -64,8 +64,8 @@ public class FolderService {
 
     private List<ProjectManager> validate(Long userId, Long projectId) {
         User user = userService.getUserByIdOrThrow(userId);
-        List<ProjectManager> managers = projectManagerService.getProjectMangersOrThrow(projectId);
-        projectManagerService.existProjectMangersOrThrow(userId, managers);
+        List<ProjectManager> managers = projectManagerService.getProjectManagersOrThrow(projectId);
+        projectManagerService.existProjectManagersOrThrow(userId, managers);
 
         return managers;
     }

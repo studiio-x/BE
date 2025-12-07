@@ -68,7 +68,7 @@ class FolderServiceTest {
         List<ProjectManager> managers = List.of(pm1, pm2);
 
         given(userService.getUserByIdOrThrow(userId)).willReturn(user);
-        given(projectManagerService.getProjectMangersOrThrow(projectId)).willReturn(managers);
+        given(projectManagerService.getProjectManagersOrThrow(projectId)).willReturn(managers);
 
         given(pm1.getProject()).willReturn(project);
         given(pm1.getUser()).willReturn(managerUser1);
@@ -85,7 +85,7 @@ class FolderServiceTest {
         assertThat(savedFolder.getName()).isEqualTo(request.name());
         assertThat(savedFolder.getProject()).isEqualTo(project);
 
-        verify(projectManagerService).existProjectMangersOrThrow(userId, managers);
+        verify(projectManagerService).existProjectManagersOrThrow(userId, managers);
 
         List<User> expectedManagerUsers = List.of(managerUser1, managerUser2);
         verify(folderManagerService).addManagersByBulkInsert(expectedManagerUsers, savedFolder);
