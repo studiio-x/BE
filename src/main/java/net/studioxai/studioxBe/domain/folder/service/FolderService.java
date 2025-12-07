@@ -2,7 +2,7 @@ package net.studioxai.studioxBe.domain.folder.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.studioxai.studioxBe.domain.folder.dto.FolderCreateRequest;
+import net.studioxai.studioxBe.domain.folder.dto.request.FolderCreateRequest;
 import net.studioxai.studioxBe.domain.folder.dto.FolderResponse;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.folder.repository.FolderRepository;
@@ -15,10 +15,8 @@ import net.studioxai.studioxBe.domain.user.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
