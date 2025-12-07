@@ -41,6 +41,23 @@ public class FolderManagerService {
         return managers;
     }
 
+    public List<FolderManager> getFolderManagersByProjectId(Long projectId) {
+        List<FolderManager> managers = folderManagerRepository.findByProjectId(projectId);
+
+        if (managers.isEmpty()) {
+            throw new FolderManagerExceptionHandler(FolderManagerErrorCode.PROJECT_FOLDER_NOT_FOUND);
+        }
+        return managers;
+    }
+
+    public List<Folder> extractFolder(List<FolderManager> folderManagers, User user) {
+        return folderManagers.stream()
+                .filter(folderManager -> folderManager.getUser().getId().equals(user.getId()))
+                .map(FolderManager::getFolder)
+                .toList();
+    }
+
+
     @Transactional
     public void addManager(Long userId, Long folderId, FolderManagerAddRequest folderManagerAddRequest) {
         List<FolderManager> managers = getFolderMangersOrThrow(folderId);

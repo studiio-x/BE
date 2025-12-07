@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.folder.dto.request.FolderCreateRequest;
 import net.studioxai.studioxBe.domain.folder.dto.FolderResponse;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
+import net.studioxai.studioxBe.domain.folder.entity.FolderManager;
 import net.studioxai.studioxBe.domain.folder.repository.FolderRepository;
 import net.studioxai.studioxBe.domain.image.service.ImageService;
 import net.studioxai.studioxBe.domain.project.entity.Project;
@@ -46,10 +47,9 @@ public class FolderService {
     }
 
     public List<FolderResponse> getFolders(Long userId, Long projectId) {
-        List<ProjectManager> managers = validate(userId, projectId);
-
-        Project project = managers.get(0).getProject();
-        List<Folder> folders = folderRepository.findByProject(project);
+        User user = userService.getUserByIdOrThrow(userId);
+        List<FolderManager> managers = folderManagerService.getFolderManagersByProjectId(projectId);
+        List<Folder> folders = folderManagerService.extractFolder(managers, user);
 
         Map<Long, List<String>> imagesByFolderId = imageService.getImagesByFolders(folders, IMAGE_COUNT);
 
