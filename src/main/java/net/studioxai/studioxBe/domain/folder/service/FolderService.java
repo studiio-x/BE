@@ -69,11 +69,6 @@ public class FolderService {
 
         return managers;
     }
-    
-    private List<String> extractImages(Folder folder) {
-        return imageService.getImagesByFolder(folder,IMAGE_COUNT);
-
-    }
 
 
 }

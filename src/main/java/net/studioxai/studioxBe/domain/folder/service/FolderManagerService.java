@@ -2,7 +2,6 @@ package net.studioxai.studioxBe.domain.folder.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.studioxai.studioxBe.domain.folder.dto.request.FolderCreateRequest;
 import net.studioxai.studioxBe.domain.folder.dto.request.FolderManagerAddRequest;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.folder.entity.FolderManager;
