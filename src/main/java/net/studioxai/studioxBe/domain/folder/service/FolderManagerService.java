@@ -66,6 +66,10 @@ public class FolderManagerService {
 
         User user = userService.getUserByEmailOrThrow(folderManagerAddRequest.email());
 
+        if (managers.stream().anyMatch(manager -> manager.getUser().getId().equals(user.getId()))) {
+            throw new FolderManagerExceptionHandler(FolderManagerErrorCode.USER_ALREADY_FOLDER_MANAGER);
+        }
+        
         FolderManager folderManager = FolderManager.create(user, folder);
         folderManagerRepository.save(folderManager);
     }
