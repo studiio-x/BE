@@ -21,7 +21,7 @@ public class ProjectManagerService {
     public void existProjectMangersOrThrow(Long userId, List<ProjectManager> managers) {
         boolean exists = managers.stream().anyMatch(manager -> manager.getUser().getId().equals(userId));
         if (!exists) {
-            throw new ProjectMangerExceptionHandler(ProjectMangerErrorCode.PROJECT_NOT_FOUND);
+            throw new ProjectMangerExceptionHandler(ProjectMangerErrorCode.USER_NO_PROJECT_AUTHORITY);
         }
     }
 
