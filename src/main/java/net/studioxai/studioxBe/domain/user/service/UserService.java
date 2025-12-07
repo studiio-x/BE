@@ -29,6 +29,12 @@ public class UserService {
         );
     }
 
+    public User getUserByEmailOrThrow(String email) {
+        return userRepository.findByEmail(email).orElseThrow(
+                () -> new UserExceptionHandler(UserErrorCode.EMAIL_NOT_FOUND)
+        );
+    }
+
     public MypageResponse findUserDetail(Long userId) {
         User user = getUserByIdOrThrow(userId);
         return MypageResponse.create(user.getId(), user.getUsername(), user.getEmail(), user.getProfileImage());

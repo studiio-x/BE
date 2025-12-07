@@ -2,7 +2,7 @@ package net.studioxai.studioxBe.domain.item.service;
 
 import lombok.RequiredArgsConstructor;
 import net.studioxai.studioxBe.domain.item.dto.ItemGet;
-import net.studioxai.studioxBe.domain.item.entity.Category;
+import net.studioxai.studioxBe.global.entity.enums.Category;
 import net.studioxai.studioxBe.domain.item.entity.Item;
 import net.studioxai.studioxBe.domain.item.repository.ItemRepository;
 import net.studioxai.studioxBe.global.dto.PageInfo;

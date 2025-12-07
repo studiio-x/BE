@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.studioxai.studioxBe.global.entity.BaseEntity;
+import net.studioxai.studioxBe.global.entity.enums.Category;
 
 @Entity
 @Getter
