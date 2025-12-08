@@ -3,6 +3,7 @@ package net.studioxai.studioxBe.domain.project.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.project.dto.MyProjectResponse;
+import net.studioxai.studioxBe.domain.project.dto.ProjectUserResponse;
 import net.studioxai.studioxBe.domain.project.entity.Project;
 import net.studioxai.studioxBe.domain.project.entity.ProjectManager;
 import net.studioxai.studioxBe.domain.project.exception.ProjectMangerExceptionHandler;
@@ -50,5 +51,16 @@ public class ProjectManagerService {
 
         List<MyProjectResponse> responses = projectManagerRepository.findByUser(user);
         return responses.stream().sorted(Comparator.comparing(MyProjectResponse::isAdmin).reversed()).toList();
+    }
+
+    public List<ProjectUserResponse> getProjectManagerList(Long userId, Long projectId) {
+        User user = userService.getUserByIdOrThrow(userId);
+
+        if (!projectManagerRepository.existsByUserAndProjectId(user, projectId)) {
+            throw new ProjectMangerExceptionHandler(ProjectMangerErrorCode.USER_NO_PROJECT_AUTHORITY);
+        }
+
+        return projectManagerRepository.findManagersByProjectId(projectId);
+
     }
 }
