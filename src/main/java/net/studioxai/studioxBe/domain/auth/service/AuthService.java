@@ -66,7 +66,7 @@ public class AuthService {
 
         userRepository.save(user);
 
-        String projectName = user.getUsername() + "'s Project";
+        String projectName = user.getUsername() + "의 프로젝트";
         projectService.addProject(user, projectName, true);
 
         return buildLoginResponse(user);
