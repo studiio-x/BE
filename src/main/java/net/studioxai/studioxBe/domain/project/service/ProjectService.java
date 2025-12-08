@@ -21,12 +21,16 @@ public class ProjectService {
     private final ProjectManagerService projectManagerService;
 
     @Transactional
-    public void addProject(Long userId, ProjectCreateRequest projectCreateRequest) {
+    public void createProject (Long userId, ProjectCreateRequest projectCreateRequest) {
         User user = userService.getUserByIdOrThrow(userId);
-        Project project = Project.create(projectCreateRequest.name());
+        addProject(user, projectCreateRequest.name(), true);
+    }
+
+    @Transactional
+    public void addProject(User user, String name, boolean isAdmin) {
+        Project project = Project.create(name);
         projectRepository.save(project);
 
-        projectManagerService.addManager(project, user, true);
-
+        projectManagerService.addManager(project, user, isAdmin);
     }
 }
