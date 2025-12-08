@@ -5,6 +5,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public record MyProjectResponse(
         Long projectId,
         String name,
-        @JsonValue boolean isAdmin
+        boolean isAdmin
         ) {
 }
