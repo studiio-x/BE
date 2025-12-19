@@ -33,8 +33,11 @@ public class User extends BaseEntity {
     @Column(name = "register_path", nullable = false)
     private RegisterPath registerPath;
 
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(name = "email", unique = true)
     private String email;
+
+    @Column(unique = true)
+    private String googleSub;
 
     @Column(name = "password", nullable = false)
     private String password;
@@ -80,6 +83,14 @@ public class User extends BaseEntity {
 
     public void updateUsername(String username) {
         this.username = username;
+    }
+
+    public static User createGoogleUser(String googleSub, String email, String name) {
+        User user = new User();
+        user.googleSub = googleSub;
+        user.email = email;
+        user.username = name;
+        return user;
     }
 
 }

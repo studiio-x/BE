@@ -6,6 +6,8 @@ import net.studioxai.studioxBe.global.dto.ErrorReason;
 import net.studioxai.studioxBe.global.error.BaseErrorCode;
 import org.springframework.http.HttpStatus;
 
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+
 @Getter
 @RequiredArgsConstructor
 public enum AuthErrorCode implements BaseErrorCode {
@@ -22,7 +24,12 @@ public enum AuthErrorCode implements BaseErrorCode {
     EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "USER_409_1", "이미 존재하는 이메일입니다."),
     USER_ALREADY_REGISTERS(HttpStatus.CONFLICT, "USER_409_2", "이미 가입된 이메일 계정입니다."),
 
-    FAIL_SENDING_MAIL(HttpStatus.SERVICE_UNAVAILABLE, "USER_503_1", "메일 전송에 실패했습니다.")
+    FAIL_SENDING_MAIL(HttpStatus.SERVICE_UNAVAILABLE, "USER_503_1", "메일 전송에 실패했습니다."),
+
+    GOOGLE_LOGIN_REDIRECT_FAILED(INTERNAL_SERVER_ERROR, "AUTH_600_1", "구글 로그인 페이지로 이동하는 데 실패했습니다."),
+    GOOGLE_AUTH_CODE_MISSING(HttpStatus.BAD_REQUEST, "AUTH_600_2", "구글 인증 코드가 존재하지 않습니다." ),
+    GOOGLE_TOKEN_REQUEST_FAILED(HttpStatus.BAD_REQUEST, "AUTH_600_3", "유효하지 않은 토큰입니다."),
+    GOOGLE_USER_INFO_REQUEST_FAILED(HttpStatus.BAD_REQUEST, "AUTH_600_4", "구글 로그인에서 사용자의 정보를 가져오지 못했습니다."),
 
     ;
 

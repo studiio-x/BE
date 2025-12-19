@@ -1,30 +1,62 @@
 package net.studioxai.studioxBe.domain.auth.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import net.studioxai.studioxBe.domain.auth.dto.response.LoginTokenResult;
+import net.studioxai.studioxBe.domain.auth.service.OauthService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 @RestController
-@CrossOrigin
 @RequiredArgsConstructor
-@RequestMapping(value = "/auth")
+@RequestMapping(value = "/api")
 @Slf4j
 public class OauthController {
+
     private final OauthService oauthService;
 
-    @GetMapping(value = "/{socialLoginType}")
-    public void socialLoginType(@PathVariable(name = "socialLoginType") SocialLoginType socialLoginType) {
-        log.info(">> 사용자로부터 SNS 로그인 요청을 받음 :: {} Social Login", socialLoginType);
-        oauthService.request(socialLoginType);
+    // 구글 로그인 요청
+    @GetMapping("/v1/oauth/google")
+    public ResponseEntity<Void> redirectToGoogleLogin() {
+        String googleLoginUrl = oauthService.getGoogleLoginUrl();
+
+        return ResponseEntity
+                .status(HttpStatus.SEE_OTHER)
+                .header(HttpHeaders.LOCATION, googleLoginUrl)
+                .build();
     }
 
-    @GetMapping(value = "/{socialLoginType}/callback")
-    public String callback(@PathVariable(name = "socialLoginType") SocialLoginType socialLoginType,
-                           @RequestParam(name = "code") String code) {
-        log.info(">> 소셜 로그인 API 서버로부터 받은 code :: {}", code);
-        return oauthService.requestAccessToken(socialLoginType, code);
+
+    // 구글 로그인 콜백(인가 코드 수신)
+    @GetMapping("/google/callback")
+    public ResponseEntity<Void> googleCallback(@RequestParam String code) {
+
+        LoginTokenResult tokenResult = oauthService.handleGoogleLogin(code);
+
+        ResponseCookie accessCookie = ResponseCookie.from("accessToken", tokenResult.getAccessToken())
+                .httpOnly(true)
+                .path("/")
+                .maxAge(60 * 60)
+                .build();
+
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenResult.getRefreshToken())
+                .httpOnly(true)
+                .path("/")
+                .maxAge(60 * 60 * 24 * 14)
+                .build();
+
+        return ResponseEntity
+                .status(HttpStatus.SEE_OTHER)
+                .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .header(HttpHeaders.LOCATION, "http://localhost:3000")
+                .build();
     }
+
 }
-
