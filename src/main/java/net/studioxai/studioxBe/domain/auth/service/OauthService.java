@@ -1,6 +1,5 @@
 package net.studioxai.studioxBe.domain.auth.service;
 
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.auth.dto.response.GoogleTokenResponse;
@@ -11,9 +10,11 @@ import net.studioxai.studioxBe.domain.auth.exception.AuthExceptionHandler;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.domain.user.repository.UserRepository;
 import net.studioxai.studioxBe.global.jwt.JwtProvider;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.UUID;
 
 
 @Service
@@ -24,6 +25,7 @@ public class OauthService {
     private final GoogleOauth googleOauth;
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
+    private final PasswordEncoder passwordEncoder;
 
     //구글 로그인 페이지로 리다이렉트
     public String getGoogleLoginUrl() {
@@ -46,21 +48,33 @@ public class OauthService {
         Optional<User> userOpt =
                 userRepository.findByGoogleSub(userInfo.getSub());
 
-        User user = userRepository.findByGoogleSub(userInfo.getSub())
-                .orElseGet(() -> {
-                    User newUser = User.createGoogleUser(
-                            userInfo.getSub(),
-                            userInfo.getEmail(),
-                            userInfo.getName()
-                    );
-                    return userRepository.save(newUser);
-                });
+        User user = userOpt.orElseGet(() -> {
+                    String profileImage = userInfo.getProfileImage();
+                    if (profileImage == null || profileImage.isBlank()) {
+                        profileImage = "https://your-cdn.com/default-profile.png";
+                    }
+
+                 return userRepository.save(
+                        User.createGoogleUser(
+                                userInfo.getSub(),
+                                userInfo.getEmail(),
+                                userInfo.getName(),
+                                passwordEncoder.encode(UUID.randomUUID().toString()),
+                                profileImage
+                        )
+                );
+    });
 
         //jwt 발급
         String accessToken = jwtProvider.createAccessToken(user.getId());
         String refreshToken = jwtProvider.createRefreshToken(user.getId());
 
+        log.info("ACCESS TOKEN = {}", accessToken);
+        log.info("REFRESH TOKEN = {}", refreshToken);
+
         return new LoginTokenResult(accessToken, refreshToken);
     }
+
+
 }
 

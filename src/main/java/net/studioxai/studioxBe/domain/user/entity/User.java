@@ -55,9 +55,10 @@ public class User extends BaseEntity {
     private LocalDateTime emailVerifiedAt;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private User(RegisterPath registerPath, String email, String password, String profileImage, String username, boolean isEmailVerified, LocalDateTime emailVerifiedAt) {
+    private User(RegisterPath registerPath, String email, String googleSub,String password, String profileImage, String username, boolean isEmailVerified, LocalDateTime emailVerifiedAt) {
         this.registerPath = registerPath;
         this.email = email;
+        this.googleSub = googleSub;
         this.password = password;
         this.profileImage = profileImage;
         this.username = username;
@@ -85,12 +86,17 @@ public class User extends BaseEntity {
         this.username = username;
     }
 
-    public static User createGoogleUser(String googleSub, String email, String name) {
-        User user = new User();
-        user.googleSub = googleSub;
-        user.email = email;
-        user.username = name;
-        return user;
+    public static User createGoogleUser(String googleSub, String email, String username, String encodedPassword, String profileImage) {
+        return User.builder()
+                .registerPath(RegisterPath.GOOGLE)
+                .googleSub(googleSub)
+                .email(email)
+                .password(encodedPassword)
+                .profileImage(profileImage)
+                .username(username)
+                .isEmailVerified(true)
+                .emailVerifiedAt(LocalDateTime.now())
+                .build();
     }
 
 }

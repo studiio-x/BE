@@ -3,14 +3,13 @@ package net.studioxai.studioxBe.global.jwt;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import net.studioxai.studioxBe.infra.redis.repository.TokenRepository;
+
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
-import java.util.UUID;
 
 @Component
 public class JwtProvider {
@@ -18,6 +17,7 @@ public class JwtProvider {
     private final long accessExpSeconds;
     private final long refreshExpSeconds;
     private final long mailExpSeconds;
+
 
     public JwtProvider(JwtProperties props) {
         this.signingKey =
@@ -28,7 +28,7 @@ public class JwtProvider {
     }
 
     public String createAccessToken(Long userId) {
-        return createToken(String.valueOf(userId), "access", accessExpSeconds);
+        return createToken(String.valueOf(userId), "access",accessExpSeconds);
     }
 
     public String createRefreshToken(Long userId) {

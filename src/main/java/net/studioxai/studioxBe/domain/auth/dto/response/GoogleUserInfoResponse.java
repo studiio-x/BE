@@ -10,6 +10,9 @@ public class GoogleUserInfoResponse {
     private String email;
     private String name;
 
+    @JsonProperty("picture")
+    private String profileImage;
+
     @JsonProperty("email_verified")
     private boolean emailVerified;
 }

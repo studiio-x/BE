@@ -1,6 +1,5 @@
 package net.studioxai.studioxBe.domain.auth.controller;
 
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginTokenResult;
@@ -10,8 +9,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
@@ -34,7 +31,7 @@ public class OauthController {
 
 
     // 구글 로그인 콜백(인가 코드 수신)
-    @GetMapping("/google/callback")
+    @GetMapping("/oauth/google/callback")
     public ResponseEntity<Void> googleCallback(@RequestParam String code) {
 
         LoginTokenResult tokenResult = oauthService.handleGoogleLogin(code);
@@ -58,5 +55,4 @@ public class OauthController {
                 .header(HttpHeaders.LOCATION, "http://localhost:3000")
                 .build();
     }
-
 }
