@@ -28,7 +28,7 @@ public class JwtProvider {
     }
 
     public String createAccessToken(Long userId) {
-        return createToken(String.valueOf(userId), "access",accessExpSeconds);
+        return createToken(String.valueOf(userId), "access", accessExpSeconds);
     }
 
     public String createRefreshToken(Long userId) {

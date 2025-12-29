@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginTokenResult;
 import net.studioxai.studioxBe.domain.auth.service.OauthService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -17,6 +18,10 @@ import org.springframework.web.bind.annotation.*;
 public class OauthController {
 
     private final OauthService oauthService;
+
+    @Value("${oauth.google.frontend-redirect-url}")
+    private String googleFrontendRedirectUrl;
+
 
     // 구글 로그인 요청
     @GetMapping("/v1/oauth/google")
@@ -52,7 +57,7 @@ public class OauthController {
                 .status(HttpStatus.SEE_OTHER)
                 .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                .header(HttpHeaders.LOCATION, "http://localhost:3000")
+                .header(HttpHeaders.LOCATION, googleFrontendRedirectUrl)
                 .build();
     }
 }

@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class GoogleOauth implements SocialOauth {
 
+    private final RestTemplate restTemplate;
+
     @Value("${sns.google.url}")
     private String GOOGLE_SNS_BASE_URL;
 
@@ -56,8 +58,6 @@ public class GoogleOauth implements SocialOauth {
     @Override
     public GoogleTokenResponse requestAccessToken(String code) {
 
-        RestTemplate restTemplate = new RestTemplate();
-
         Map<String, Object> params = new HashMap<>();
         params.put("code", code);
         params.put("client_id", GOOGLE_SNS_CLIENT_ID);
@@ -81,8 +81,6 @@ public class GoogleOauth implements SocialOauth {
 
 
     public GoogleUserInfoResponse requestUserInfo(String accessToken) {
-
-        RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);

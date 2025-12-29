@@ -64,14 +64,12 @@ class OauthServiceTest {
         GoogleUserInfoResponse userInfo = mock(GoogleUserInfoResponse.class);
         given(userInfo.getSub()).willReturn(googleSub);
 
-        User user = User.create(
-                RegisterPath.GOOGLE,
+        User user = User.createGoogleUser(
+                googleSub,
                 email,
-                "encoded-password",
-                profileImage,
                 name,
-                true,
-                LocalDateTime.now()
+                "encoded-password",
+                profileImage
         );
         ReflectionTestUtils.setField(user, "id", userId);
 
