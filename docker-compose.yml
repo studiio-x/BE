@@ -25,3 +25,4 @@ volumes:
 
 networks:
   studiox-network:
+    name: studiox-network
