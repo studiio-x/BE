@@ -42,7 +42,7 @@ public class SecurityConfig {
     };
 
     private final String[] PermitAllPatterns = {
-            "/api/v1/auth/**", "/signup", "/", "/login", "/Oauth2/**", "/auth/**", "/actuator/health"
+            "/env", "/api/v1/auth/**", "/signup", "/", "/login", "/Oauth2/**", "/auth/**", "/actuator/health"
     };
 
     private final String[] GetPermitPatterns = {
