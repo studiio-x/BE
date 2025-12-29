@@ -12,9 +12,11 @@ ENV MANAGEMENT_METRICS_BINDERS_PROCESSOR_ENABLED="false"
 
 # JAR 복사 (필요에 맞게 수정)
 ARG JAR_FILE=build/libs/*.jar
+ARG PROFILES
+ARG ENV
 COPY ${JAR_FILE} app.jar
 
 EXPOSE 8080
 ENV TZ=Asia/Seoul
 ENV SPRING_PROFILES_ACTIVE=prod
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+ENTRYPOINT ["java", "-Dspring.profiles.active=${PROFILES}", "-Dsever.env=${ENV}", "-jar","/app/app.jar"]

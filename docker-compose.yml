@@ -1,20 +1,27 @@
 version: "3"
 
 services:
-  backend:
-    image: 010709min/backend
-    container_name: backend
-    hostname: backend
-    env_file:
-      - .env
-    expose:
-      - "8080"
-
+  redis:
+    image: "redis:alpine"
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - studiox-network
 
   nginx:
     image: 010709min/nginx
-    depends_on:
-      - backend
+    container_name: nginx
     restart: always
     ports:
       - "80:80"
+    networks:
+      - studiox-network
+
+volumes:
+  redis-data:
+
+networks:
+  studiox-network:
