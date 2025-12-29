@@ -126,4 +126,9 @@ public class AuthService {
         }
     }
 
+    @Transactional
+    public Map<String, String> issueTokens(Long userId) {
+        return buildToken(userId);
+    }
+
 }
