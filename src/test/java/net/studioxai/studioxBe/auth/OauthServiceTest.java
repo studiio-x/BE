@@ -2,13 +2,14 @@ package net.studioxai.studioxBe.auth;
 
 import net.studioxai.studioxBe.domain.auth.dto.response.GoogleTokenResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.GoogleUserInfoResponse;
+import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginTokenResult;
 import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
 import net.studioxai.studioxBe.domain.auth.exception.AuthExceptionHandler;
+import net.studioxai.studioxBe.domain.auth.service.AuthService;
 import net.studioxai.studioxBe.domain.auth.service.GoogleOauth;
 import net.studioxai.studioxBe.domain.auth.service.OauthService;
 import net.studioxai.studioxBe.domain.user.entity.User;
-import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
 import net.studioxai.studioxBe.domain.user.repository.UserRepository;
 import net.studioxai.studioxBe.global.jwt.JwtProvider;
 import org.junit.jupiter.api.DisplayName;
@@ -19,12 +20,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OauthServiceTest {
@@ -36,10 +37,10 @@ class OauthServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private JwtProvider jwtProvider;
+    private PasswordEncoder passwordEncoder;
 
     @Mock
-    private PasswordEncoder passwordEncoder;
+    private AuthService authService;
 
     @InjectMocks
     private OauthService oauthService;
@@ -50,46 +51,43 @@ class OauthServiceTest {
         // given
         String code = "auth-code";
         String googleSub = "google-sub";
-        String email = "google@test.com";
-        String name = "googleUser";
-        String profileImage = "https://img.com/profile.png";
-
         Long userId = 1L;
-        String accessToken = "access-token";
-        String refreshToken = "refresh-token";
 
-        GoogleTokenResponse tokenResponse = mock(GoogleTokenResponse.class);
-        given(tokenResponse.getAccessToken()).willReturn("google-access-token");
+        GoogleTokenResponse tokenResponse = new GoogleTokenResponse(
+                "google-access-token",
+                3600,
+                "Bearer",
+                "profile email"
+        );
 
         GoogleUserInfoResponse userInfo = mock(GoogleUserInfoResponse.class);
         given(userInfo.getSub()).willReturn(googleSub);
 
-        User user = User.createGoogleUser(
-                googleSub,
-                email,
-                name,
-                "encoded-password",
-                profileImage
-        );
-        ReflectionTestUtils.setField(user, "id", userId);
+        User user = mock(User.class);
+        given(user.getId()).willReturn(userId);
+        given(user.getEmail()).willReturn("google@test.com");
+        given(user.getProfileImage()).willReturn("profile.png");
 
         given(googleOauth.requestAccessToken(code)).willReturn(tokenResponse);
         given(googleOauth.requestUserInfo("google-access-token")).willReturn(userInfo);
         given(userRepository.findByGoogleSub(googleSub)).willReturn(Optional.of(user));
-        given(jwtProvider.createAccessToken(userId)).willReturn(accessToken);
-        given(jwtProvider.createRefreshToken(userId)).willReturn(refreshToken);
+
+        given(authService.issueTokens(userId)).willReturn(
+                Map.of(
+                        "accessToken", "access-token",
+                        "refreshToken", "refresh-token"
+                )
+        );
 
         // when
-        LoginTokenResult result = oauthService.handleGoogleLogin(code);
+        LoginResponse result = oauthService.loginWithGoogle(code);
 
         // then
-        assertThat(result.getAccessToken()).isEqualTo(accessToken);
-        assertThat(result.getRefreshToken()).isEqualTo(refreshToken);
+        assertThat(result.accessToken()).isEqualTo("access-token");
+        assertThat(result.refreshToken()).isEqualTo("refresh-token");
 
         verify(userRepository, never()).save(any());
-        verify(passwordEncoder, never()).encode(anyString());
-        verify(jwtProvider).createAccessToken(userId);
-        verify(jwtProvider).createRefreshToken(userId);
+        verify(authService).issueTokens(userId);
     }
 
     @Test
@@ -98,27 +96,24 @@ class OauthServiceTest {
         // given
         String code = "auth-code";
         String googleSub = "new-google-sub";
-        String email = "new@test.com";
-        String name = "newUser";
-        String profileImage = null;
-
         Long userId = 10L;
-        String accessToken = "access-token";
-        String refreshToken = "refresh-token";
 
-        GoogleTokenResponse tokenResponse = mock(GoogleTokenResponse.class);
-        given(tokenResponse.getAccessToken()).willReturn("google-access-token");
+        GoogleTokenResponse tokenResponse = new GoogleTokenResponse(
+                "google-access-token",
+                3600,
+                "Bearer",
+                "profile email"
+        );
 
         GoogleUserInfoResponse userInfo = mock(GoogleUserInfoResponse.class);
         given(userInfo.getSub()).willReturn(googleSub);
-        given(userInfo.getEmail()).willReturn(email);
-        given(userInfo.getName()).willReturn(name);
-        given(userInfo.getProfileImage()).willReturn(profileImage);
+        given(userInfo.getEmail()).willReturn("new@test.com");
+        given(userInfo.getName()).willReturn("newUser");
+        given(userInfo.getProfileImage()).willReturn(null);
 
         given(googleOauth.requestAccessToken(code)).willReturn(tokenResponse);
         given(googleOauth.requestUserInfo("google-access-token")).willReturn(userInfo);
         given(userRepository.findByGoogleSub(googleSub)).willReturn(Optional.empty());
-
         given(passwordEncoder.encode(anyString())).willReturn("encoded-password");
 
         given(userRepository.save(any(User.class)))
@@ -128,35 +123,36 @@ class OauthServiceTest {
                     return saved;
                 });
 
-        given(jwtProvider.createAccessToken(userId)).willReturn(accessToken);
-        given(jwtProvider.createRefreshToken(userId)).willReturn(refreshToken);
+        given(authService.issueTokens(userId)).willReturn(
+                Map.of(
+                        "accessToken", "access-token",
+                        "refreshToken", "refresh-token"
+                )
+        );
 
         // when
-        LoginTokenResult result = oauthService.handleGoogleLogin(code);
+        LoginResponse result = oauthService.loginWithGoogle(code);
 
         // then
-        assertThat(result.getAccessToken()).isEqualTo(accessToken);
-        assertThat(result.getRefreshToken()).isEqualTo(refreshToken);
+        assertThat(result.accessToken()).isEqualTo("access-token");
+        assertThat(result.refreshToken()).isEqualTo("refresh-token");
 
         verify(userRepository).save(any(User.class));
         verify(passwordEncoder).encode(anyString());
-        verify(jwtProvider).createAccessToken(userId);
-        verify(jwtProvider).createRefreshToken(userId);
+        verify(authService).issueTokens(userId);
     }
 
     @Test
     @DisplayName("구글 로그인 실패 - 인가 코드 누락")
     void googleLogin_fail_codeMissing() {
         // when
-        AuthExceptionHandler ex = org.junit.jupiter.api.Assertions.assertThrows(
+        AuthExceptionHandler ex = assertThrows(
                 AuthExceptionHandler.class,
-                () -> oauthService.handleGoogleLogin(null)
+                () -> oauthService.loginWithGoogle(null)
         );
 
         // then
         assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.GOOGLE_AUTH_CODE_MISSING);
-        verifyNoInteractions(googleOauth);
-        verifyNoInteractions(userRepository);
-        verifyNoInteractions(jwtProvider);
+        verifyNoInteractions(googleOauth, userRepository, authService);
     }
 }
