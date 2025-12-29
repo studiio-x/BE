@@ -109,9 +109,9 @@ jobs:
             sudo touch .env
             echo "${{ secrets.ENV }}" | sudo tee .env > /dev/null
             
-            sudo curl -o docker-compose.yml https://raw.githubusercontent.com/studiio-x/BE/main/docker-compose.yml
-            sudo curl -o docker-compose-blue.yml https://raw.githubusercontent.com/studiio-x/BE/main/docker-compose-blue.yml
-            sudo curl -o docker-compose-green.yml https://raw.githubusercontent.com/studiio-x/BE/main/docker-compose-green.yml
+            sudo curl -o docker-compose.yml https://raw.githubusercontent.com/studiio-x/BE/feature/3-blueGreenDeploy/docker-compose.yml
+            sudo curl -o docker-compose-blue.yml https://raw.githubusercontent.com/studiio-x/BE/feature/3-blueGreenDeploy/docker-compose-blue.yml
+            sudo curl -o docker-compose-green.yml https://raw.githubusercontent.com/studiio-x/BE/feature/3-blueGreenDeploy/docker-compose-green.yml
             
             sudo chmod 666 /var/run/docker.sock
             
