@@ -131,8 +131,7 @@ jobs:
         with:
           username: ubuntu
           host: ${{ secrets.EC2_HOST }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script_stop: true
+          key: ${{ secrets.EC2_KEY }}
           script: |
             sudo docker exec -i nginx bash -c 'echo "set \$service_url ${{ env.TARGET_UPSTREAM }};" > /etc/nginx/conf.d/service-env.inc && nginx -s reload' 
 
@@ -141,8 +140,7 @@ jobs:
         with:
           username: ubuntu
           host: ${{ secrets.EC2_HOST }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script_stop: true
+          key: ${{ secrets.EC2_KEY }}
           script: |
             sudo docker stop ${{env.CURRENT_UPSTREAM}}
             sudo docker rm ${{env.CURRENT_UPSTREAM}}
