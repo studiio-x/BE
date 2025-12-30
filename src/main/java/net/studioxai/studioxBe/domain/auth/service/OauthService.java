@@ -9,12 +9,10 @@ import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
 import net.studioxai.studioxBe.domain.auth.exception.AuthExceptionHandler;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.domain.user.repository.UserRepository;
-import net.studioxai.studioxBe.global.jwt.JwtProvider;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 
@@ -25,12 +23,9 @@ public class OauthService {
 
     private final GoogleOauth googleOauth;
     private final UserRepository userRepository;
-    private final JwtProvider jwtProvider;
     private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
 
-    private static final String DEFAULT_PROFILE_IMAGE_URL =
-            "https://your-cdn.com/default-profile.png";
 
     public String getGoogleLoginUrl() {
         return googleOauth.getOauthRedirectURL();
@@ -58,12 +53,12 @@ public class OauthService {
     }
 
     private User findOrCreateGoogleUser(GoogleUserInfoResponse userInfo) {
-        return userRepository.findByGoogleSub(userInfo.getSub())
+        return userRepository.findByGoogleSub(userInfo.sub())
                 .orElseGet(() -> userRepository.save(
                         User.createGoogleUser(
-                                userInfo.getSub(),
-                                userInfo.getEmail(),
-                                userInfo.getName(),
+                                userInfo.sub(),
+                                userInfo.email(),
+                                userInfo.name(),
                                 passwordEncoder.encode(UUID.randomUUID().toString()),
                                 resolveProfileImage(userInfo)
                         )
@@ -71,10 +66,10 @@ public class OauthService {
     }
 
     private String resolveProfileImage(GoogleUserInfoResponse userInfo) {
-        if (userInfo.getProfileImage() == null || userInfo.getProfileImage().isBlank()) {
-            return DEFAULT_PROFILE_IMAGE_URL;
+        if (userInfo.profileImage() == null || userInfo.profileImage().isBlank()) {
+            return AuthService.DEFAULT_PROFILE_IMAGE_URL;
         }
-        return userInfo.getProfileImage();
+        return userInfo.profileImage();
     }
 
     private LoginResponse buildLoginResponse(User user) {

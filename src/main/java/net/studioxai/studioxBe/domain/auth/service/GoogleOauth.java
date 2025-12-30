@@ -44,7 +44,6 @@ public class GoogleOauth {
     @Value("${sns.google.userinfo.url}")
     private String GOOGLE_SNS_USERINFO_URL;
 
-    @Override
     public String getOauthRedirectURL() {
 
         Map<String, String> params = new HashMap<>();
