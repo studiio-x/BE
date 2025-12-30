@@ -120,11 +120,13 @@ jobs:
             docker image prune -f
 
       - name: Check deploy server URL
-        uses: jtalk/url-health-check-action@v3
+        uses: appleboy/ssh-action@master
         with:
-          url: http://${{ secrets.EC2_HOST }}:${{env.STOPPED_PORT}}/actuator/health
-          max-attempts: 3
-          retry-delay: 10s
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            curl -f http://localhost:${{  env.STOPPED_PORT  }}/actuator/health
 
       - name: Change nginx upstream
         uses: appleboy/ssh-action@master
