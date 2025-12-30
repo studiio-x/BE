@@ -19,4 +19,4 @@ COPY ${JAR_FILE} app.jar
 EXPOSE 8080
 ENV TZ=Asia/Seoul
 ENV SPRING_PROFILES_ACTIVE=prod
-ENTRYPOINT ["java", "-Dspring.profiles.active=${PROFILES}", "-Dsever.env=${ENV}", "-jar","/app/app.jar"]
+ENTRYPOINT ["java","-jar","/app/app.jar"]
