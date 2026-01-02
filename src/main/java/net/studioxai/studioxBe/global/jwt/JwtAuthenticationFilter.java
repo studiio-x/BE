@@ -96,4 +96,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         new ObjectMapper().writeValue(response.getWriter(), errorResponse);
     }
+
 }

@@ -25,10 +25,10 @@ public class Image extends BaseEntity {
     @JoinColumn(name = "template_id", nullable = false)
     private Template template;
 
-    @Column(name = "raw_image_url", nullable = false)
+    @Column(name = "raw_image_url")
     private String rawImageUrl;
 
-    @Column(name = "image_url", nullable = false)
+    @Column(name = "image_url")
     private String imageUrl;
 
 }
