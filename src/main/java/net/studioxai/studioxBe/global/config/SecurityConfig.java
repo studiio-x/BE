@@ -38,14 +38,15 @@ public class SecurityConfig {
     }
 
     private final String[] SwaggerPatterns = {
-            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/images"
+            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html"
     };
 
     private final String[] PermitAllPatterns = {
-            "/api/v1/auth/**", "/signup", "/", "/login", "/Oauth2/**", "/auth/**", "/actuator/health", "/api/v1/oauth/**", "/api/oauth/**"
+            "/api/v1/auth/**", "/signup", "/", "/login", "/Oauth2/**", "/auth/**", "/actuator/health", "/api/v1/oauth/**", "/api/oauth/**", "/env"
     };
 
     private final String[] GetPermitPatterns = {
+            "/items/**"
     };
 
     @Bean
