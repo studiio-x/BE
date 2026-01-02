@@ -44,7 +44,7 @@ public class GoogleOauth {
     @Value("${sns.google.userinfo.url}")
     private String GOOGLE_SNS_USERINFO_URL;
 
-    public String getOauthRedirectURL() {
+    public String buildAuthorizeUrl() {
 
         Map<String, String> params = new HashMap<>();
         params.put("scope", "profile email");
@@ -116,6 +116,22 @@ public class GoogleOauth {
 
         return response.getBody();
     }
+
+    public String getOauthRedirectURL(String redirectUrl) {
+
+        Map<String, String> params = new HashMap<>();
+        params.put("scope", "profile email");
+        params.put("response_type", "code");
+        params.put("client_id", GOOGLE_SNS_CLIENT_ID);
+        params.put("redirect_uri", GOOGLE_SNS_CALLBACK_URL);
+
+        params.put("state",
+                UriUtils.encode(redirectUrl, StandardCharsets.UTF_8)
+        );
+
+        return GOOGLE_SNS_BASE_URL + "?" + buildQuery(params);
+    }
+
 
 
 }

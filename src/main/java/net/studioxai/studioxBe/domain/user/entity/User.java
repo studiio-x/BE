@@ -55,7 +55,7 @@ public class User extends BaseEntity {
     private LocalDateTime emailVerifiedAt;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private User(RegisterPath registerPath, String email, String googleSub,String password, String profileImage, String username, boolean isEmailVerified, LocalDateTime emailVerifiedAt) {
+    private User(RegisterPath registerPath, String email, String googleSub, String password, String profileImage, String username, boolean isEmailVerified, LocalDateTime emailVerifiedAt) {
         this.registerPath = registerPath;
         this.email = email;
         this.googleSub = googleSub;

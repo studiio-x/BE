@@ -18,14 +18,11 @@ public class OauthController {
 
     private final OauthService oauthService;
 
-    @Value("${oauth.google.frontend-redirect-url}")
-    private String googleFrontendRedirectUrl;
-
 
     // 구글 로그인 요청
     @GetMapping("/v1/oauth/google")
-    public ResponseEntity<Void> redirectToGoogleLogin() {
-        String googleLoginUrl = oauthService.getGoogleLoginUrl();
+    public ResponseEntity<Void> redirectToGoogleLogin(@RequestParam String redirectUrl) {
+        String googleLoginUrl = oauthService.getGoogleLoginUrl(redirectUrl);
 
         return ResponseEntity
                 .status(HttpStatus.SEE_OTHER)
@@ -36,8 +33,14 @@ public class OauthController {
 
     // 구글 로그인 콜백(인가 코드 수신)
     @GetMapping("/oauth/google/callback")
-    public LoginResponse googleCallback(@RequestParam String code) {
+    public ResponseEntity<Void> googleCallback(@RequestParam String code, @RequestParam String state) {
 
-        return oauthService.loginWithGoogle(code);
+        String frontendRedirectUrl = oauthService.loginWithGoogle(code, state);
+
+        return ResponseEntity
+                .status(HttpStatus.SEE_OTHER)
+                .header(HttpHeaders.LOCATION, frontendRedirectUrl)
+                .build();
     }
+
 }

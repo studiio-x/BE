@@ -59,7 +59,7 @@ class OauthServiceTest {
         );
 
         GoogleUserInfoResponse userInfo = mock(GoogleUserInfoResponse.class);
-        given(userInfo.getSub()).willReturn(googleSub);
+        given(userInfo.sub()).willReturn(googleSub);
 
         User user = mock(User.class);
         given(user.getId()).willReturn(userId);
@@ -104,10 +104,10 @@ class OauthServiceTest {
         );
 
         GoogleUserInfoResponse userInfo = mock(GoogleUserInfoResponse.class);
-        given(userInfo.getSub()).willReturn(googleSub);
-        given(userInfo.getEmail()).willReturn("new@test.com");
-        given(userInfo.getName()).willReturn("newUser");
-        given(userInfo.getProfileImage()).willReturn(null);
+        given(userInfo.sub()).willReturn(googleSub);
+        given(userInfo.email()).willReturn("new@test.com");
+        given(userInfo.name()).willReturn("newUser");
+        given(userInfo.profileImage()).willReturn(null);
 
         given(googleOauth.requestAccessToken(code)).willReturn(tokenResponse);
         given(googleOauth.requestUserInfo("google-access-token")).willReturn(userInfo);

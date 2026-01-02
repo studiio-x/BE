@@ -9,9 +9,11 @@ import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
 import net.studioxai.studioxBe.domain.auth.exception.AuthExceptionHandler;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.domain.user.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 
@@ -26,23 +28,40 @@ public class OauthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
 
+    @Value("${server.front-urls}")
+    private String[] FRONT_URLS;
 
-    public String getGoogleLoginUrl() {
-        return googleOauth.getOauthRedirectURL();
+    public String getGoogleLoginUrl(String redirectUrl) {
+        validateRedirectUrl(redirectUrl);
+        return googleOauth.getOauthRedirectURL(redirectUrl);
     }
 
-    public LoginResponse loginWithGoogle(String code) {
+    public String loginWithGoogle(String code, String redirectUrl) {
         validateCode(code);
+        validateRedirectUrl(redirectUrl);
 
         GoogleUserInfoResponse userInfo = getGoogleUserInfo(code);
         User user = findOrCreateGoogleUser(userInfo);
 
-        return buildLoginResponse(user);
+        Map<String, String> tokens = authService.issueTokens(user.getId());
+
+        return redirectUrl +
+                "?accessToken=" + tokens.get("accessToken") +
+                "&refreshToken=" + tokens.get("refreshToken");
     }
 
     private void validateCode(String code) {
         if (code == null || code.isBlank()) {
             throw new AuthExceptionHandler(AuthErrorCode.GOOGLE_AUTH_CODE_MISSING);
+        }
+    }
+
+    private void validateRedirectUrl(String redirectUrl) {
+        boolean allowed = Arrays.stream(FRONT_URLS)
+                .anyMatch(redirectUrl::startsWith);
+
+        if (!allowed) {
+            throw new AuthExceptionHandler(AuthErrorCode.INVALID_REDIRECT_URL);
         }
     }
 
@@ -72,15 +91,4 @@ public class OauthService {
         return userInfo.profileImage();
     }
 
-    private LoginResponse buildLoginResponse(User user) {
-        Map<String, String> tokens = authService.issueTokens(user.getId());
-
-        return LoginResponse.create(
-                user.getId(),
-                user.getEmail(),
-                user.getProfileImage(),
-                tokens.get("accessToken"),
-                tokens.get("refreshToken")
-        );
-    }
 }
