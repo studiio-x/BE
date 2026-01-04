@@ -49,8 +49,7 @@ public class ProjectManagerService {
     public List<MyProjectResponse> getMyProjectList(Long userId) {
         User user = userService.getUserByIdOrThrow(userId);
 
-        List<MyProjectResponse> responses = projectManagerRepository.findByUser(user);
-        return responses.stream().sorted(Comparator.comparing(MyProjectResponse::isAdmin).reversed()).toList();
+        return projectManagerRepository.findByUser(user);
     }
 
     public List<ProjectUserResponse> getProjectManagerList(Long userId, Long projectId) {
