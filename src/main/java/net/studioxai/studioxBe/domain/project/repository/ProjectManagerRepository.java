@@ -20,20 +20,23 @@ public interface ProjectManagerRepository extends JpaRepository<ProjectManager, 
 
     @Query("""
         SELECT new net.studioxai.studioxBe.domain.project.dto.ProjectUserResponse(
-            pm.user.id,
-            pm.user.username,
-            pm.user.email,
-            pm.user.profileImage
+            u.id,
+            u.username,
+            u.email,
+            u.profileImage
         )
         FROM ProjectManager pm
+        JOIN pm.user u
         WHERE pm.project.id = :projectId
         """)
     List<ProjectUserResponse> findManagersByProjectId(@Param("projectId") Long projectId);
 
     @Query("""
-        SELECT new net.studioxai.studioxBe.domain.project.dto.MyProjectResponse(pm.project.id, pm.project.name, pm.isAdmin)
+        SELECT new net.studioxai.studioxBe.domain.project.dto.MyProjectResponse(p.id, p.name, pm.isAdmin)
         FROM ProjectManager pm
+        JOIN pm.project p
         WHERE pm.user = :user
+        ORDER BY pm.isAdmin DESC
     """)
     List<MyProjectResponse> findByUser(User user);
 
