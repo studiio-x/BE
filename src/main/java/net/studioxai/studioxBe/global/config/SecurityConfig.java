@@ -84,12 +84,18 @@ public class SecurityConfig {
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         );
 
-        if (environmentUtil.isProdAndStagingProfile()) {
+        if (environmentUtil.isProdProfile()) {
             http
                     .authorizeHttpRequests(auth -> auth
                             .requestMatchers(SwaggerPatterns).authenticated()
                     )
                     .httpBasic(basic -> {});
+        }
+        else {
+            http
+                    .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(SwaggerPatterns).permitAll()
+                    );
         }
 
 
@@ -97,7 +103,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(PermitAllPatterns).permitAll()
-                        .requestMatchers(SwaggerPatterns).permitAll()
                         .requestMatchers(HttpMethod.GET, GetPermitPatterns).permitAll()
                         .anyRequest().authenticated()
                 )
