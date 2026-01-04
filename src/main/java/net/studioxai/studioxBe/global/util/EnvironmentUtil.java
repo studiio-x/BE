@@ -17,7 +17,7 @@ public class EnvironmentUtil {
     private final String GREEN = "green";
     private final String LOCAL = "local";
 
-    private final List<String> PROD = List.of("blue", "green");
+    private final List<String> PROD = List.of("blue", "green", "prod");
 
     public Boolean isBlueProfile() {
         String[] activeProfiles = environment.getActiveProfiles();
@@ -25,7 +25,7 @@ public class EnvironmentUtil {
         return currentProfile.contains(BLUE);
     }
 
-    public Boolean isGreebProfile() {
+    public Boolean isGreenProfile() {
         String[] activeProfiles = environment.getActiveProfiles();
         List<String> currentProfile = Arrays.stream(activeProfiles).toList();
         return currentProfile.contains(GREEN);
@@ -37,7 +37,7 @@ public class EnvironmentUtil {
         return currentProfile.contains(LOCAL);
     }
 
-    public Boolean isProdAndStagingProfile() {
+    public Boolean isProdProfile() {
         String[] activeProfiles = environment.getActiveProfiles();
         List<String> currentProfile = Arrays.stream(activeProfiles).toList();
         return CollectionUtils.containsAny(PROD, currentProfile);
