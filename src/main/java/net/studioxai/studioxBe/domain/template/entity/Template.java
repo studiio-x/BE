@@ -3,8 +3,11 @@ package net.studioxai.studioxBe.domain.template.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import net.studioxai.studioxBe.global.entity.enums.Category;
 import net.studioxai.studioxBe.global.entity.BaseEntity;
+import net.studioxai.studioxBe.global.entity.enums.Category;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -23,5 +26,7 @@ public class Template extends BaseEntity {
     @Column(name = "image_url", nullable = false)
     private String imageUrl;
 
-    // TODO: keyword추가. 아직 정해진 바 없어서 추후 구현
+    @OneToMany(mappedBy = "template", fetch = FetchType.LAZY)
+    private List<TemplateKeyword> templateKeywords = new ArrayList<>();
+
 }
