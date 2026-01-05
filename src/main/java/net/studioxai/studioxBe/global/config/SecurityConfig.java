@@ -2,6 +2,7 @@ package net.studioxai.studioxBe.global.config;
 
 import net.studioxai.studioxBe.global.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import net.studioxai.studioxBe.global.util.EnvironmentUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,9 +10,14 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -29,8 +35,25 @@ public class SecurityConfig {
     @Value("${server.front-urls}")
     private String[] FRONT_URLS;
 
+    @Value("${swagger.user}")
+    private String SWAGGER_USER;
+
+    @Value("${swagger.password}")
+    private String SWAGGER_PASSWORD;
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    private final EnvironmentUtil environmentUtil;
+
+    @Bean
+    public InMemoryUserDetailsManager userDetailsService() {
+        UserDetails user =
+                User.withUsername(SWAGGER_USER)
+                        .password(passwordEncoder().encode(SWAGGER_PASSWORD))
+                        .roles("SWAGGER")
+                        .build();
+        return new InMemoryUserDetailsManager(user);
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -55,14 +78,35 @@ public class SecurityConfig {
                 .cors(c -> c.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable);
+
+        http.sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        );
+
+        if (environmentUtil.isProdProfile()) {
+            http
+                    .authorizeHttpRequests(auth -> auth
+                            .requestMatchers(SwaggerPatterns).authenticated()
+                    )
+                    .httpBasic(basic -> {});
+        }
+        else {
+            http
+                    .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(SwaggerPatterns).permitAll()
+                    );
+        }
+
+
+        http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(PermitAllPatterns).permitAll()
-                        .requestMatchers(SwaggerPatterns).permitAll()
                         .requestMatchers(HttpMethod.GET, GetPermitPatterns).permitAll()
                         .anyRequest().authenticated()
                 )
-                .formLogin(AbstractHttpConfigurer::disable);
+                ;
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -92,4 +136,6 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", cfg);
         return source;
     }
+
+
 }
