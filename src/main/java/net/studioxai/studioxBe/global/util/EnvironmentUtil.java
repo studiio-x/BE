@@ -7,40 +7,44 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
 public class EnvironmentUtil {
     private final Environment environment;
 
-    private final String BLUE = "blue";
-    private final String GREEN = "green";
-    private final String LOCAL = "local";
+    private static final String BLUE = "blue";
+    private static final String GREEN = "green";
+    private static final String LOCAL = "local";
 
-    private final List<String> PROD = List.of("blue", "green", "prod");
+    private static final Set<String> PROD_PROFILES = Set.of("blue", "green", "prod");
 
-    public Boolean isBlueProfile() {
-        String[] activeProfiles = environment.getActiveProfiles();
-        List<String> currentProfile = Arrays.stream(activeProfiles).toList();
-        return currentProfile.contains(BLUE);
+    public boolean isBlueProfile() {
+        return hasProfile(BLUE);
     }
 
-    public Boolean isGreenProfile() {
-        String[] activeProfiles = environment.getActiveProfiles();
-        List<String> currentProfile = Arrays.stream(activeProfiles).toList();
-        return currentProfile.contains(GREEN);
+    public boolean isGreenProfile() {
+        return hasProfile(GREEN);
     }
 
-    public Boolean isLocalProfile() {
-        String[] activeProfiles = environment.getActiveProfiles();
-        List<String> currentProfile = Arrays.stream(activeProfiles).toList();
-        return currentProfile.contains(LOCAL);
+    public boolean isLocalProfile() {
+        return hasProfile(LOCAL);
     }
 
-    public Boolean isProdProfile() {
-        String[] activeProfiles = environment.getActiveProfiles();
-        List<String> currentProfile = Arrays.stream(activeProfiles).toList();
-        return CollectionUtils.containsAny(PROD, currentProfile);
+    public boolean isProdProfile() {
+        return hasAnyProfile(PROD_PROFILES);
     }
 
+    private Set<String> activeProfiles() {
+        return Set.of(environment.getActiveProfiles());
+    }
+
+    private boolean hasProfile(String profile) {
+        return activeProfiles().contains(profile);
+    }
+
+    private boolean hasAnyProfile(Set<String> profiles) {
+        return activeProfiles().stream().anyMatch(profiles::contains);
+    }
 }
