@@ -26,7 +26,7 @@ public class Template extends BaseEntity {
     @Column(name = "image_url", nullable = false)
     private String imageUrl;
 
-    @OneToMany(mappedBy = "template", fetch = FetchType.LAZY)
+@OneToMany(mappedBy = "template", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TemplateKeyword> templateKeywords = new ArrayList<>();
 
 }
