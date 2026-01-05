@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
+import net.studioxai.studioxBe.domain.project.service.ProjectService;
 import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
@@ -30,9 +31,9 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final TokenService tokenService;
+    private final ProjectService projectService;
     private final EmailVerificationService emailVerificationService;
 
-    // TODO: 추후 로직 수정
     public static final String DEFAULT_PROFILE_IMAGE_URL = "profile-example.com";
 
     @Transactional
@@ -64,6 +65,9 @@ public class AuthService {
         );
 
         userRepository.save(user);
+
+        String projectName = user.getUsername() + "의 프로젝트";
+        projectService.addProject(user, projectName, true);
 
         return buildLoginResponse(user);
     }

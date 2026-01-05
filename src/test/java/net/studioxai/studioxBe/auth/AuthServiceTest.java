@@ -3,6 +3,7 @@ package net.studioxai.studioxBe.auth;
 import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
+import net.studioxai.studioxBe.domain.project.service.ProjectService;
 import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
@@ -45,6 +46,9 @@ public class AuthServiceTest {
 
     @InjectMocks
     private AuthService authService;
+
+    @Mock
+    private ProjectService projectService;
 
     @Captor
     private ArgumentCaptor<User> userCaptor;
