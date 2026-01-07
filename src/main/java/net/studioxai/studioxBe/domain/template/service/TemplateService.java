@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.template.dto.response.TemplateResponse;
 import net.studioxai.studioxBe.domain.template.entity.TemplateKeywordType;
+import net.studioxai.studioxBe.domain.template.repository.TemplateKeywordRepository;
 import net.studioxai.studioxBe.domain.template.repository.TemplateRepository;
 import net.studioxai.studioxBe.global.entity.enums.Category;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import java.util.List;
 public class TemplateService {
 
     private final TemplateRepository templateRepository;
+    private final TemplateKeywordRepository templateKeywordRepository;
 
     public List<TemplateResponse> getTemplatesByCategory(Category category) {
         return templateRepository.findByCategory(category)
@@ -26,7 +28,7 @@ public class TemplateService {
 
 
     public List<TemplateResponse> getTemplatesByKeyword(TemplateKeywordType keyword) {
-        return templateRepository.findByKeyword(keyword)
+        return templateKeywordRepository.findTemplatesByKeyword(keyword)
                 .stream()
                 .map(TemplateResponse::from)
                 .toList();

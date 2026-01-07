@@ -13,13 +13,14 @@ public class TemplateKeyword {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "template_keyword_id")
-    private Long templateKeywordId;
+    private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "template_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "template_id", nullable = false)
     private Template template;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "keyword", nullable = false)
     private TemplateKeywordType keyword;
 }
 
