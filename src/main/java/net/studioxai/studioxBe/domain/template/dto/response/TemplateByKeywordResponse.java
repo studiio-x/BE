@@ -6,6 +6,7 @@ import net.studioxai.studioxBe.global.entity.enums.Category;
 public record TemplateByKeywordResponse(
         Long templateId,
         TemplateKeywordType keyword,
+        String keywordTitle,
         String imageUrl,
         Category category
 ) {

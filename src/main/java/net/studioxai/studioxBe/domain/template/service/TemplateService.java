@@ -38,6 +38,7 @@ public class TemplateService {
                 .map(tk -> new TemplateByKeywordResponse(
                         tk.getTemplate().getId(),
                         tk.getKeyword(),
+                        tk.getKeyword().getTitle(),
                         tk.getTemplate().getImageUrl(),
                         tk.getTemplate().getCategory()
                 ))
