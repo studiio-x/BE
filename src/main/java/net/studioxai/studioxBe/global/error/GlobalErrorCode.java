@@ -12,6 +12,10 @@ import static org.springframework.http.HttpStatus.*;
 public enum GlobalErrorCode implements BaseErrorCode {
     // 전역 오류
     WRONG_FORMAT_VALUE(BAD_REQUEST, "GLOBAL_400_1", "잘못된 형식의 값을 입력했습니다."),
+    INVALID_INPUT(BAD_REQUEST, "GLOBAL_400_2", "요청값이 올바르지 않습니다."),
+    GLOBAL_NOT_FOUND(NOT_FOUND, "GLOBAL_404_1", "요청한 리소스를 찾을 수 없습니다."),
+    GLOBAL_METHOD_NOT_ALLOWED(METHOD_NOT_ALLOWED, "GLOBAL_405_1", "지원하지 않는 HTTP 메서드입니다."),
+    GLOBAL_UNSUPPORTED_MEDIA_TYPE(UNSUPPORTED_MEDIA_TYPE, "GLOBAL_415_1", "지원하지 않는 Content-Type 입니다."),
     UNCAUGHT_EXCEPTION(INTERNAL_SERVER_ERROR, "GLOBAL_500_1", "서버 오류"),
 
     // 토큰 관련
@@ -19,7 +23,6 @@ public enum GlobalErrorCode implements BaseErrorCode {
     INVALID_TOKEN(UNAUTHORIZED, "AUTH_401_2", "유효하지 않은 토큰입니다"),
     EXPIRED_TOKEN(UNAUTHORIZED, "AUTH_401_3", "만료된 토큰입니다"),
     ACCESS_DENIED(FORBIDDEN, "AUTH_403_1", "접근 권한이 없습니다")
-
     ;;
 
     private HttpStatus status;
