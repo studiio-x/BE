@@ -9,15 +9,16 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface TemplateKeywordRepository
-        extends JpaRepository<TemplateKeyword, Long> {
+public interface TemplateKeywordRepository extends JpaRepository<TemplateKeyword, Long> {
 
     @Query("""
-        select distinct tk.template
+        select tk
         from TemplateKeyword tk
+        join fetch tk.template t
         where tk.keyword = :keyword
+        order by t.createdAt desc
     """)
-    List<Template> findTemplatesByKeyword(
+    List<TemplateKeyword> findByKeywordOrderByTemplateCreatedAtDesc(
             @Param("keyword") TemplateKeywordType keyword
     );
 }

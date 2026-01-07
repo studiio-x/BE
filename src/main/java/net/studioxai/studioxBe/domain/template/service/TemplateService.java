@@ -2,7 +2,8 @@ package net.studioxai.studioxBe.domain.template.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.studioxai.studioxBe.domain.template.dto.response.TemplateResponse;
+import net.studioxai.studioxBe.domain.template.dto.response.TemplateByCategoryResponse;
+import net.studioxai.studioxBe.domain.template.dto.response.TemplateByKeywordResponse;
 import net.studioxai.studioxBe.domain.template.entity.TemplateKeywordType;
 import net.studioxai.studioxBe.domain.template.repository.TemplateKeywordRepository;
 import net.studioxai.studioxBe.domain.template.repository.TemplateRepository;
@@ -19,18 +20,27 @@ public class TemplateService {
     private final TemplateRepository templateRepository;
     private final TemplateKeywordRepository templateKeywordRepository;
 
-    public List<TemplateResponse> getTemplatesByCategory(Category category) {
-        return templateRepository.findByCategory(category)
+    public List<TemplateByCategoryResponse> getTemplatesByCategory(Category category) {
+        return templateRepository.findByCategoryOrderByCreatedAtDesc(category)
                 .stream()
-                .map(TemplateResponse::from)
+                .map(template -> new TemplateByCategoryResponse(
+                        template.getId(),
+                        template.getImageUrl()
+                ))
                 .toList();
     }
 
 
-    public List<TemplateResponse> getTemplatesByKeyword(TemplateKeywordType keyword) {
-        return templateKeywordRepository.findTemplatesByKeyword(keyword)
+    public List<TemplateByKeywordResponse> getTemplatesByKeyword(TemplateKeywordType keyword) {
+        return templateKeywordRepository
+                .findByKeywordOrderByTemplateCreatedAtDesc(keyword)
                 .stream()
-                .map(TemplateResponse::from)
+                .map(tk -> new TemplateByKeywordResponse(
+                        tk.getTemplate().getId(),
+                        tk.getKeyword(),
+                        tk.getTemplate().getImageUrl(),
+                        tk.getTemplate().getCategory()
+                ))
                 .toList();
     }
 

@@ -1,6 +1,5 @@
 package net.studioxai.studioxBe.template;
 
-import net.studioxai.studioxBe.domain.template.dto.response.TemplateResponse;
 import net.studioxai.studioxBe.domain.template.entity.Template;
 import net.studioxai.studioxBe.domain.template.entity.TemplateKeywordType;
 import net.studioxai.studioxBe.domain.template.repository.TemplateRepository;

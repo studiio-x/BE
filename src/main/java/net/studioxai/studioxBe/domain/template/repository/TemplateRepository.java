@@ -9,5 +9,5 @@ import java.util.List;
 
 public interface TemplateRepository extends JpaRepository<Template, Long> {
 
-    List<Template> findByCategory(Category category);
+    List<Template> findByCategoryOrderByCreatedAtDesc(Category category);
 }
