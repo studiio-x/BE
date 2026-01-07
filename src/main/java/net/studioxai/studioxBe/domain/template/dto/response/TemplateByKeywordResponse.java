@@ -10,4 +10,18 @@ public record TemplateByKeywordResponse(
         String imageUrl,
         Category category
 ) {
+    public TemplateByKeywordResponse(
+            Long templateId,
+            TemplateKeywordType keyword,
+            String imageUrl,
+            Category category
+    ) {
+        this(
+                templateId,
+                keyword,
+                keyword.getTitle(),
+                imageUrl,
+                category
+        );
+    }
 }

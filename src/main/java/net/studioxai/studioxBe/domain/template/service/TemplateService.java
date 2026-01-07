@@ -21,28 +21,13 @@ public class TemplateService {
     private final TemplateKeywordRepository templateKeywordRepository;
 
     public List<TemplateByCategoryResponse> getTemplatesByCategory(Category category) {
-        return templateRepository.findByCategoryOrderByCreatedAtDesc(category)
-                .stream()
-                .map(template -> new TemplateByCategoryResponse(
-                        template.getId(),
-                        template.getImageUrl()
-                ))
-                .toList();
+        return templateRepository.findByCategoryOrderByCreatedAtDesc(category);
     }
 
 
     public List<TemplateByKeywordResponse> getTemplatesByKeyword(TemplateKeywordType keyword) {
         return templateKeywordRepository
-                .findByKeywordOrderByTemplateCreatedAtDesc(keyword)
-                .stream()
-                .map(tk -> new TemplateByKeywordResponse(
-                        tk.getTemplate().getId(),
-                        tk.getKeyword(),
-                        tk.getKeyword().getTitle(),
-                        tk.getTemplate().getImageUrl(),
-                        tk.getTemplate().getCategory()
-                ))
-                .toList();
+                .findByKeywordOrderByTemplateCreatedAtDesc(keyword);
     }
 
 }
