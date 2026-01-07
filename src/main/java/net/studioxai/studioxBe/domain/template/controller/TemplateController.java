@@ -2,6 +2,8 @@ package net.studioxai.studioxBe.domain.template.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.studioxai.studioxBe.domain.template.dto.TemplateCategoryGet;
+import net.studioxai.studioxBe.domain.template.dto.TemplateKeywordGet;
 import net.studioxai.studioxBe.domain.template.dto.response.TemplateByCategoryResponse;
 import net.studioxai.studioxBe.domain.template.dto.response.TemplateByKeywordResponse;
 import net.studioxai.studioxBe.domain.template.entity.TemplateKeywordType;
@@ -23,16 +25,12 @@ public class TemplateController {
     private final TemplateService templateService;
 
     @GetMapping("/v1/templates/category")
-    public List<TemplateByCategoryResponse> getTemplatesByCategory(@RequestParam Category category) {
-
-        return templateService.getTemplatesByCategory(category);
-
+    public TemplateCategoryGet getTemplatesByCategory(@RequestParam Category category, @RequestParam int pageNum, @RequestParam int limit) {
+        return templateService.getTemplatesByCategory(category, pageNum, limit);
     }
 
     @GetMapping("/v1/templates/keyword")
-    public List<TemplateByKeywordResponse> getTemplatesByKeyword(@RequestParam TemplateKeywordType keyword) {
-
-        return templateService.getTemplatesByKeyword(keyword);
-
+    public TemplateKeywordGet getTemplatesByKeyword(@RequestParam TemplateKeywordType keyword, @RequestParam int pageNum, @RequestParam int limit) {
+        return templateService.getTemplatesByKeyword(keyword, pageNum, limit);
     }
 }
