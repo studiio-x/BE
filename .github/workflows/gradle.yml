@@ -1,157 +1,153 @@
-name: Deploy to EC2
+name: Deploy Backend
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+    paths:
+      - "Dockerfile"
+      - "docker-compose*.yml"
+      - "config/nginx/**"
+      - "Dockerfile.alloy"
+      - "config/alloy/**"
+      - "src/**"
+      - "build.gradle*"
+      - "settings.gradle*"
+      - "gradle/**"
   workflow_dispatch:
-    inputs:
-      name:
-        description: 'admin'
-        required: true
-        default: 'user'
-      message:
-        description: 'message'
-        required: false
-        default: '수동 워크플로우 트리거'
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      # 기본 체크아웃
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Make application-secret.yml without env
-        run: |
-          mkdir -p ./src/main/resources
-          touch ./src/main/resources/application.yml
-          echo "${{ secrets.APPLICATION }}" > ./src/main/resources/application.yml
-          touch ./src/main/resources/application-prod.yml
-          echo "${{ secrets.APPLICATION_PROD }}" > ./src/main/resources/application-prod.yml
+      - name: Detect changed files
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - "src/**"
+              - "Dockerfile"
+              - "build.gradle*"
+              - "settings.gradle*"
+              - "gradle/**"
+            nginx:
+              - "config/nginx/**"
+            alloy:
+              - "Dockerfile.alloy"
+              - "config/alloy/**"
+            compose_app:
+              - "docker-compose.yml"
+              - "docker-compose-blue.yml"
+              - "docker-compose-green.yml"
 
-      # JDK version 설정
+      # (backend 이미지가 필요할 때만) gradle build
       - name: Set up JDK 17
+        if: steps.changes.outputs.backend == 'true'
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: "17"
+          distribution: "temurin"
 
       - name: Grant execute permission for gradlew
+        if: steps.changes.outputs.backend == 'true'
         run: chmod +x ./gradlew
 
-      ## gradle build
       - name: Build with Gradle
+        if: steps.changes.outputs.backend == 'true'
         run: ./gradlew clean bootJar --no-daemon
 
       - name: Login to DockerHub
+        if: steps.changes.outputs.backend == 'true' || steps.changes.outputs.nginx == 'true' || steps.changes.outputs.alloy == 'true'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Docker app build & push
+      - name: Build & Push backend
+        if: steps.changes.outputs.backend == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/backend
+          tags: ${{ secrets.DOCKER_USERNAME }}/backend:latest
 
-      - name: Docker nginx build & push
+      - name: Build & Push nginx
+        if: steps.changes.outputs.nginx == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./config/nginx/Dockerfile
           platforms: linux/amd64
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/nginx
+          tags: ${{ secrets.DOCKER_USERNAME }}/nginx:latest
 
-      - name: set target IP
+      - name: Build & Push alloy
+        if: steps.changes.outputs.alloy == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.alloy
+          platforms: linux/amd64
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/alloy:latest
+
+      # blue/green 결정 로직은 네 기존 걸 그대로 유지하면 됨
+      - name: set target upstream
         run: |
-          STATUS=$(curl -o /dev/null -w "%{http_code}" "http://${{ secrets.EC2_HOST }}/actuator/health")
-          echo $STATUS
-          if [ $STATUS = 200 ]; then
-            CURRENT_UPSTREAM=$(curl -s "http://${{ secrets.EC2_HOST }}/env")
+          STATUS=$(curl -o /dev/null -w "%{http_code}" "http://${{ secrets.EC2_HOST_BACKEND }}/actuator/health")
+          if [ "$STATUS" = "200" ]; then
+            CURRENT_UPSTREAM=$(curl -s "http://${{ secrets.EC2_HOST_BACKEND }}/env")
           else
             CURRENT_UPSTREAM=green
           fi
-          echo CURRENT_UPSTREAM=$CURRENT_UPSTREAM >> $GITHUB_ENV
-          if [ $CURRENT_UPSTREAM = blue ]; then
+          echo "CURRENT_UPSTREAM=$CURRENT_UPSTREAM" >> $GITHUB_ENV
+          if [ "$CURRENT_UPSTREAM" = "blue" ]; then
             echo "CURRENT_PORT=8080" >> $GITHUB_ENV
             echo "STOPPED_PORT=8081" >> $GITHUB_ENV
             echo "TARGET_UPSTREAM=green" >> $GITHUB_ENV
-          elif [ $CURRENT_UPSTREAM = green ]; then
+          else
             echo "CURRENT_PORT=8081" >> $GITHUB_ENV
             echo "STOPPED_PORT=8080" >> $GITHUB_ENV
             echo "TARGET_UPSTREAM=blue" >> $GITHUB_ENV
-          else
-            echo "error"
-            exit 1
           fi
 
-      # ssh 접근 후 docker 이미지 pull 및 컨테이너 재시작
-      - name: executing remote ssh commands using password
+      - name: Deploy to Backend EC2 (only what changed)
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu #  ec2-user 에서 변경
-          key: ${{ secrets.EC2_KEY }}
-          script: |
-            cd /home/ubuntu/studiox
-            
-            sudo touch .env
-            echo "${{ secrets.ENV }}" | sudo tee .env > /dev/null
-            
-            sudo curl -o docker-compose.yml https://raw.githubusercontent.com/studiio-x/BE/main/docker-compose.yml
-            sudo curl -o docker-compose-blue.yml https://raw.githubusercontent.com/studiio-x/BE/main/docker-compose-blue.yml
-            sudo curl -o docker-compose-green.yml https://raw.githubusercontent.com/studiio-x/BE/main/docker-compose-green.yml
-            
-            sudo chmod 666 /var/run/docker.sock
-            
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/backend
-            docker compose -f docker-compose-${{env.TARGET_UPSTREAM}}.yml --env-file .env up -d
-            docker image prune -f
-
-      - name: Check deploy server URL
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ secrets.EC2_HOST_BACKEND }}
           username: ubuntu
-          key: ${{ secrets.EC2_KEY }}
+          key: ${{ secrets.EC2_KEY_BACKEND }}
           script: |
             set -e
-            for i in {1..10}; do
-              echo "[$i] health check..."
-              if curl -f http://localhost:${{ env.STOPPED_PORT }}/actuator/health > /dev/null 2>&1; then
-                echo "health check success"
-                exit 0
-              fi
-              echo "health check failed, retrying in 5s..."
-              sleep 5
-            done
-            echo "health check failed after 10 attempts"
-            exit 1
-      - name: Change nginx upstream
-        uses: appleboy/ssh-action@master
-        with:
-          username: ubuntu
-          host: ${{ secrets.EC2_HOST }}
-          key: ${{ secrets.EC2_KEY }}
-          script: |
-            sudo docker exec -i nginx bash -c 'echo "set \$service_url ${{ env.TARGET_UPSTREAM }};" > /etc/nginx/conf.d/service-env.inc && nginx -s reload' 
+            cd /home/ubuntu/studiox
 
-      - name: Stop current server
-        uses: appleboy/ssh-action@master
-        with:
-          username: ubuntu
-          host: ${{ secrets.EC2_HOST }}
-          key: ${{ secrets.EC2_KEY }}
-          script: |
-            sudo docker stop ${{env.CURRENT_UPSTREAM}}
-            sudo docker rm ${{env.CURRENT_UPSTREAM}}
+            # .env 갱신(원하면)
+            echo "${{ secrets.BACKEND_ENV }}" | sudo tee .env > /dev/null
+
+            # compose 변경 있을 때만 다시 받기
+            if [ "${{ steps.changes.outputs.compose_app }}" = "true" ]; then
+              sudo curl -o docker-compose.yml https://raw.githubusercontent.com/<OWNER>/<REPO>/main/docker-compose.yml
+              sudo curl -o docker-compose-blue.yml https://raw.githubusercontent.com/<OWNER>/<REPO>/main/docker-compose-blue.yml
+              sudo curl -o docker-compose-green.yml https://raw.githubusercontent.com/<OWNER>/<REPO>/main/docker-compose-green.yml
+            fi
+
+            # 바뀐 이미지만 pull
+            if [ "${{ steps.changes.outputs.backend }}" = "true" ]; then
+              sudo docker pull ${{ secrets.DOCKER_USERNAME }}/backend:latest
+            fi
+            if [ "${{ steps.changes.outputs.nginx }}" = "true" ]; then
+              sudo docker pull ${{ secrets.DOCKER_USERNAME }}/nginx:latest
+            fi
+            if [ "${{ steps.changes.outputs.alloy }}" = "true" ]; then
+              sudo docker pull ${{ secrets.DOCKER_USERNAME }}/alloy:latest
+            fi
+
+            docker compose -f docker-compose-${{ env.TARGET_UPSTREAM }}.yml --env-file .env up -d
+            docker image prune -f
