@@ -2,6 +2,7 @@ package net.studioxai.studioxBe.image;
 
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.image.entity.Image;
+import net.studioxai.studioxBe.domain.image.entity.CutoutImage;
 import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
 import net.studioxai.studioxBe.domain.image.service.ImageService;
 import org.junit.jupiter.api.DisplayName;
@@ -34,13 +35,22 @@ class ImageServiceTest {
         // given
         Folder folder = mock(Folder.class);
 
+        CutoutImage cutoutImage1 = mock(CutoutImage.class);
+        CutoutImage cutoutImage2 = mock(CutoutImage.class);
+
+        given(cutoutImage1.getFolder()).willReturn(folder);
+        given(cutoutImage2.getFolder()).willReturn(folder);
+
         Image img1 = mock(Image.class);
         Image img2 = mock(Image.class);
+
+        given(img1.getCutoutImage()).willReturn(cutoutImage1);
+        given(img2.getCutoutImage()).willReturn(cutoutImage2);
 
         given(img1.getImageUrl()).willReturn("url1");
         given(img2.getImageUrl()).willReturn("url2");
 
-        given(imageRepository.findByFolderOrderByCreatedAt(eq(folder), any(Pageable.class)))
+        given(imageRepository.findByFolder(eq(folder), any(Pageable.class)))
                 .willReturn(List.of(img1, img2));
 
         int count = 2;
@@ -52,7 +62,7 @@ class ImageServiceTest {
         assertThat(result).containsExactly("url1", "url2");
 
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        verify(imageRepository).findByFolderOrderByCreatedAt(eq(folder), pageableCaptor.capture());
+        verify(imageRepository).findByFolder(eq(folder), pageableCaptor.capture());
 
         Pageable usedPageable = pageableCaptor.getValue();
         assertThat(usedPageable.getPageNumber()).isEqualTo(0);
@@ -69,47 +79,57 @@ class ImageServiceTest {
         given(folder1.getId()).willReturn(1L);
         given(folder2.getId()).willReturn(2L);
 
-        List<Folder> folders = List.of(folder1, folder2);
+        CutoutImage cutout1 = mock(CutoutImage.class);
+        CutoutImage cutout2 = mock(CutoutImage.class);
+        CutoutImage cutout3 = mock(CutoutImage.class);
+        CutoutImage cutout4 = mock(CutoutImage.class);
+
+        given(cutout1.getFolder()).willReturn(folder1);
+        given(cutout2.getFolder()).willReturn(folder1);
+        given(cutout3.getFolder()).willReturn(folder1);
+        given(cutout4.getFolder()).willReturn(folder2);
 
         Image img1 = mock(Image.class);
         Image img2 = mock(Image.class);
         Image img3 = mock(Image.class);
         Image img4 = mock(Image.class);
 
-        given(img1.getFolder()).willReturn(folder1);
-        given(img2.getFolder()).willReturn(folder1);
-        given(img3.getFolder()).willReturn(folder1);
-        given(img4.getFolder()).willReturn(folder2);
+        given(img1.getCutoutImage()).willReturn(cutout1);
+        given(img2.getCutoutImage()).willReturn(cutout2);
+        given(img3.getCutoutImage()).willReturn(cutout3);
+        given(img4.getCutoutImage()).willReturn(cutout4);
 
         given(img1.getImageUrl()).willReturn("f1_img1");
         given(img2.getImageUrl()).willReturn("f1_img2");
         given(img4.getImageUrl()).willReturn("f2_img1");
 
-        given(imageRepository.findByFolderInOrderByFolderIdAndCreatedAtDesc(folders))
+        given(imageRepository.findByFolders(List.of(folder1, folder2)))
                 .willReturn(List.of(img1, img2, img3, img4));
 
         int count = 2;
+
         // when
-        Map<Long, List<String>> result = imageService.getImagesByFolders(folders, count);
+        Map<Long, List<String>> result =
+                imageService.getImagesByFolders(List.of(folder1, folder2), count);
 
         // then
         assertThat(result).hasSize(2);
-        assertThat(result.get(1L)).containsExactly("f1_img1", "f1_img2"); // 3개 중 앞 2개만
-        assertThat(result.get(2L)).containsExactly("f2_img1");            // 1개 뿐이므로 그대로
+        assertThat(result.get(1L)).containsExactly("f1_img1", "f1_img2");
+        assertThat(result.get(2L)).containsExactly("f2_img1");
 
-        verify(imageRepository).findByFolderInOrderByFolderIdAndCreatedAtDesc(folders);
+        verify(imageRepository).findByFolders(List.of(folder1, folder2));
     }
 
     @Test
     @DisplayName("[getImagesByFolders] 이미지가 하나도 없으면 빈 Map을 반환한다")
     void getImagesByFolders_empty() {
         // given
-        List<Folder> folders = List.of();
-        given(imageRepository.findByFolderInOrderByFolderIdAndCreatedAtDesc(folders))
+        given(imageRepository.findByFolders(List.of()))
                 .willReturn(List.of());
 
         // when
-        Map<Long, List<String>> result = imageService.getImagesByFolders(folders, 3);
+        Map<Long, List<String>> result =
+                imageService.getImagesByFolders(List.of(), 3);
 
         // then
         assertThat(result).isEmpty();

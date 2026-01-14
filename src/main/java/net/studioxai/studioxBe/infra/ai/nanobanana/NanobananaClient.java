@@ -15,11 +15,11 @@ public class NanobananaClient {
     private final RestTemplate restTemplate;
     private final NanobananaProperties properties;
 
-    public NanobananaGenerateResponse generateImage(String rawImageUrl, String templateImageUrl, String prompt) {
+    public NanobananaGenerateResponse generateImage(String cutoutImageUrl, String templateImageUrl, String prompt) {
         NanobananaGenerateRequest request =
                 new NanobananaGenerateRequest(
                         properties.model(),
-                        rawImageUrl,
+                        cutoutImageUrl,
                         templateImageUrl,
                         prompt
                 );

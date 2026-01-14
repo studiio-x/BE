@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import net.studioxai.studioxBe.domain.image.dto.request.ImageGenerateRequest;
 import net.studioxai.studioxBe.domain.image.dto.response.ImageGenerateResponse;
-import net.studioxai.studioxBe.domain.image.entity.Image;
 import net.studioxai.studioxBe.domain.image.service.ImageService;
 import net.studioxai.studioxBe.global.jwt.JwtUserPrincipal;
 import org.springframework.http.ResponseEntity;
@@ -22,20 +21,11 @@ public class ImageController {
     private final ImageService imageService;
 
     @PostMapping("/v1/image/generate")
-    public ResponseEntity<ImageGenerateResponse> generateImage(@AuthenticationPrincipal JwtUserPrincipal principal, @Valid @RequestBody ImageGenerateRequest request) {
-        Image image = imageService.generateAdImage(
-                principal.userId(),
-                request.folderId(),
-                request.templateId(),
-                request.rawImageUrl()
-        );
+    public ResponseEntity<ImageGenerateResponse> generateImage(@AuthenticationPrincipal JwtUserPrincipal principal, @RequestBody @Valid ImageGenerateRequest request) {
 
-        return ResponseEntity.ok(
-                new ImageGenerateResponse(
-                        image.getId(),
-                        image.getImageUrl()
-                )
-        );
+        ImageGenerateResponse response = imageService.generateImage(principal.userId(), request);
+
+        return ResponseEntity.ok(response);
     }
 
 

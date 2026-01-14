@@ -12,12 +12,27 @@ import java.util.List;
 
 @Repository
 public interface ImageRepository extends JpaRepository<Image, Long> {
-    List<Image> findByFolderOrderByCreatedAt(Folder folder, Pageable pageable);
 
-    @Query("SELECT i FROM Image i " +
-            "WHERE i.folder IN :folders " +
-            "ORDER BY i.folder.id ASC, i.createdAt DESC")
-    List<Image> findByFolderInOrderByFolderIdAndCreatedAtDesc(
+    @Query("""
+    SELECT i FROM Image i
+    WHERE i.cutoutImage.folder = :folder
+    ORDER BY i.createdAt DESC
+    """)
+    List<Image> findByFolder(
+            @Param("folder") Folder folder,
+            Pageable pageable
+    );
+
+    @Query("""
+    SELECT i FROM Image i
+    WHERE i.cutoutImage.folder IN :folders
+    ORDER BY i.cutoutImage.folder.id ASC, i.createdAt DESC
+    """)
+    List<Image> findByFolders(
             @Param("folders") List<Folder> folders
     );
+
+
+    List<Image> findByCutoutImageIdOrderByCreatedAtDesc(Long cutoutImageId);
+
 }

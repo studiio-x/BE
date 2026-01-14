@@ -2,7 +2,7 @@ package net.studioxai.studioxBe.infra.ai.nanobanana;
 
 public record NanobananaGenerateRequest (
         String model,
-        String rawImageUrl,
+        String cutoutImageUrl,
         String templateImageUrl,
         String prompt
 ){ }

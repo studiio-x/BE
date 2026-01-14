@@ -4,14 +4,18 @@ package net.studioxai.studioxBe.domain.image.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
-import net.studioxai.studioxBe.domain.folder.repository.FolderRepository;
+import net.studioxai.studioxBe.domain.image.dto.request.ImageGenerateRequest;
+import net.studioxai.studioxBe.domain.image.dto.response.ImageGenerateResponse;
 import net.studioxai.studioxBe.domain.image.entity.Image;
+import net.studioxai.studioxBe.domain.image.entity.CutoutImage;
 import net.studioxai.studioxBe.domain.image.exception.ImageErrorCode;
 import net.studioxai.studioxBe.domain.image.exception.ImageExceptionHandler;
 import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
+import net.studioxai.studioxBe.domain.image.repository.CutoutImageRepository;
 import net.studioxai.studioxBe.domain.template.entity.Template;
 import net.studioxai.studioxBe.domain.template.repository.TemplateRepository;
 import net.studioxai.studioxBe.infra.ai.nanobanana.NanobananaClient;
+import net.studioxai.studioxBe.infra.ai.nanobanana.NanobananaGenerateResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,27 +32,38 @@ import java.util.Map;
 @Slf4j
 public class ImageService {
     private final ImageRepository imageRepository;
-    private final FolderRepository folderRepository;
     private final TemplateRepository templateRepository;
+    private final CutoutImageRepository cutoutImageRepository;
     private final NanobananaClient nanobananaClient;
 
     public List<String> getImagesByFolder(Folder folder, int count) {
         Pageable limit = PageRequest.of(0, count);
-        return imageRepository.findByFolderOrderByCreatedAt(folder, limit)
+
+        return imageRepository.findByFolder(folder, limit)
                 .stream()
                 .map(Image::getImageUrl)
                 .toList();
     }
 
+
     public Map<Long, List<String>> getImagesByFolders(List<Folder> folders, int count) {
-        List<Image> images = imageRepository.findByFolderInOrderByFolderIdAndCreatedAtDesc(folders);
+        List<Image> images = imageRepository.findByFolders(folders);
 
         Map<Long, List<String>> result = new LinkedHashMap<>();
 
         for (Image image : images) {
-            Long folderId = image.getFolder().getId();
+            Folder folder = image.getCutoutImage().getFolder();
 
-            List<String> urls = result.computeIfAbsent(folderId, k -> new ArrayList<>());
+            if (folder == null) {
+                continue;
+            }
+
+            Long folderId = folder.getId();
+
+            List<String> urls = result.computeIfAbsent(
+                    folderId,
+                    k -> new ArrayList<>()
+            );
 
             if (urls.size() >= count) {
                 continue;
@@ -60,41 +75,40 @@ public class ImageService {
         return result;
     }
 
-    public Image generateAdImage(Long userId, Long folderId, Long templateId, String rawImageUrl) {
-
-        // 1. Folder 조회 -> 빼고
-        Folder folder = folderRepository.findById(folderId)
-                .orElseThrow(() -> new ImageExceptionHandler(ImageErrorCode.FOLDER_NOT_FOUND));
-
-        // 2. Template 조회
-        Template template = templateRepository.findById(templateId)
+    public ImageGenerateResponse generateImage(Long userId, ImageGenerateRequest request) {
+        // 1. Template 조회
+        Template template = templateRepository.findById(request.templateId())
                 .orElseThrow(() -> new ImageExceptionHandler(ImageErrorCode.TEMPLATE_NOT_FOUND));
 
-        // 3. AI 프롬프트
-        String prompt = """
-                Create a photorealistic advertisement image.
-                Blend the product image naturally with the reference style.
-                Keep product shape and logo intact.
-                Maintain clean, premium composition.
-                """;
-
-        // 4. AI 호출
-        var aiResult = nanobananaClient.generateImage(
-                rawImageUrl,
-                template.getImageUrl(),
-                prompt
-        );
-
-        // 5. Image 생성 (Folder 패턴과 동일) -> image url 어떻게 저장하는지
-        Image image = Image.create(
-                folder,
+        // 2. CutoutImage 생성 (folder = null)
+        CutoutImage cutoutImage = CutoutImage.create(
+                request.cutoutImageUrl(),
                 template,
-                rawImageUrl,
-                aiResult.outputImageUrl()
+                null
         );
+        cutoutImageRepository.save(cutoutImage);
 
-        // 6. 저장
-        return imageRepository.save(image);
+        // 3. AI 호출
+        NanobananaGenerateResponse aiResponse =
+                nanobananaClient.generateImage(
+                        cutoutImage.getCutoutImageUrl(),
+                        template.getImageUrl(),
+                        request.prompt()
+                );
+
+        // 4. Image 저장
+        Image image = Image.create(
+                cutoutImage,
+                aiResponse.outputImageUrl()
+        );
+        imageRepository.save(image);
+
+        // 5. 응답
+        return new ImageGenerateResponse(
+                image.getId(),
+                image.getImageUrl()
+        );
     }
+
 
 }
