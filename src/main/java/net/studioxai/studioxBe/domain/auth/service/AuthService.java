@@ -5,7 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
-import net.studioxai.studioxBe.domain.project.service.ProjectService;
+import net.studioxai.studioxBe.domain.folder.entity.Folder;
+import net.studioxai.studioxBe.domain.folder.repository.FolderManagerRepository;
+import net.studioxai.studioxBe.domain.folder.service.FolderManagerSerivce;
+import net.studioxai.studioxBe.domain.folder.service.FolderService;
 import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
@@ -31,7 +34,8 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final TokenService tokenService;
-    private final ProjectService projectService;
+    private final FolderService folderService;
+    private final FolderManagerSerivce folderManagerSerivce;
     private final EmailVerificationService emailVerificationService;
 
     public static final String DEFAULT_PROFILE_IMAGE_URL = "profile-example.com";
@@ -65,9 +69,7 @@ public class AuthService {
         );
 
         userRepository.save(user);
-
-        String projectName = user.getUsername() + "의 프로젝트";
-        projectService.addProject(user, projectName, true);
+        provisioningFolder(user);
 
         return buildLoginResponse(user);
     }
@@ -81,6 +83,13 @@ public class AuthService {
                 tokens.get("accessToken"),
                 tokens.get("refreshToken")
         );
+    }
+
+    @Transactional
+    protected void provisioningFolder(User user) {
+        String folderName = user.getUsername() + "의 프로젝트";
+        Folder folder = folderService.createRootFolder(folderName);
+        folderManagerSerivce.createRootManager(user, folder);
     }
 
     private User getUserByEmailOrThrow(String email) {

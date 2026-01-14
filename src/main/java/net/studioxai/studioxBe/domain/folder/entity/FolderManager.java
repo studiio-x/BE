@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import net.studioxai.studioxBe.domain.folder.entity.enums.Permission;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.global.entity.BaseEntity;
 
@@ -26,16 +27,42 @@ public class FolderManager extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "permission", nullable = false)
+    private Permission permission;
+
     @Builder(access = AccessLevel.PRIVATE)
-    public FolderManager(User user, Folder folder) {
+    public FolderManager(User user, Folder folder, Permission permission) {
         this.user = user;
         this.folder = folder;
+        this.permission = permission;
     }
 
-    public static FolderManager create(User user, Folder folder) {
+    public static FolderManager createRootManager(User user, Folder folder) {
         return FolderManager.builder()
                 .user(user)
                 .folder(folder)
+                .permission(Permission.OWNER)
                 .build();
+    }
+
+    public static FolderManager createWriter(User user, Folder folder) {
+        return FolderManager.builder()
+                .user(user)
+                .folder(folder)
+                .permission(Permission.WRITE)
+                .build();
+    }
+
+    public static FolderManager createReader(User user, Folder folder) {
+        return FolderManager.builder()
+                .user(user)
+                .folder(folder)
+                .permission(Permission.READ)
+                .build();
+    }
+
+    public void updatePermission(Permission permission) {
+        this.permission = permission;
     }
 }
