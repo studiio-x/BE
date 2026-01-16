@@ -5,14 +5,16 @@ import lombok.Getter;
 
 @Getter
 public class S3Url {
-    private final String url;
+    private final String uploadUrl;
+    private final String objectKey;
 
     @Builder
-    private S3Url(String url) {
-        this.url = url;
+    private S3Url(String url, String objectKey) {
+        this.uploadUrl = url;
+        this.objectKey = objectKey;
     }
 
-    public static S3Url to(String url) {
-        return S3Url.builder().url(url).build();
+    public static S3Url to(String url, String objectKey) {
+        return S3Url.builder().url(url).objectKey(objectKey).build();
     }
 }

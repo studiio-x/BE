@@ -48,7 +48,14 @@ public class UserService {
 
         user.updateProfileImage(profileUpdateRequest.profileImage());
 
-        if(!originProfileImage.equals(AuthService.DEFAULT_PROFILE_IMAGE_URL)) {
+        boolean isDefaultImage =
+                originProfileImage.equals(AuthService.DEFAULT_PROFILE_IMAGE_URL);
+
+        boolean isExternalUrl =
+                originProfileImage.startsWith("http://")
+                        || originProfileImage.startsWith("https://");
+
+        if (!isDefaultImage && !isExternalUrl) {
             s3UrlHandler.delete(originProfileImage);
         }
     }

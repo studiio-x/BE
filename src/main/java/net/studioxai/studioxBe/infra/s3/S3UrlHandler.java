@@ -12,8 +12,7 @@ public class S3UrlHandler {
     private final S3UrlService s3UrlService;
 
     public S3Url handle(String prefix) {
-        final String url = s3UrlService.generateUrl(prefix);
-        return S3Url.to(url);
+        return s3UrlService.generateUrl(prefix);
     }
 
     public void delete(String url) {

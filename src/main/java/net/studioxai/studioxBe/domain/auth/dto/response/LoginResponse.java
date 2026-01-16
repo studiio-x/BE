@@ -1,9 +1,11 @@
 package net.studioxai.studioxBe.domain.auth.dto.response;
 
+import net.studioxai.studioxBe.global.annotation.ImageUrl;
+
 public record LoginResponse(
         Long userId,
         String email,
-        String profileImageUrl,
+        @ImageUrl String profileImageUrl,
         String accessToken,
         String refreshToken
 ) {
