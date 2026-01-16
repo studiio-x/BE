@@ -14,7 +14,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     volumes:
-      - D:/spring/studio-x/logs:/var/log
+      - ./logs:/var/log
     networks:
       - studiox-network
 
