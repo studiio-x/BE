@@ -3,7 +3,7 @@ package net.studioxai.studioxBe.domain.folder.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import net.studioxai.studioxBe.domain.folder.dto.request.FolderManagerAddRequest;
-import net.studioxai.studioxBe.domain.project.dto.MyProjectResponse;
+import net.studioxai.studioxBe.domain.folder.service.FolderManagerSerivce;
 import net.studioxai.studioxBe.global.jwt.JwtUserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class FolderManagerController {
-    private final FolderManagerService folderManagerService;
+    private final FolderManagerSerivce folderManagerService;
 
 //    @GetMapping("/v1/project")
 //    public List<MyProjectResponse> myProjectList(
@@ -27,6 +27,6 @@ public class FolderManagerController {
             @PathVariable Long folderId,
             @RequestBody @Valid FolderManagerAddRequest folderManagerAddRequest
     ) {
-        
+        folderManagerService.inviteManager(principal.userId(), folderId, folderManagerAddRequest);
     }
 }

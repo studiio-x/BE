@@ -2,12 +2,14 @@ package net.studioxai.studioxBe.domain.folder.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.studioxai.studioxBe.domain.folder.dto.request.FolderManagerAddRequest;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.folder.entity.FolderManager;
 import net.studioxai.studioxBe.domain.folder.entity.enums.Permission;
 import net.studioxai.studioxBe.domain.folder.exception.FolderManagerErrorCode;
 import net.studioxai.studioxBe.domain.folder.exception.FolderManagerExceptionHandler;
 import net.studioxai.studioxBe.domain.folder.repository.FolderManagerRepository;
+import net.studioxai.studioxBe.domain.folder.repository.FolderRepository;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.domain.user.service.UserService;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,20 @@ public class FolderManagerSerivce {
 
     private final FolderManagerRepository folderManagerRepository;
     private final UserService userService;
+    private final FolderRepository folderRepository;
+
+    @Transactional
+    public void inviteManager(Long userId, Long folderId, FolderManagerAddRequest folderManagerAddRequest) {
+        validatePermission(userId, folderId);
+
+        userService.getUserByEmailOrThrow(folderManagerAddRequest.email());
+
+        Folder folder = folderRepository.findById(folderId).orElseThrow(
+                () -> new FolderManagerExceptionHandler(FolderManagerErrorCode.FOLDER_NOT_FOUND)
+        );
+
+        createWritableManager(userId, folder);
+    }
 
     @Transactional
     public void createRootManager(User user, Folder folder) {

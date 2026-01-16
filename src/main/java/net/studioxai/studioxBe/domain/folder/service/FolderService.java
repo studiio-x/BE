@@ -34,7 +34,7 @@ public class FolderService {
                 .orElseThrow(() -> new FolderExceptionHandler(FolderErrorCode.PARENT_REQUIRED));
 
         Folder subFolder = Folder.createSub(folderCreateRequest.name(), parentFolder);
-        folderManagerSerivce.createWritableManager(userId, subFolder);
+        folderRepository.save(subFolder);
     }
 
 }
