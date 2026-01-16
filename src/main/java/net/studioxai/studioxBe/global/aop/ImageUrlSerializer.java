@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -13,7 +12,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class ImageUrlSerializerAop extends JsonSerializer<Object> {
+public class ImageUrlSerializer extends JsonSerializer<Object> {
     @Value("${server.image-domain}")
     private String imageDomain;
 
@@ -37,7 +36,11 @@ public class ImageUrlSerializerAop extends JsonSerializer<Object> {
         if (value instanceof List<?> list) {
             jsonGenerator.writeStartArray();
             for (Object item : list) {
-                jsonGenerator.writeString(convert((String) item));
+                if (item instanceof String strItem) {
+                    jsonGenerator.writeString(convert(strItem));
+                } else {
+                    jsonGenerator.writeNull();
+                }
             }
             jsonGenerator.writeEndArray();
         }
@@ -45,7 +48,7 @@ public class ImageUrlSerializerAop extends JsonSerializer<Object> {
     }
 
     private String convert(String image) {
-        if (image.startsWith("http") || image.startsWith("https")) {
+        if (image.startsWith("http://") || image.startsWith("https://")) {
             return image;
         }
         return imageDomain + image;
