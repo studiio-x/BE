@@ -21,12 +21,21 @@ public class FolderManagerController {
 //        return projectManagerService.getMyProjectList(jwtUserPrincipal.userId());
 //    }
 
-    @PostMapping("/v1/folder/{folderId}/manager")
+    @PostMapping("/v1/folder/manager/{folderId}")
     public void folderManagerAdd(
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @PathVariable Long folderId,
             @RequestBody @Valid FolderManagerAddRequest folderManagerAddRequest
     ) {
         folderManagerService.inviteManager(principal.userId(), folderId, folderManagerAddRequest);
+    }
+
+    @PutMapping("/v1/folder/manager/{folderId}/{targetUserId}")
+    public void folderManagerUpdate(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long folderId,
+            @PathVariable Long targetUserId
+    ) {
+        folderManagerService.updatePermission(principal.userId(), targetUserId, folderId);
     }
 }

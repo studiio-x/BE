@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface FolderManagerRepository extends JpaRepository<FolderManager, Long> {
@@ -22,6 +23,8 @@ public interface FolderManagerRepository extends JpaRepository<FolderManager, Lo
             Long userId,
             Collection<Permission> permissions
     );
+
+    Optional<FolderManager> findByFolderIdAndUserId(Long folderId, Long userId);
 
 
 }

@@ -27,6 +27,16 @@ public class FolderManagerSerivce {
     private final UserService userService;
     private final FolderRepository folderRepository;
 
+    // TODO: 상위 권한에 의한 권한이 있을 경우, 상위 폴더와의 연관 끊기
+    @Transactional
+    public void updatePermission(Long actorUserId, Long targetUserId, Long folderId) {
+        validatePermission(actorUserId, targetUserId);
+
+        FolderManager folderManager = getManagerByFolderIdAndUserId(folderId, targetUserId);
+        folderManager.updatePermission();
+
+    }
+
     @Transactional
     public void inviteManager(Long userId, Long folderId, FolderManagerAddRequest folderManagerAddRequest) {
         validatePermission(userId, folderId);
@@ -53,6 +63,7 @@ public class FolderManagerSerivce {
         folderManagerRepository.save(writerManager);
     }
 
+    // TODO: validate 상위 폴더에도 권한 있는 확인
     public void validatePermission(Long userId, Long folderId) {
         boolean writable = folderManagerRepository
                 .existsByFolderIdAndUserIdAndPermissionIn(folderId, userId,
@@ -61,5 +72,11 @@ public class FolderManagerSerivce {
         if (!writable) {
             throw new FolderManagerExceptionHandler(FolderManagerErrorCode.USER_NO_FOLDER_AUTHORITY);
         }
+    }
+
+    public FolderManager getManagerByFolderIdAndUserId(Long folderId, Long userId) {
+        return folderManagerRepository.findByFolderIdAndUserId(folderId, userId).orElseThrow(
+                () -> new FolderManagerExceptionHandler(FolderManagerErrorCode.FOLDERMANAGER_NOT_FOUND)
+        );
     }
 }

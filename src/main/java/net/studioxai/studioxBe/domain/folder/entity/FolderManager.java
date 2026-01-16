@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.studioxai.studioxBe.domain.folder.entity.enums.Permission;
+import net.studioxai.studioxBe.domain.folder.exception.FolderManagerErrorCode;
+import net.studioxai.studioxBe.domain.folder.exception.FolderManagerExceptionHandler;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.global.entity.BaseEntity;
 
@@ -62,7 +64,12 @@ public class FolderManager extends BaseEntity {
                 .build();
     }
 
-    public void updatePermission(Permission permission) {
-        this.permission = permission;
+    public void updatePermission() {
+        if (this.permission == Permission.READ) {
+            this.permission = Permission.WRITE;
+        }
+        else {
+            this.permission = Permission.READ;
+        }
     }
 }
