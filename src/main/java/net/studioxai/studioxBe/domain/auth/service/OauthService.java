@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.auth.dto.response.GoogleTokenResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.GoogleUserInfoResponse;
-import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
 import net.studioxai.studioxBe.domain.auth.exception.AuthExceptionHandler;
 import net.studioxai.studioxBe.domain.user.entity.User;
