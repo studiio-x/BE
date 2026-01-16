@@ -5,7 +5,7 @@
                     source="spring.profiles.active"
                     defaultValue="local"/>
 
-    <property name="LOG_PATH" value="/var/log/spring/${PROFILES}"/>
+    <property name="LOG_PATH" value="/var/log/spring/${SPRING_PROFILES_ACTIVE}"/>
     <property name="LOG_FILE" value="${LOG_PATH}/app.log"/>
 
     <property name="LOG_PATTERN"
