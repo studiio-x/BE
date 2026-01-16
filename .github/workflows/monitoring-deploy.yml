@@ -1,0 +1,124 @@
+name: Deploy Monitoring (Loki / Prometheus / Grafana)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docker-compose-monitoring.yml'
+      - 'config/loki/**'
+      - 'config/prometheus/**'
+      - 'config/grafana/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # 1) 변경 감지
+      - name: Detect changes
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            compose:
+              - 'docker-compose-monitoring.yml'
+            loki:
+              - 'config/loki/**'
+            prometheus:
+              - 'config/prometheus/**'
+            grafana:
+              - 'config/grafana/**'
+
+      # 2) DockerHub 로그인
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 3) 변경된 서비스만 build & push
+      - name: Build & Push Loki
+        if: steps.changes.outputs.loki == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./config/loki/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/loki:latest
+
+      - name: Build & Push Prometheus
+        if: steps.changes.outputs.prometheus == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./config/prometheus/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/prometheus:latest
+
+      - name: Build & Push Grafana
+        if: steps.changes.outputs.grafana == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./config/grafana/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/grafana:latest
+
+      # 4) EC2 배포 (변경된 것만 pull + recreate)
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.MONTORING_EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            set -e
+            cd /home/ubuntu/studiox
+
+            # compose 최신화
+            sudo curl -o docker-compose-monitoring.yml \
+              https://raw.githubusercontent.com/studiio-x/BE/main/docker-compose-monitoring.yml
+            
+            sudo touch .env.monitoring
+            echo "${{ secrets.ENV }}" | sudo tee .env > /dev/null
+
+            sudo chmod 666 /var/run/docker.sock
+
+            # 변경된 이미지만 pull
+            if [ "${{ steps.changes.outputs.loki }}" = "true" ]; then
+              sudo docker pull ${{ secrets.DOCKER_USERNAME }}/loki:latest
+            fi
+            if [ "${{ steps.changes.outputs.prometheus }}" = "true" ]; then
+              sudo docker pull ${{ secrets.DOCKER_USERNAME }}/prometheus:latest
+            fi
+            if [ "${{ steps.changes.outputs.grafana }}" = "true" ]; then
+              sudo docker pull ${{ secrets.DOCKER_USERNAME }}/grafana:latest
+            fi
+
+            # compose 자체가 바뀌면 전체 재기동
+            if [ "${{ steps.changes.outputs.compose }}" = "true" ]; then
+              sudo docker compose --env-file .env -f docker-compose-monitoring.yml up -d --force-recreate
+            else
+              # 서비스별 부분 재기동
+              if [ "${{ steps.changes.outputs.loki }}" = "true" ]; then
+                sudo docker compose --env-file .env -f docker-compose-monitoring.yml up -d --force-recreate loki
+              fi
+              if [ "${{ steps.changes.outputs.prometheus }}" = "true" ]; then
+                sudo docker compose --env-file .env -f docker-compose-monitoring.yml up -d --force-recreate prometheus
+              fi
+              if [ "${{ steps.changes.outputs.grafana }}" = "true" ]; then
+                sudo docker compose --env-file .env -f docker-compose-monitoring.yml up -d --force-recreate grafana
+              fi
+            fi
+
+            sudo docker image prune -f

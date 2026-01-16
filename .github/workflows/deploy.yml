@@ -4,6 +4,22 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
+      - 'config/nginx/**'
+      - 'config/alloy/**'
+      - 'docker-compose.yml'
+      - 'docker-compose-blue.yml'
+      - 'docker-compose-green.yml'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - '**/build.gradle'
+      - '**/settings.gradle'
+      - 'gradle/**'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - 'Dockerfile'
+
   workflow_dispatch:
     inputs:
       name:
@@ -25,6 +41,36 @@ jobs:
       # 기본 체크아웃
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Detect changed files
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            nginx:
+              - 'config/nginx/**'
+            alloy
+              - 'config/alloy/**'
+            compose:
+              - 'docker-compose.yml'
+              - 'docker-compose-blue.yml'
+              - 'docker-compose-green.yml'
+
+      - name: Set NEED_NGINX env
+        run: |
+          if [[ "${{ steps.changes.outputs.nginx }}" == "true" || "${{ steps.changes.outputs.compose }}" == "true" ]]; then
+            echo "NEED_NGINX=true" >> $GITHUB_ENV
+          else
+            echo "NEED_NGINX=false" >> $GITHUB_ENV
+          fi
+
+      - name: Set NEED_ALLOY env
+        run: |
+          if [[ "${{ steps.changes.outputs.alloy }}" == "true" || "${{ steps.changes.outputs.compose }}" == "true" ]]; then
+            echo "NEED_ALLOY=true" >> $GITHUB_ENV
+          else
+            echo "NEED_ALLOY=false" >> $GITHUB_ENV
+          fi
 
       - name: Make application-secret.yml without env
         run: |
@@ -64,6 +110,7 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/backend
 
       - name: Docker nginx build & push
+        if: env.NEED_NGINX == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -71,6 +118,16 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/nginx
+
+      - name: Docker alloy build & push
+        if: env.NEED_ALLOY == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./config/alloy/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/alloy
 
       - name: set target IP
         run: |
@@ -95,6 +152,52 @@ jobs:
             exit 1
           fi
 
+      - name: Deploy nginx first if needed
+        if: env.NEED_NGINX == 'true'
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            set -e
+            cd /home/ubuntu/studiox
+
+            sudo touch .env
+            echo "${{ secrets.ENV }}" | sudo tee .env > /dev/null
+
+            # 최신 compose 파일 반영 (nginx 설정/서비스 정의가 바뀌는 케이스 대응)
+            sudo curl -o docker-compose.yml https://raw.githubusercontent.com/studiio-x/BE/main/docker-compose.yml
+
+            sudo chmod 666 /var/run/docker.sock
+
+            # nginx 이미지 갱신 + 컨테이너 재기동(설정 변경 반영)
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/nginx
+            sudo docker compose -f docker-compose.yml --env-file .env up -d --force-recreate nginx
+
+      - name: Deploy alloy if needed
+        if: env.NEED_ALLOY == 'true'
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            set -e
+            cd /home/ubuntu/studiox
+            
+            sudo touch .env
+            echo "${{ secrets.ENV }}" | sudo tee .env > /dev/null
+            
+            # compose 최신 반영 (alloy 서비스 정의/볼륨 변경 대응)
+            sudo curl -o docker-compose.yml https://raw.githubusercontent.com/studiio-x/BE/main/docker-compose.yml
+            
+            sudo chmod 666 /var/run/docker.sock
+            
+            # alloy 이미지 pull + 재기동
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/alloy
+            sudo docker compose -f docker-compose.yml --env-file .env up -d --force-recreate alloy
+
       # ssh 접근 후 docker 이미지 pull 및 컨테이너 재시작
       - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@master
@@ -103,6 +206,7 @@ jobs:
           username: ubuntu #  ec2-user 에서 변경
           key: ${{ secrets.EC2_KEY }}
           script: |
+            set -e
             cd /home/ubuntu/studiox
             
             sudo touch .env

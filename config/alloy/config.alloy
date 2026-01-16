@@ -1,0 +1,55 @@
+logging {
+  level  = "info"
+  format = "logfmt"
+}
+
+local.file_match "spring_logs" {
+  path_targets = [{ __path__ = "/var/log/spring/*/*.log" }]
+}
+
+loki.source.file "spring_source" {
+  targets = local.file_match.spring_logs.targets
+  forward_to = [loki.process.spring_labels.receiver] 
+}
+
+loki.process "spring_labels" {
+  forward_to = [loki.write.grafana_loki.receiver]
+
+  stage.regex {
+      source     = "__path__"
+      expression = `/var/log/spring/(?P<color>[^/]+)/.*\.log$`
+  }
+
+  stage.labels {
+      values = {
+        color = "color"
+      }
+  }
+	
+  stage.regex {
+      expression = `^\[(?P<ts>[^\]]+)\]\s+\[(?P<level>[^\]]+)\]\s+\[(?P<thread>[^\]]+)\]\s+\[(?P<traceId>[^\]]+)\]\s+\[(?P<logger>[^\]]+)\]\s+-\s+(?P<msg>.*)$`
+  }
+
+  stage.static_labels {
+    values = {
+      service = "backend",
+      env = env("ALLOY_ENV")
+    }
+  }
+  
+  stage.labels {
+      values = {
+        level  = "level"
+        logger = "logger"
+      }
+    }
+}
+
+loki.write "grafana_loki" {
+  endpoint {
+    url = env("LOKI_URL")
+    tenant_id = "fake"
+    batch_wait = "1s"
+    batch_size = "1MB"  
+  }
+}
