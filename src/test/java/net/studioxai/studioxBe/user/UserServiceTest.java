@@ -158,12 +158,13 @@ public class UserServiceTest {
     @Test
     @DisplayName("getProfileImageUrl - S3 presigned URL 발급")
     void getProfileImageUrl_success() {
-        S3Url url = S3Url.to("https://example-s3.com/presigned");
+        S3Url url = S3Url.to("https://example-s3.com/presigned", "presigned");
 
         org.mockito.Mockito.when(s3UrlHandler.handle("/profile")).thenReturn(url);
 
         S3Url result = userService.getProfileImageUrl();
 
-        assertEquals("https://example-s3.com/presigned", result.getUrl());
+        assertEquals("https://example-s3.com/presigned", result.getUploadUrl());
+        assertEquals("presigned", result.getObjectKey());
     }
 }
