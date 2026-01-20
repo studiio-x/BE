@@ -3,12 +3,15 @@ package net.studioxai.studioxBe.domain.folder.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.folder.dto.request.FolderCreateRequest;
+import net.studioxai.studioxBe.domain.folder.dto.response.RootFolderResponse;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.folder.exception.FolderErrorCode;
 import net.studioxai.studioxBe.domain.folder.exception.FolderExceptionHandler;
 import net.studioxai.studioxBe.domain.folder.repository.FolderRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
@@ -28,13 +31,17 @@ public class FolderService {
 
     @Transactional
     public void createSubFolder(Long userId, Long parentFolderId, FolderCreateRequest folderCreateRequest) {
-        folderManagerSerivce.validatePermission(userId, parentFolderId);
+        folderManagerSerivce.validateWritePermission(userId, parentFolderId);
 
         Folder parentFolder = folderRepository.findById(parentFolderId)
                 .orElseThrow(() -> new FolderExceptionHandler(FolderErrorCode.PARENT_REQUIRED));
 
         Folder subFolder = Folder.createSub(folderCreateRequest.name(), parentFolder);
         folderRepository.save(subFolder);
+    }
+
+    public List<RootFolderResponse> findfolders(Long userId) {
+        return folderManagerSerivce.getFolders(userId);
     }
 
 }
