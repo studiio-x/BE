@@ -4,9 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import net.studioxai.studioxBe.domain.image.dto.request.CutoutRequest;
 import net.studioxai.studioxBe.domain.image.dto.request.ImageGenerateRequest;
-import net.studioxai.studioxBe.domain.image.dto.response.CutoutResponse;
-import net.studioxai.studioxBe.domain.image.dto.response.ImageGenerateResponse;
-import net.studioxai.studioxBe.domain.image.dto.response.RawPresignResponse;
+import net.studioxai.studioxBe.domain.image.dto.response.*;
 import net.studioxai.studioxBe.domain.image.service.ImageService;
 import net.studioxai.studioxBe.global.jwt.JwtUserPrincipal;
 import org.springframework.http.ResponseEntity;
@@ -20,21 +18,37 @@ public class ImageController {
 
     private final ImageService imageService;
 
-    @GetMapping("/raw/presign")
-    public ResponseEntity<RawPresignResponse> issueRawPresign(
-            @AuthenticationPrincipal JwtUserPrincipal principal
-    ) {
-        return ResponseEntity.ok(imageService.issueRawPresign(principal.getUserId()));
+    @GetMapping("/v1/image/raw/presign")
+    public ResponseEntity<RawPresignResponse> issueRawPresign(@AuthenticationPrincipal JwtUserPrincipal principal) {
+
+        return ResponseEntity.ok(imageService.issueRawPresign(principal.userId()));
     }
 
-    // 2~3. 검증 후 AI 누끼 → cutout을 S3에 저장 → URL 반환
-    @PostMapping("/cutout")
-    public ResponseEntity<CutoutResponse> cutout(
-            @AuthenticationPrincipal JwtUserPrincipal principal,
-            @RequestBody @Valid CutoutRequest request
-    ) {
-        return ResponseEntity.ok(imageService.cutout(principal.getUserId(), request));
+    // 검증 후 AI 누끼 → cutout을 S3에 저장 → URL 반환
+    @PostMapping("/v1/image/cutout")
+    public ResponseEntity<CutoutResponse> cutout(@AuthenticationPrincipal JwtUserPrincipal principal, @RequestBody @Valid CutoutRequest request) {
+
+        return ResponseEntity.ok(imageService.cutout(principal.userId(), request));
     }
+
+    @PostMapping("/v1/image/generate")
+    public ResponseEntity<ImageGenerateResponse> generate(@AuthenticationPrincipal JwtUserPrincipal principal, @RequestBody @Valid ImageGenerateRequest request) {
+
+        return ResponseEntity.ok(imageService.generate(principal.userId(), request));
+    }
+
+    @GetMapping("/v1/image/cutout/{cutoutImageId}")
+    public ResponseEntity<CutoutImageResponse> getCutoutImage(@PathVariable Long cutoutImageId) {
+
+        return ResponseEntity.ok(imageService.getCutoutImage(cutoutImageId));
+    }
+
+    @GetMapping("/{imageId}")
+    public ResponseEntity<ImageResponse> getImage(@PathVariable Long imageId) {
+
+        return ResponseEntity.ok(imageService.getImage(imageId));
+    }
+
 
 
 }

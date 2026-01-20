@@ -20,7 +20,7 @@ public class CutoutImage extends BaseEntity {
     @Column(name = "raw_image_id")
     private Long id;
 
-    @Column(name = "raw_image_url", nullable = false)
+    @Column(name = "cutout_image_url", nullable = false)
     private String cutoutImageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)

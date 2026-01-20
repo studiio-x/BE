@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
@@ -37,14 +39,17 @@ public class OauthService {
 
     public String loginWithGoogle(String code, String redirectUrl) {
         validateCode(code);
-        validateRedirectUrl(redirectUrl);
+
+        String decodedRedirectUrl = URLDecoder.decode(redirectUrl, StandardCharsets.UTF_8);
+
+        validateRedirectUrl(decodedRedirectUrl);
 
         GoogleUserInfoResponse userInfo = getGoogleUserInfo(code);
         User user = findOrCreateGoogleUser(userInfo);
 
         Map<String, String> tokens = authService.issueTokens(user.getId());
 
-        return redirectUrl +
+        return decodedRedirectUrl +
                 "?accessToken=" + tokens.get("accessToken") +
                 "&refreshToken=" + tokens.get("refreshToken");
     }
@@ -60,6 +65,8 @@ public class OauthService {
                 .anyMatch(redirectUrl::startsWith);
 
         if (!allowed) {
+            log.error("Invalid redirect url: {}", redirectUrl);
+            log.error("Invalid redirect url: {}", FRONT_URLS);
             throw new AuthExceptionHandler(AuthErrorCode.INVALID_REDIRECT_URL);
         }
     }
