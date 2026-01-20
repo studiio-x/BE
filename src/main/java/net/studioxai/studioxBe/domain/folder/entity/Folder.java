@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.studioxai.studioxBe.domain.folder.entity.enums.FolderType;
+import net.studioxai.studioxBe.domain.folder.entity.enums.InheritMode;
 import net.studioxai.studioxBe.domain.folder.exception.FolderErrorCode;
 import net.studioxai.studioxBe.domain.folder.exception.FolderExceptionHandler;
 import net.studioxai.studioxBe.global.entity.BaseEntity;
@@ -30,6 +31,10 @@ public class Folder extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "folder_type", nullable = false)
     private FolderType folderType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "inherit_mode", nullable = false)
+    private InheritMode inheritMode;
 
     public static Folder createSub(String name, Folder parentFolder) {
         if(parentFolder == null) {
@@ -56,6 +61,7 @@ public class Folder extends BaseEntity {
         this.name = name;
         this.parentFolder = parentFolder;
         this.folderType = folderType;
+        this.inheritMode = InheritMode.INHERIT;
     }
 
 

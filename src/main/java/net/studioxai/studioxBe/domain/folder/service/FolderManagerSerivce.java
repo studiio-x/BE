@@ -55,7 +55,7 @@ public class FolderManagerSerivce {
         validateWritePermission(actorUserId, targetUserId);
 
         FolderManager folderManager = getManagerByFolderIdAndUserId(folderId, targetUserId);
-        folderManager.updatePermission();
+        folderManager.updateDirectPermission();
 
     }
 

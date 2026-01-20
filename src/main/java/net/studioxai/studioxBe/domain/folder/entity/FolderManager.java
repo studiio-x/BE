@@ -6,8 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.studioxai.studioxBe.domain.folder.entity.enums.Permission;
-import net.studioxai.studioxBe.domain.folder.exception.FolderManagerErrorCode;
-import net.studioxai.studioxBe.domain.folder.exception.FolderManagerExceptionHandler;
+import net.studioxai.studioxBe.domain.folder.entity.enums.SourceType;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.global.entity.BaseEntity;
 
@@ -33,11 +32,16 @@ public class FolderManager extends BaseEntity {
     @Column(name = "permission", nullable = false)
     private Permission permission;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source_type", nullable = false)
+    private SourceType sourceType;
+
     @Builder(access = AccessLevel.PRIVATE)
-    public FolderManager(User user, Folder folder, Permission permission) {
+    public FolderManager(User user, Folder folder, Permission permission, SourceType sourceType) {
         this.user = user;
         this.folder = folder;
         this.permission = permission;
+        this.sourceType = sourceType;
     }
 
     public static FolderManager createRootManager(User user, Folder folder) {
@@ -45,6 +49,7 @@ public class FolderManager extends BaseEntity {
                 .user(user)
                 .folder(folder)
                 .permission(Permission.OWNER)
+                .sourceType(SourceType.ROOT)
                 .build();
     }
 
@@ -53,23 +58,12 @@ public class FolderManager extends BaseEntity {
                 .user(user)
                 .folder(folder)
                 .permission(Permission.WRITE)
+                .sourceType(SourceType.DIRECT)
                 .build();
     }
 
-    public static FolderManager createReader(User user, Folder folder) {
-        return FolderManager.builder()
-                .user(user)
-                .folder(folder)
-                .permission(Permission.READ)
-                .build();
-    }
 
-    public void updatePermission() {
-        if (this.permission == Permission.READ) {
-            this.permission = Permission.WRITE;
-        }
-        else {
-            this.permission = Permission.READ;
-        }
+    public void updateDirectPermission() {
+        this.permission = this.permission.toggle();
     }
 }

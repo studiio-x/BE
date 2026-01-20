@@ -13,6 +13,7 @@ public enum FolderManagerErrorCode implements BaseErrorCode {
 
     // 403 FORBIDDEN
     USER_NO_FOLDER_AUTHORITY(HttpStatus.FORBIDDEN, "FOLDERMANAGER_403_1", "해당 폴더에 대한 권한이 없습니다."),
+    OWNER_PERMISSION_CHANGE_FORBIDDEN(HttpStatus.FORBIDDEN, "FOLDERMANAGER_403_2", "해당 프로젝트의 소유주의 권한을 변경할 수 없습니다."),
 
     // 404 NOT_FOUND
     FOLDER_NOT_FOUND(HttpStatus.NOT_FOUND, "FOLDERMANAGER_404_1", "해당하는 폴더가 존재하지 않습니다."),
