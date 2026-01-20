@@ -3,23 +3,20 @@ package net.studioxai.studioxBe.domain.folder.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import net.studioxai.studioxBe.domain.folder.dto.request.FolderManagerAddRequest;
+import net.studioxai.studioxBe.domain.folder.dto.FolderManagerDto;
+import net.studioxai.studioxBe.domain.folder.dto.response.FolderManagersResponse;
 import net.studioxai.studioxBe.domain.folder.service.FolderManagerSerivce;
 import net.studioxai.studioxBe.global.jwt.JwtUserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class FolderManagerController {
     private final FolderManagerSerivce folderManagerService;
-
-//    @GetMapping("/v1/project")
-//    public List<MyProjectResponse> myProjectList(
-//            @AuthenticationPrincipal JwtUserPrincipal jwtUserPrincipal
-//    ) {
-//        return projectManagerService.getMyProjectList(jwtUserPrincipal.userId());
-//    }
 
     @PostMapping("/v1/folder/manager/{folderId}")
     public void folderManagerAdd(
@@ -38,4 +35,13 @@ public class FolderManagerController {
     ) {
         folderManagerService.updatePermission(principal.userId(), targetUserId, folderId);
     }
+
+    @GetMapping("/v1/folder/manager/{folderId}")
+    public FolderManagersResponse folderManagers(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long folderId
+    ) {
+        return folderManagerService.getManagers(principal.userId(), folderId);
+    }
+
 }

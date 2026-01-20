@@ -2,7 +2,11 @@ package net.studioxai.studioxBe.domain.folder.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.studioxai.studioxBe.domain.folder.dto.FolderManagerDto;
+import net.studioxai.studioxBe.domain.folder.dto.PermissionDto;
 import net.studioxai.studioxBe.domain.folder.dto.request.FolderManagerAddRequest;
+import net.studioxai.studioxBe.domain.folder.dto.response.FolderManagersResponse;
+import net.studioxai.studioxBe.domain.folder.dto.response.RootFolderResponse;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.folder.entity.FolderManager;
 import net.studioxai.studioxBe.domain.folder.entity.enums.Permission;
@@ -27,10 +31,28 @@ public class FolderManagerSerivce {
     private final UserService userService;
     private final FolderRepository folderRepository;
 
+    public FolderManagersResponse getManagers(Long userId, Long folderId) {
+        List<FolderManagerDto> folderManagers = getManagers(folderId);
+        if (folderManagers.isEmpty()) {
+            throw new FolderManagerExceptionHandler(FolderManagerErrorCode.FOLDER_NOT_FOUND);
+        }
+
+        FolderManagerDto me = folderManagers.stream()
+                .filter(m -> m.userId().equals(userId))
+                .findFirst()
+                .orElseThrow(() -> new FolderManagerExceptionHandler(
+                        FolderManagerErrorCode.USER_NO_FOLDER_AUTHORITY
+                ));
+
+        PermissionDto myPermission = PermissionDto.create(me.permission());
+
+        return FolderManagersResponse.create(myPermission, folderManagers);
+    }
+
     // TODO: 상위 권한에 의한 권한이 있을 경우, 상위 폴더와의 연관 끊기
     @Transactional
     public void updatePermission(Long actorUserId, Long targetUserId, Long folderId) {
-        validatePermission(actorUserId, targetUserId);
+        validateWritePermission(actorUserId, targetUserId);
 
         FolderManager folderManager = getManagerByFolderIdAndUserId(folderId, targetUserId);
         folderManager.updatePermission();
@@ -39,7 +61,7 @@ public class FolderManagerSerivce {
 
     @Transactional
     public void inviteManager(Long userId, Long folderId, FolderManagerAddRequest folderManagerAddRequest) {
-        validatePermission(userId, folderId);
+        validateWritePermission(userId, folderId);
 
         userService.getUserByEmailOrThrow(folderManagerAddRequest.email());
 
@@ -64,10 +86,26 @@ public class FolderManagerSerivce {
     }
 
     // TODO: validate 상위 폴더에도 권한 있는 확인
-    public void validatePermission(Long userId, Long folderId) {
+    public void validateWritePermission(Long userId, Long folderId) {
         boolean writable = folderManagerRepository
                 .existsByFolderIdAndUserIdAndPermissionIn(folderId, userId,
                         List.of(Permission.WRITE, Permission.OWNER));
+
+        if (!writable) {
+            throw new FolderManagerExceptionHandler(FolderManagerErrorCode.USER_NO_FOLDER_AUTHORITY);
+        }
+    }
+
+    private List<FolderManagerDto> getManagers(Long folderId) {
+        return folderManagerRepository.findByFolderId(folderId);
+    }
+
+    public List<RootFolderResponse> getFolders(Long userId) {
+        return folderManagerRepository.findByUserId(userId);
+    }
+
+    public void validateReadPermission(Long userId, Long folderId) {
+        boolean writable = folderManagerRepository.existsByFolderIdAndUserId(folderId, userId);
 
         if (!writable) {
             throw new FolderManagerExceptionHandler(FolderManagerErrorCode.USER_NO_FOLDER_AUTHORITY);
