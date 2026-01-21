@@ -65,8 +65,6 @@ public class OauthService {
                 .anyMatch(redirectUrl::startsWith);
 
         if (!allowed) {
-            log.error("Invalid redirect url: {}", redirectUrl);
-            log.error("Invalid redirect url: {}", FRONT_URLS);
             throw new AuthExceptionHandler(AuthErrorCode.INVALID_REDIRECT_URL);
         }
     }

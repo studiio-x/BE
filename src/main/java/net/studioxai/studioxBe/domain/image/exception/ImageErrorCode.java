@@ -14,6 +14,7 @@ public enum ImageErrorCode implements BaseErrorCode {
     IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "IMAGE_404_3", "이미지를 찾을 수 없습니다."),
 
     S3_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE_500_1", "S3 업로드에 실패했습니다."),
+    S3_DOWNLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "IMAGE_500_2", "S3 다운로드에 실패했습니다."),
 
     AI_IMAGE_DOWNLOAD_FAILED(HttpStatus.BAD_GATEWAY, "IMAGE_502_1", "이미지 다운로드에 실패했습니다."),
 

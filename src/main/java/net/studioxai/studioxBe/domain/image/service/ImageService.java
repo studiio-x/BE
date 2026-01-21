@@ -15,8 +15,8 @@ import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
 import net.studioxai.studioxBe.domain.image.repository.CutoutImageRepository;
 import net.studioxai.studioxBe.domain.template.entity.Template;
 import net.studioxai.studioxBe.domain.template.repository.TemplateRepository;
-import net.studioxai.studioxBe.infra.ai.nanobanana.NanobananaClient;
-import net.studioxai.studioxBe.infra.ai.nanobanana.NanobananaGenerateResponse;
+import net.studioxai.studioxBe.infra.ai.gemini.GeminiImageClient;
+import net.studioxai.studioxBe.infra.s3.S3ImageLoader;
 import net.studioxai.studioxBe.infra.s3.S3Url;
 import net.studioxai.studioxBe.infra.s3.S3UrlHandler;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +31,12 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+import java.util.Base64;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+
+
 import java.util.*;
 
 @Service
@@ -38,168 +44,119 @@ import java.util.*;
 @RequiredArgsConstructor
 @Slf4j
 public class ImageService {
+
     private final ImageRepository imageRepository;
     private final CutoutImageRepository cutoutImageRepository;
     private final TemplateRepository templateRepository;
 
     private final S3UrlHandler s3UrlHandler;
     private final S3Client s3Client;
-    private final NanobananaClient nanobananaClient;
-    private final RestTemplate restTemplate;
-
+    private final GeminiImageClient geminiImageClient;
+    private final S3ImageLoader s3ImageLoader;
 
     @Value("${BUCKET_NAME}")
     private String bucket;
 
-    @Value("${server.image-domain}")
-    private String imageDomain;
-
 
     public List<String> getImagesByFolder(Folder folder, int count) {
         Pageable limit = PageRequest.of(0, count);
-
         return imageRepository.findByFolder(folder, limit)
                 .stream()
                 .map(Image::getImageUrl)
                 .toList();
     }
 
-
     public Map<Long, List<String>> getImagesByFolders(List<Folder> folders, int count) {
-        List<Image> images = imageRepository.findByFolders(folders);
-
         Map<Long, List<String>> result = new LinkedHashMap<>();
 
-        for (Image image : images) {
+        for (Image image : imageRepository.findByFolders(folders)) {
             Folder folder = image.getCutoutImage().getFolder();
+            if (folder == null) continue;
 
-            if (folder == null) {continue;}
+            result.computeIfAbsent(folder.getId(), k -> new ArrayList<>());
 
-            Long folderId = folder.getId();
-
-            List<String> urls = result.computeIfAbsent(
-                    folderId,
-                    k -> new ArrayList<>()
-            );
-
-            if (urls.size() >= count) {continue;}
-
-            urls.add(image.getImageUrl());
+            List<String> urls = result.get(folder.getId());
+            if (urls.size() < count) {
+                urls.add(image.getImageUrl());
+            }
         }
-
         return result;
     }
 
-    @Transactional(readOnly = true)
     public RawPresignResponse issueRawPresign(Long userId) {
-        // TODO: userId 기반 rate limit, 권한 체크 등 가능
-
         S3Url s3Url = s3UrlHandler.handle("images/raw");
-        return RawPresignResponse.of(s3Url.getUploadUrl(), s3Url.getObjectKey());
+        return RawPresignResponse.of(
+                s3Url.getUploadUrl(),
+                s3Url.getObjectKey()
+        );
     }
 
-    // 2~3) 검증 → AI 누끼 → cutout S3 업로드
+    @Transactional
     public CutoutResponse cutout(Long userId, CutoutRequest request) {
 
-        // TODO 2) 검증(결제/쿼터/권한 등)
+        // 1. S3 RAW 이미지 → Base64
+        String rawImageBase64 =
+                s3ImageLoader.loadAsBase64(request.rawObjectKey());
 
-        // raw objectKey -> raw image url(접근 가능한 도메인)
-        String rawImageUrl = toPublicUrl(request.rawObjectKey());
+        // 2. Gemini 누끼 요청
+        String cutoutBase64 =
+                geminiImageClient.removeBackground(rawImageBase64);
 
-        // 2) AI에게 누끼 요청 (templateImageUrl은 null)
-        NanobananaGenerateResponse aiResponse =
-                nanobananaClient.generateImage(
-                        rawImageUrl,
-                        null,
-                        "remove background"
-                );
+        // 3. Base64 → byte[]
+        byte[] cutoutBytes = Base64.getDecoder().decode(cutoutBase64);
 
-        String cutoutExternalUrl = aiResponse.outputImageUrl();
+        // 4. S3 저장
+        String cutoutObjectKey =
+                "images/cutout/" + UUID.randomUUID() + ".png";
 
-        // 3) AI 결과 이미지를 다운로드 -> 우리 S3에 저장
-        byte[] cutoutBytes = downloadBytes(cutoutExternalUrl);
+        uploadToS3(cutoutObjectKey, cutoutBytes);
 
-        String cutoutKey = "images/cutout/" + UUID.randomUUID() + ".png";
-
-        putObjectToS3(cutoutKey, cutoutBytes, "image/png");
-
-        return CutoutResponse.of(cutoutKey);
+        return CutoutResponse.of(cutoutObjectKey);
     }
 
-    private String toPublicUrl(String objectKeyOrUrl) {
-        if (objectKeyOrUrl.startsWith("http://") || objectKeyOrUrl.startsWith("https://")) {
-            return objectKeyOrUrl;
-        }
-        return imageDomain + objectKeyOrUrl;
-    }
+    @Transactional
+    public ImageGenerateResponse generate(Long userId, ImageGenerateRequest request) {
 
-    private byte[] downloadBytes(String url) {
-        try {
-            ResponseEntity<byte[]> response = restTemplate.getForEntity(url, byte[].class);
-            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-                throw new IllegalStateException("Failed to download cutout image from AI response url.");
-            }
-            return response.getBody();
-        } catch (RestClientException e) {
-            throw new ImageExceptionHandler(ImageErrorCode.AI_IMAGE_DOWNLOAD_FAILED);
-        }
-    }
+        CutoutImage cutoutImage =
+                cutoutImageRepository.findById(request.cutoutImageId())
+                        .orElseThrow(() ->
+                                new ImageExceptionHandler(ImageErrorCode.CUTOUT_IMAGE_NOT_FOUND));
 
-    private void putObjectToS3(String objectKey, byte[] bytes, String contentType) {
-        try {
-            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                    .bucket(bucket)
-                    .key(objectKey)
-                    .contentType(contentType)
-                    .build();
+        Template template =
+                templateRepository.findById(request.templateId())
+                        .orElseThrow(() ->
+                                new ImageExceptionHandler(ImageErrorCode.TEMPLATE_NOT_FOUND));
 
-            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(bytes));
-        } catch (Exception e) {
-            throw new ImageExceptionHandler(ImageErrorCode.S3_UPLOAD_FAILED);
+        // 1. 이미지 Base64 로드
+        String cutoutBase64 =
+                s3ImageLoader.loadAsBase64(cutoutImage.getCutoutImageUrl());
 
-        }
-    }
+        String templateBase64 =
+                s3ImageLoader.loadAsBase64(template.getImageUrl());
 
-    public ImageGenerateResponse generate(
-            Long userId,
-            ImageGenerateRequest request
-    ) {
-        // 1. CutoutImage 조회
-        CutoutImage cutoutImage = cutoutImageRepository.findById(request.cutoutImageId())
-                .orElseThrow(() -> new ImageExceptionHandler(ImageErrorCode.CUTOUT_IMAGE_NOT_FOUND));
-
-        // 2. Template 조회
-        Template template = templateRepository.findById(request.templateId())
-                .orElseThrow(() -> new ImageExceptionHandler(
-                        ImageErrorCode.TEMPLATE_NOT_FOUND
-                ));
-
-        // TODO userId 권한 검증 (cutoutImage 소유자 등)
-
-        // 3. AI 합성 요청
-        NanobananaGenerateResponse aiResponse =
-                nanobananaClient.generateImage(
-                        toPublicUrl(cutoutImage.getCutoutImageUrl()),
-                        template.getImageUrl(),
+        // 2. Gemini 합성 요청
+        String resultBase64 =
+                geminiImageClient.generateCompositeImage(
+                        cutoutBase64,
+                        templateBase64,
                         request.prompt()
                 );
 
-        // 4. AI 결과 다운로드
-        byte[] resultBytes = downloadBytes(aiResponse.outputImageUrl());
+        byte[] resultBytes = Base64.getDecoder().decode(resultBase64);
 
-        // 5. S3 업로드
-        String resultKey = "images/result/" + UUID.randomUUID() + ".png";
+        // 3. S3 업로드
+        String resultKey =
+                "images/result/" + UUID.randomUUID() + ".png";
+
         uploadToS3(resultKey, resultBytes);
 
-        // 6. Image 엔티티 저장
-        Image image = Image.create(
-                cutoutImage,
-                resultKey
-        );
+        // 4. DB 저장
+        Image image = Image.create(cutoutImage, resultKey);
         imageRepository.save(image);
 
         return ImageGenerateResponse.of(image);
     }
+
 
     private void uploadToS3(String objectKey, byte[] bytes) {
         try {
@@ -216,6 +173,7 @@ public class ImageService {
         }
     }
 
+
     public CutoutImageResponse getCutoutImage(Long cutoutImageId) {
         CutoutImage cutoutImage =
                 cutoutImageRepository.findWithTemplateAndFolderById(cutoutImageId)
@@ -228,11 +186,9 @@ public class ImageService {
     public ImageResponse getImage(Long imageId) {
         Image image =
                 imageRepository.findDetailById(imageId)
-                        .orElseThrow(() -> new ImageExceptionHandler(ImageErrorCode.IMAGE_NOT_FOUND));
+                        .orElseThrow(() ->
+                                new ImageExceptionHandler(ImageErrorCode.IMAGE_NOT_FOUND));
 
         return ImageResponse.from(image);
     }
-
-
-
 }
