@@ -21,7 +21,8 @@ public enum FolderManagerErrorCode implements BaseErrorCode {
 
     // 409 CONFLICT
     USER_ALREADY_FOLDER_MANAGER(HttpStatus.CONFLICT, "FOLDERMANAGER_409_1", "이미 폴더 매니저로 등록된 유저입니다."),
-    FOLDER_PARENT_RELATION_EXISTS(HttpStatus.CONFLICT, "FOLDERMANAGER_409_2", "상위 폴더와의 연관을 먼저 끊어야합니다."),;
+    FOLDER_PARENT_RELATION_EXISTS(HttpStatus.CONFLICT, "FOLDERMANAGER_409_2", "상위 폴더와의 연관을 먼저 끊어야합니다."),
+    MANAGER_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "FOLDERMANAGER_409_3", "프로젝트의 관리자를 5명 이상 초대할 수 없습니다."),;
 
     private final HttpStatus status;
     private final String code;

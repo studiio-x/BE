@@ -6,8 +6,6 @@ import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
-import net.studioxai.studioxBe.domain.folder.repository.FolderManagerRepository;
-import net.studioxai.studioxBe.domain.folder.service.FolderManagerSerivce;
 import net.studioxai.studioxBe.domain.folder.service.FolderService;
 import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
 import net.studioxai.studioxBe.domain.user.entity.User;

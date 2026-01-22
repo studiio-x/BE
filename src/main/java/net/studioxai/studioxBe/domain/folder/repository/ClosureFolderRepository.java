@@ -2,6 +2,7 @@ package net.studioxai.studioxBe.domain.folder.repository;
 
 import net.studioxai.studioxBe.domain.folder.dto.FolderManagerDto;
 import net.studioxai.studioxBe.domain.folder.dto.projection.FolderManagerProjection;
+import net.studioxai.studioxBe.domain.folder.dto.projection.RootFolderProjection;
 import net.studioxai.studioxBe.domain.folder.entity.ClosureFolder;
 import net.studioxai.studioxBe.domain.folder.entity.enums.Permission;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -60,6 +61,42 @@ public interface ClosureFolderRepository extends JpaRepository<ClosureFolder, Lo
             @Param("folderId") Long folderId,
             @Param("aclRootFolderId") Long aclRootFolderId
     );
+
+    @Query(value = """
+    SELECT COUNT(DISTINCT fm.user_id)
+    FROM closure_folders cf
+    JOIN folder_managers fm
+      ON fm.folder_id = cf.ancestor_folder_id
+    JOIN closure_folders cr
+      ON cr.ancestor_folder_id = :aclRootFolderId
+     AND cr.descendant_folder_id = cf.ancestor_folder_id
+    WHERE cf.descendant_folder_id = :folderId
+      AND cf.depth = (
+          SELECT MIN(cf2.depth)
+          FROM closure_folders cf2
+          JOIN folder_managers fm2
+            ON fm2.folder_id = cf2.ancestor_folder_id
+           AND fm2.user_id = fm.user_id
+          WHERE cf2.descendant_folder_id = :folderId
+      )
+    """, nativeQuery = true)
+    long countManagers(
+            @Param("folderId") Long folderId,
+            @Param("aclRootFolderId") Long aclRootFolderId
+    );
+
+    @Query(value = """
+    SELECT DISTINCT
+      f.folder_id AS id,
+      f.name AS name
+    FROM folder_managers fm
+    JOIN closure_folders cf
+      ON cf.descendant_folder_id = fm.folder_id
+    JOIN folders f
+      ON f.folder_id = cf.ancestor_folder_id
+    WHERE fm.user_id = :userId
+    """, nativeQuery = true)
+    List<RootFolderProjection> findMyFolders(@Param("userId") Long userId);
 
 
 }

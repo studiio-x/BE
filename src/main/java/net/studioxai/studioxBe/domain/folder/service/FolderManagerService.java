@@ -26,7 +26,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
-public class FolderManagerSerivce {
+public class FolderManagerService {
 
     private final FolderManagerRepository folderManagerRepository;
     private final UserService userService;
@@ -70,6 +70,11 @@ public class FolderManagerSerivce {
         );
 
         isUserWritable(userId, folderId);
+
+        long count = closureFolderRepository.countManagers(folderId, folder.getAclRootFolderId());
+        if (count >= 5) {
+            throw new FolderManagerExceptionHandler(FolderManagerErrorCode.MANAGER_LIMIT_EXCEEDED);
+        }
 
         userService.getUserByEmailOrThrow(folderManagerAddRequest.email());
 

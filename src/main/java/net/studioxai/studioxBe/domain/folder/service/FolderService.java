@@ -8,6 +8,7 @@ import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.folder.exception.FolderErrorCode;
 import net.studioxai.studioxBe.domain.folder.exception.FolderExceptionHandler;
 import net.studioxai.studioxBe.domain.folder.repository.ClosureFolderInsertRepository;
+import net.studioxai.studioxBe.domain.folder.repository.ClosureFolderRepository;
 import net.studioxai.studioxBe.domain.folder.repository.FolderRepository;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import org.springframework.stereotype.Service;
@@ -22,8 +23,9 @@ import java.util.List;
 public class FolderService {
 
     private final FolderRepository folderRepository;
-    private final FolderManagerSerivce folderManagerService;
+    private final FolderManagerService folderManagerService;
     private final ClosureFolderInsertRepository closureFolderInsertRepository;
+    private final ClosureFolderRepository closureFolderRepository;
 
     @Transactional
     public Folder createRootFolder(String folderName, User user) {
@@ -48,7 +50,12 @@ public class FolderService {
     }
 
     public List<RootFolderResponse> findFolders(Long userId) {
-        return folderManagerService.getFolders(userId);
+        return closureFolderRepository.findMyFolders(userId).stream()
+                .map(p -> RootFolderResponse.create(
+                        p.getFolderId(),
+                        p.getName()
+                ))
+                .toList();
     }
 
 }
