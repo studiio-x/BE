@@ -41,4 +41,5 @@ public class FolderManagerController {
         return folderManagerService.getManagers(principal.userId(), folderId);
     }
 
+
 }

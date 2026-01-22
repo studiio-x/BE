@@ -6,16 +6,22 @@ import net.studioxai.studioxBe.domain.folder.dto.FolderManagerDto;
 import net.studioxai.studioxBe.domain.folder.dto.PermissionDto;
 import net.studioxai.studioxBe.domain.folder.dto.request.FolderManagerAddRequest;
 import net.studioxai.studioxBe.domain.folder.dto.response.FolderManagersResponse;
-import net.studioxai.studioxBe.domain.folder.dto.response.RootFolderResponse;
+import net.studioxai.studioxBe.domain.folder.dto.RootFolderDto;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.folder.entity.FolderManager;
+import net.studioxai.studioxBe.domain.folder.entity.enums.LinkMode;
 import net.studioxai.studioxBe.domain.folder.entity.enums.Permission;
+import net.studioxai.studioxBe.domain.folder.exception.FolderErrorCode;
+import net.studioxai.studioxBe.domain.folder.exception.FolderExceptionHandler;
 import net.studioxai.studioxBe.domain.folder.exception.FolderManagerErrorCode;
 import net.studioxai.studioxBe.domain.folder.exception.FolderManagerExceptionHandler;
 import net.studioxai.studioxBe.domain.folder.repository.ClosureFolderRepository;
 import net.studioxai.studioxBe.domain.folder.repository.FolderManagerRepository;
 import net.studioxai.studioxBe.domain.folder.repository.FolderRepository;
 import net.studioxai.studioxBe.domain.user.entity.User;
+import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
+import net.studioxai.studioxBe.domain.user.exception.UserExceptionHandler;
+import net.studioxai.studioxBe.domain.user.repository.UserRepository;
 import net.studioxai.studioxBe.domain.user.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,10 +60,24 @@ public class FolderManagerService {
     @Transactional
     public void updatePermission(Long actorUserId, Long targetUserId, Long folderId) {
         isUserWritable(actorUserId, folderId);
+        Permission permission = getPermission(targetUserId, folderId);
 
-        FolderManager folderManager = folderManagerRepository.findByFolderIdAndUserId(folderId, targetUserId).orElseThrow(
-                () -> new FolderManagerExceptionHandler(FolderManagerErrorCode.FOLDER_PARENT_RELATION_EXISTS)
-        );
+        Folder folder = folderRepository.findById(folderId)
+                .orElseThrow(() -> new FolderExceptionHandler(FolderErrorCode.FOLDER_NOT_FOUND));
+
+        FolderManager folderManager = folderManagerRepository
+                .findByFolderIdAndUserId(folderId, targetUserId)
+                .orElseGet(() -> {
+                    if (folder.getLinkMode() != LinkMode.UNLINK) {
+                        throw new FolderManagerExceptionHandler(FolderManagerErrorCode.FOLDER_PARENT_RELATION_EXISTS);
+                    }
+
+                    User targetUser = userService.getUserByIdOrThrow(targetUserId);
+
+                    return folderManagerRepository.save(
+                            FolderManager.create(targetUser, folder, permission)
+                    );
+                });
 
         folderManager.updateDirectPermission();
 
@@ -115,13 +135,19 @@ public class FolderManagerService {
         return result;
     }
 
-    public List<RootFolderResponse> getFolders(Long userId) {
+    public List<RootFolderDto> getFolders(Long userId) {
         return folderManagerRepository.findByUserId(userId);
     }
 
     public void isUserWritable(Long userId, Long folderId) {
         if (!getPermission(userId, folderId).isWritable()) {
             throw new FolderManagerExceptionHandler(FolderManagerErrorCode.USER_NO_FOLDER_AUTHORITY);
+        }
+    }
+
+    public void isUserAdmin(Long userId, Long folderId) {
+        if (!getPermission(userId, folderId).isReadable()) {
+            throw new FolderManagerExceptionHandler(FolderManagerErrorCode.FOLDERMANAGER_NOT_FOUND);
         }
     }
 

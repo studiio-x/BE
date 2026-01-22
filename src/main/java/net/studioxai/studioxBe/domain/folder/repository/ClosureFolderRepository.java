@@ -87,13 +87,28 @@ public interface ClosureFolderRepository extends JpaRepository<ClosureFolder, Lo
 
     @Query(value = """
     SELECT DISTINCT
-      f.folder_id AS id,
-      f.name AS name
+      r.folder_id AS folderId,
+      r.name AS name,
+      CASE WHEN fmo.folder_manager_id IS NULL THEN 0 ELSE 1 END AS isOwner
     FROM folder_managers fm
-    JOIN closure_folders cf
-      ON cf.descendant_folder_id = fm.folder_id
-    JOIN folders f
-      ON f.folder_id = cf.ancestor_folder_id
+    JOIN (
+        SELECT cf.descendant_folder_id, cf.ancestor_folder_id AS root_id
+        FROM closure_folders cf
+        JOIN (
+            SELECT descendant_folder_id, MAX(depth) AS max_depth
+            FROM closure_folders
+            GROUP BY descendant_folder_id
+        ) md
+          ON md.descendant_folder_id = cf.descendant_folder_id
+         AND md.max_depth = cf.depth
+    ) roots
+      ON roots.descendant_folder_id = fm.folder_id
+    JOIN folders r
+      ON r.folder_id = roots.root_id
+    LEFT JOIN folder_managers fmo
+      ON fmo.user_id = :userId
+     AND fmo.folder_id = r.folder_id
+     AND fmo.permission = 'OWNER'
     WHERE fm.user_id = :userId
     """, nativeQuery = true)
     List<RootFolderProjection> findMyFolders(@Param("userId") Long userId);

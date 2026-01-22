@@ -63,10 +63,14 @@ public class Folder extends BaseEntity {
     }
 
     public void updateRootAclId() {
-        if(this.folderType != FolderType.ROOT) {
+        if (this.folderType == FolderType.ROOT) {
             throw new FolderExceptionHandler(FolderErrorCode.ACL_ROOT_SET_ONLY_FOR_ROOT);
         }
         this.aclRootFolderId = this.id;
+    }
+
+    public void updateLinkMode() {
+        this.linkMode = this.linkMode.toggle();
     }
 
     @Builder(access = AccessLevel.PRIVATE)

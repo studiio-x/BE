@@ -63,6 +63,15 @@ public class FolderManager extends BaseEntity {
                 .build();
     }
 
+    public static FolderManager create(User user, Folder folder, Permission permission) {
+        return FolderManager.builder()
+                .user(user)
+                .folder(folder)
+                .permission(permission)
+                .linkMode(folder.getLinkMode())
+                .build();
+    }
+
 
     public void updateDirectPermission() {
         this.permission = this.permission.toggle();

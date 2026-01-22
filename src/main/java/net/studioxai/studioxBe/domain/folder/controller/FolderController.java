@@ -3,8 +3,8 @@ package net.studioxai.studioxBe.domain.folder.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import net.studioxai.studioxBe.domain.folder.dto.request.FolderCreateRequest;
-import net.studioxai.studioxBe.domain.folder.dto.response.FolderResponse;
-import net.studioxai.studioxBe.domain.folder.dto.response.RootFolderResponse;
+import net.studioxai.studioxBe.domain.folder.dto.RootFolderDto;
+import net.studioxai.studioxBe.domain.folder.dto.response.MyFolderResponse;
 import net.studioxai.studioxBe.domain.folder.service.FolderService;
 import net.studioxai.studioxBe.global.jwt.JwtUserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,10 +28,20 @@ public class FolderController {
     }
 
     @GetMapping("/v1/folder")
-    public List<RootFolderResponse> myfolders(
+    public MyFolderResponse myfolders(
             @AuthenticationPrincipal JwtUserPrincipal principal
     ) {
         return folderService.findFolders(principal.userId());
     }
+
+    @PutMapping("/v1/folder/{folderId}")
+    public void folderUnlinked(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long folderId
+    ) {
+        folderService.changeLinkMode(principal.userId(), folderId);
+    }
+
+
 
 }
