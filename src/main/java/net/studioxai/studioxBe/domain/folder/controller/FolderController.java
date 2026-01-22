@@ -31,7 +31,7 @@ public class FolderController {
     public List<RootFolderResponse> myfolders(
             @AuthenticationPrincipal JwtUserPrincipal principal
     ) {
-        return folderService.findfolders(principal.userId());
+        return folderService.findFolders(principal.userId());
     }
 
 }

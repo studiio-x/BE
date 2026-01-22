@@ -7,7 +7,9 @@ import net.studioxai.studioxBe.domain.folder.dto.response.RootFolderResponse;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.folder.exception.FolderErrorCode;
 import net.studioxai.studioxBe.domain.folder.exception.FolderExceptionHandler;
+import net.studioxai.studioxBe.domain.folder.repository.ClosureFolderInsertRepository;
 import net.studioxai.studioxBe.domain.folder.repository.FolderRepository;
+import net.studioxai.studioxBe.domain.user.entity.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,28 +22,33 @@ import java.util.List;
 public class FolderService {
 
     private final FolderRepository folderRepository;
-    private final FolderManagerSerivce folderManagerSerivce;
+    private final FolderManagerSerivce folderManagerService;
+    private final ClosureFolderInsertRepository closureFolderInsertRepository;
 
     @Transactional
-    public Folder createRootFolder(String folderName) {
+    public Folder createRootFolder(String folderName, User user) {
         Folder rootFolder = Folder.createRoot(folderName);
-        folderRepository.save(rootFolder);
+        folderRepository.saveAndFlush(rootFolder);
+        folderManagerService.createRootManager(user, rootFolder);
+        closureFolderInsertRepository.insertClosureForNewFolder(null, rootFolder.getId());
+        rootFolder.updateRootAclId();
         return rootFolder;
     }
 
     @Transactional
     public void createSubFolder(Long userId, Long parentFolderId, FolderCreateRequest folderCreateRequest) {
-        folderManagerSerivce.validateWritePermission(userId, parentFolderId);
-
         Folder parentFolder = folderRepository.findById(parentFolderId)
                 .orElseThrow(() -> new FolderExceptionHandler(FolderErrorCode.PARENT_REQUIRED));
 
+        folderManagerService.isUserWritable(userId, parentFolderId);
+
         Folder subFolder = Folder.createSub(folderCreateRequest.name(), parentFolder);
-        folderRepository.save(subFolder);
+        folderRepository.saveAndFlush(subFolder);
+        closureFolderInsertRepository.insertClosureForNewFolder(parentFolder.getId(), subFolder.getId());
     }
 
-    public List<RootFolderResponse> findfolders(Long userId) {
-        return folderManagerSerivce.getFolders(userId);
+    public List<RootFolderResponse> findFolders(Long userId) {
+        return folderManagerService.getFolders(userId);
     }
 
 }

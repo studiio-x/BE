@@ -12,6 +12,7 @@ import net.studioxai.studioxBe.domain.folder.entity.FolderManager;
 import net.studioxai.studioxBe.domain.folder.entity.enums.Permission;
 import net.studioxai.studioxBe.domain.folder.exception.FolderManagerErrorCode;
 import net.studioxai.studioxBe.domain.folder.exception.FolderManagerExceptionHandler;
+import net.studioxai.studioxBe.domain.folder.repository.ClosureFolderRepository;
 import net.studioxai.studioxBe.domain.folder.repository.FolderManagerRepository;
 import net.studioxai.studioxBe.domain.folder.repository.FolderRepository;
 import net.studioxai.studioxBe.domain.user.entity.User;
@@ -30,6 +31,7 @@ public class FolderManagerSerivce {
     private final FolderManagerRepository folderManagerRepository;
     private final UserService userService;
     private final FolderRepository folderRepository;
+    private final ClosureFolderRepository closureFolderRepository;
 
     public FolderManagersResponse getManagers(Long userId, Long folderId) {
         List<FolderManagerDto> folderManagers = getManagers(folderId);
@@ -49,25 +51,27 @@ public class FolderManagerSerivce {
         return FolderManagersResponse.create(myPermission, folderManagers);
     }
 
-    // TODO: 상위 권한에 의한 권한이 있을 경우, 상위 폴더와의 연관 끊기
     @Transactional
     public void updatePermission(Long actorUserId, Long targetUserId, Long folderId) {
-        validateWritePermission(actorUserId, targetUserId);
+        isUserWritable(actorUserId, folderId);
 
-        FolderManager folderManager = getManagerByFolderIdAndUserId(folderId, targetUserId);
+        FolderManager folderManager = folderManagerRepository.findByFolderIdAndUserId(folderId, targetUserId).orElseThrow(
+                () -> new FolderManagerExceptionHandler(FolderManagerErrorCode.FOLDER_PARENT_RELATION_EXISTS)
+        );
+
         folderManager.updateDirectPermission();
 
     }
 
     @Transactional
     public void inviteManager(Long userId, Long folderId, FolderManagerAddRequest folderManagerAddRequest) {
-        validateWritePermission(userId, folderId);
-
-        userService.getUserByEmailOrThrow(folderManagerAddRequest.email());
-
         Folder folder = folderRepository.findById(folderId).orElseThrow(
                 () -> new FolderManagerExceptionHandler(FolderManagerErrorCode.FOLDER_NOT_FOUND)
         );
+
+        isUserWritable(userId, folderId);
+
+        userService.getUserByEmailOrThrow(folderManagerAddRequest.email());
 
         createWritableManager(userId, folder);
     }
@@ -81,21 +85,12 @@ public class FolderManagerSerivce {
     @Transactional
     public void createWritableManager(Long userId, Folder folder) {
         User user = userService.getUserByIdOrThrow(userId);
+
         FolderManager writerManager = FolderManager.createWriter(user, folder);
         folderManagerRepository.save(writerManager);
     }
 
-    // TODO: validate 상위 폴더에도 권한 있는 확인
-    public void validateWritePermission(Long userId, Long folderId) {
-        boolean writable = folderManagerRepository
-                .existsByFolderIdAndUserIdAndPermissionIn(folderId, userId,
-                        List.of(Permission.WRITE, Permission.OWNER));
-
-        if (!writable) {
-            throw new FolderManagerExceptionHandler(FolderManagerErrorCode.USER_NO_FOLDER_AUTHORITY);
-        }
-    }
-
+    // TODO: 상위 폴더 manager도 한꺼번에 갖고오기
     private List<FolderManagerDto> getManagers(Long folderId) {
         return folderManagerRepository.findByFolderId(folderId);
     }
@@ -104,17 +99,20 @@ public class FolderManagerSerivce {
         return folderManagerRepository.findByUserId(userId);
     }
 
-    public void validateReadPermission(Long userId, Long folderId) {
-        boolean writable = folderManagerRepository.existsByFolderIdAndUserId(folderId, userId);
-
-        if (!writable) {
+    public void isUserWritable(Long userId, Long folderId) {
+        if (!getPermission(userId, folderId).isWritable()) {
             throw new FolderManagerExceptionHandler(FolderManagerErrorCode.USER_NO_FOLDER_AUTHORITY);
         }
     }
 
-    public FolderManager getManagerByFolderIdAndUserId(Long folderId, Long userId) {
-        return folderManagerRepository.findByFolderIdAndUserId(folderId, userId).orElseThrow(
-                () -> new FolderManagerExceptionHandler(FolderManagerErrorCode.FOLDERMANAGER_NOT_FOUND)
+    private Permission getPermission(Long userId, Long folderId) {
+        Folder folder = folderRepository.findById(folderId).orElseThrow(
+                () -> new FolderManagerExceptionHandler(FolderManagerErrorCode.FOLDER_NOT_FOUND)
+        );
+
+        return closureFolderRepository.findPermission(folderId, folder.getAclRootFolderId(), userId).orElseThrow(
+                () -> new FolderManagerExceptionHandler(FolderManagerErrorCode.USER_NO_FOLDER_AUTHORITY)
         );
     }
+
 }

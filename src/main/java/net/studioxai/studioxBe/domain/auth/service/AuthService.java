@@ -35,7 +35,6 @@ public class AuthService {
     private final JwtProvider jwtProvider;
     private final TokenService tokenService;
     private final FolderService folderService;
-    private final FolderManagerSerivce folderManagerSerivce;
     private final EmailVerificationService emailVerificationService;
 
     public static final String DEFAULT_PROFILE_IMAGE_URL = "profile-example.com";
@@ -68,7 +67,7 @@ public class AuthService {
                 LocalDateTime.now()
         );
 
-        userRepository.save(user);
+        userRepository.saveAndFlush(user);
         provisioningFolder(user);
 
         return buildLoginResponse(user);
@@ -88,8 +87,7 @@ public class AuthService {
     @Transactional
     protected void provisioningFolder(User user) {
         String folderName = user.getUsername() + "의 프로젝트";
-        Folder folder = folderService.createRootFolder(folderName);
-        folderManagerSerivce.createRootManager(user, folder);
+        Folder folder = folderService.createRootFolder(folderName, user);
     }
 
     private User getUserByEmailOrThrow(String email) {

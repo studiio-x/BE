@@ -20,7 +20,8 @@ public enum FolderManagerErrorCode implements BaseErrorCode {
     FOLDERMANAGER_NOT_FOUND(HttpStatus.NOT_FOUND, "FOLDERMANAGER_404_2", "해당하는 관리자가 존재하지 않습니다."),
 
     // 409 CONFLICT
-    USER_ALREADY_FOLDER_MANAGER(HttpStatus.CONFLICT, "FOLDERMANAGER_409_1", "이미 폴더 매니저로 등록된 유저입니다."),;
+    USER_ALREADY_FOLDER_MANAGER(HttpStatus.CONFLICT, "FOLDERMANAGER_409_1", "이미 폴더 매니저로 등록된 유저입니다."),
+    FOLDER_PARENT_RELATION_EXISTS(HttpStatus.CONFLICT, "FOLDERMANAGER_409_2", "상위 폴더와의 연관을 먼저 끊어야합니다."),;
 
     private final HttpStatus status;
     private final String code;

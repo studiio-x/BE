@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.studioxai.studioxBe.domain.folder.entity.enums.FolderType;
-import net.studioxai.studioxBe.domain.folder.entity.enums.InheritMode;
+import net.studioxai.studioxBe.domain.folder.entity.enums.LinkMode;
 import net.studioxai.studioxBe.domain.folder.exception.FolderErrorCode;
 import net.studioxai.studioxBe.domain.folder.exception.FolderExceptionHandler;
 import net.studioxai.studioxBe.global.entity.BaseEntity;
@@ -28,23 +28,27 @@ public class Folder extends BaseEntity {
     @JoinColumn(name = "parent_folder", nullable = true)
     private Folder parentFolder;
 
+    @Column(name = "acl_root_folder_id", nullable = false)
+    private Long aclRootFolderId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "folder_type", nullable = false)
     private FolderType folderType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "inherit_mode", nullable = false)
-    private InheritMode inheritMode;
+    @Column(name = "link_mode", nullable = false)
+    private LinkMode linkMode;
 
     public static Folder createSub(String name, Folder parentFolder) {
         if(parentFolder == null) {
             throw new FolderExceptionHandler(FolderErrorCode.PARENT_REQUIRED);
         }
-
         return Folder.builder()
                 .name(name)
                 .parentFolder(parentFolder)
                 .folderType(FolderType.SUB)
+                .linkMode(LinkMode.LINK)
+                .aclRootFolderId(parentFolder.getAclRootFolderId())
                 .build();
     }
 
@@ -53,16 +57,34 @@ public class Folder extends BaseEntity {
                 .name(name)
                 .parentFolder(null)
                 .folderType(FolderType.ROOT)
+                .linkMode(LinkMode.UNLINK)
+                .aclRootFolderId(null)
                 .build();
     }
 
+    public void updateRootAclId() {
+        if(this.folderType != FolderType.ROOT) {
+            throw new FolderExceptionHandler(FolderErrorCode.ACL_ROOT_SET_ONLY_FOR_ROOT);
+        }
+        this.aclRootFolderId = this.id;
+    }
+
     @Builder(access = AccessLevel.PRIVATE)
-    private Folder(String name, Folder parentFolder, FolderType folderType) {
+    private Folder(
+            String name,
+            Folder parentFolder,
+            FolderType folderType,
+            LinkMode linkMode,
+            Long aclRootFolderId
+        ) {
         this.name = name;
         this.parentFolder = parentFolder;
         this.folderType = folderType;
-        this.inheritMode = InheritMode.INHERIT;
+        this.linkMode = linkMode;
+        this.aclRootFolderId = aclRootFolderId;
     }
+
+
 
 
 }

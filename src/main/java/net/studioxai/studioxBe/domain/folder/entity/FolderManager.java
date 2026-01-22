@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import net.studioxai.studioxBe.domain.folder.entity.enums.LinkMode;
 import net.studioxai.studioxBe.domain.folder.entity.enums.Permission;
 import net.studioxai.studioxBe.domain.folder.entity.enums.SourceType;
 import net.studioxai.studioxBe.domain.user.entity.User;
@@ -33,15 +34,15 @@ public class FolderManager extends BaseEntity {
     private Permission permission;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "source_type", nullable = false)
-    private SourceType sourceType;
+    @Column(name = "link_mode", nullable = false)
+    private LinkMode linkMode;
 
     @Builder(access = AccessLevel.PRIVATE)
-    public FolderManager(User user, Folder folder, Permission permission, SourceType sourceType) {
+    public FolderManager(User user, Folder folder, Permission permission, LinkMode linkMode) {
         this.user = user;
         this.folder = folder;
         this.permission = permission;
-        this.sourceType = sourceType;
+        this.linkMode = linkMode;
     }
 
     public static FolderManager createRootManager(User user, Folder folder) {
@@ -49,7 +50,7 @@ public class FolderManager extends BaseEntity {
                 .user(user)
                 .folder(folder)
                 .permission(Permission.OWNER)
-                .sourceType(SourceType.ROOT)
+                .linkMode(LinkMode.LINK)
                 .build();
     }
 
@@ -58,7 +59,7 @@ public class FolderManager extends BaseEntity {
                 .user(user)
                 .folder(folder)
                 .permission(Permission.WRITE)
-                .sourceType(SourceType.DIRECT)
+                .linkMode(folder.getLinkMode())
                 .build();
     }
 
