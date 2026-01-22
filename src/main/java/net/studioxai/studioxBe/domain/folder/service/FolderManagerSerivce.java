@@ -90,9 +90,24 @@ public class FolderManagerSerivce {
         folderManagerRepository.save(writerManager);
     }
 
-    // TODO: 상위 폴더 manager도 한꺼번에 갖고오기
     private List<FolderManagerDto> getManagers(Long folderId) {
-        return folderManagerRepository.findByFolderId(folderId);
+        Folder folder = folderRepository.findById(folderId).orElseThrow(
+                () -> new FolderManagerExceptionHandler(FolderManagerErrorCode.FOLDER_NOT_FOUND)
+        );
+
+        List<FolderManagerDto> result =
+                closureFolderRepository.findAllUserPermissions(folderId, folder.getAclRootFolderId())
+                        .stream()
+                        .map(p -> FolderManagerDto.create(
+                                p.getUserId(),
+                                p.getProfileUrl(),
+                                p.getUsername(),
+                                p.getEmail(),
+                                p.getPermission()
+                        ))
+                        .toList();
+
+        return result;
     }
 
     public List<RootFolderResponse> getFolders(Long userId) {
