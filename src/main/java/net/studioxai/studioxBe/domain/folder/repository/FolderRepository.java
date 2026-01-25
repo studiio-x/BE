@@ -12,7 +12,7 @@ import java.util.Optional;
 
 @Repository
 public interface FolderRepository extends JpaRepository<Folder, Long> {
-    Optional<Long> findAclRootIdByFolderId(Long folderId);
+    Optional<Long> findAclRootIdById(Long folderId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
@@ -26,5 +26,20 @@ public interface FolderRepository extends JpaRepository<Folder, Long> {
             @Param("newRootId") Long newRootId
     );
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(value = """
+    UPDATE folders f
+    JOIN closure_folders cf
+      ON cf.descendant_folder_id = f.folder_id
+    JOIN folders child
+      ON child.folder_id = :folderId
+    JOIN folders p
+      ON p.folder_id = child.parent_folder
+    SET f.acl_root_folder_id = p.acl_root_folder_id
+    WHERE cf.ancestor_folder_id = :folderId
+    """, nativeQuery = true)
+    int updateAclRootForSubtreeToParentAclRoot(
+            @Param("folderId") Long folderId
+    );
 
 }

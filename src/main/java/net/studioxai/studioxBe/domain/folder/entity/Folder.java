@@ -28,7 +28,7 @@ public class Folder extends BaseEntity {
     @JoinColumn(name = "parent_folder", nullable = true)
     private Folder parentFolder;
 
-    @Column(name = "acl_root_folder_id", nullable = false)
+    @Column(name = "acl_root_folder_id", nullable = true)
     private Long aclRootFolderId;
 
     @Enumerated(EnumType.STRING)
@@ -63,7 +63,7 @@ public class Folder extends BaseEntity {
     }
 
     public void updateRootAclId() {
-        if (this.folderType == FolderType.ROOT) {
+        if (this.folderType != FolderType.ROOT) {
             throw new FolderExceptionHandler(FolderErrorCode.ACL_ROOT_SET_ONLY_FOR_ROOT);
         }
         this.aclRootFolderId = this.id;

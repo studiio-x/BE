@@ -11,4 +11,8 @@ public enum LinkMode {
     };
 
     public abstract LinkMode toggle();
+
+    public boolean isLink() {
+        return this == LINK;
+    }
 }

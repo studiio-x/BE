@@ -39,9 +39,9 @@ public class ClosureFolderInsertRepository {
     private void insertChildClosure(Long parentId, Long newId) {
         String sql = """
             INSERT INTO closure_folders (ancestor_folder_id, descendant_folder_id, depth, created_at, updated_at)
-            SELECT ancestor_folder, :newId, depth + 1, NOW(), NOW()
+            SELECT ancestor_folder_id, :newId, depth + 1, NOW(), NOW()
             FROM closure_folders
-            WHERE descendant_folder = :parentId
+            WHERE descendant_folder_id = :parentId
             UNION ALL
             SELECT :newId, :newId, 0, NOW(), NOW()
         """;

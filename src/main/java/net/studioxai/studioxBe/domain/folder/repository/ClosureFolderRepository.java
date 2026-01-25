@@ -34,33 +34,36 @@ public interface ClosureFolderRepository extends JpaRepository<ClosureFolder, Lo
 
     @Query(value = """
     SELECT
-      u.user_id        AS userId,
-      u.profile_image  AS profileUrl,
-      u.username       AS username,
-      u.email          AS email,
-      fm.permission    AS permission
-    FROM closure_folders cf
-    JOIN folder_managers fm
-      ON fm.folder_id = cf.ancestor_folder_id
-    JOIN users u
-      ON u.user_id = fm.user_id
-    JOIN closure_folders cr
-      ON cr.ancestor_folder_id = :aclRootFolderId
-     AND cr.descendant_folder_id = cf.ancestor_folder_id
-    WHERE cf.descendant_folder_id = :folderId
-      AND cf.depth = (
-          SELECT MIN(cf2.depth)
-          FROM closure_folders cf2
-          JOIN folder_managers fm2
-            ON fm2.folder_id = cf2.ancestor_folder_id
-           AND fm2.user_id = fm.user_id
-          WHERE cf2.descendant_folder_id = :folderId
-      )
+        u.user_id        AS userId,
+        u.profile_image  AS profileUrl,
+        u.username       AS username,
+        u.email          AS email,
+        fm_final.permission AS permission -- fm -> fm_final로 수정
+    FROM (
+        SELECT
+            fm.user_id,
+            fm.permission,
+            ROW_NUMBER() OVER (
+                PARTITION BY fm.user_id\s
+                ORDER BY cf.depth ASC, fm.folder_manager_id DESC
+            ) as rn
+        FROM closure_folders cf
+        JOIN folder_managers fm ON fm.folder_id = cf.ancestor_folder_id
+        WHERE cf.descendant_folder_id = :folderId
+          AND EXISTS (
+              SELECT 1 FROM closure_folders cr
+              WHERE cr.ancestor_folder_id = :aclRootFolderId
+                AND cr.descendant_folder_id = cf.ancestor_folder_id
+          )
+    ) fm_final
+    JOIN users u ON u.user_id = fm_final.user_id
+    WHERE fm_final.rn = 1
     """, nativeQuery = true)
     List<FolderManagerProjection> findAllUserPermissions(
             @Param("folderId") Long folderId,
             @Param("aclRootFolderId") Long aclRootFolderId
     );
+
 
     @Query(value = """
     SELECT COUNT(DISTINCT fm.user_id)

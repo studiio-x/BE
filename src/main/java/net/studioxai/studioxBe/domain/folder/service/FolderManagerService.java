@@ -96,9 +96,13 @@ public class FolderManagerService {
             throw new FolderManagerExceptionHandler(FolderManagerErrorCode.MANAGER_LIMIT_EXCEEDED);
         }
 
-        userService.getUserByEmailOrThrow(folderManagerAddRequest.email());
+        User user = userService.getUserByEmailOrThrow(folderManagerAddRequest.email());
 
-        createWritableManager(userId, folder);
+        if (closureFolderRepository.findPermission(folderId, folder.getAclRootFolderId(), user.getId()).isPresent()) {
+            throw new FolderManagerExceptionHandler(FolderManagerErrorCode.USER_ALREADY_FOLDER_MANAGER);
+        }
+
+        createWritableManager(user.getId(), folder);
     }
 
     @Transactional
@@ -115,7 +119,7 @@ public class FolderManagerService {
         folderManagerRepository.save(writerManager);
     }
 
-    private List<FolderManagerDto> getManagers(Long folderId) {
+    public List<FolderManagerDto> getManagers(Long folderId) {
         Folder folder = folderRepository.findById(folderId).orElseThrow(
                 () -> new FolderManagerExceptionHandler(FolderManagerErrorCode.FOLDER_NOT_FOUND)
         );

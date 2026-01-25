@@ -29,7 +29,7 @@ public interface FolderManagerRepository extends JpaRepository<FolderManager, Lo
     List<FolderManagerDto> findByFolderId(Long folderId);
 
     @Query("""
-    SELECT new net.studioxai.studioxBe.domain.folder.dto.response.FolderDto(
+    SELECT new net.studioxai.studioxBe.domain.folder.dto.RootFolderDto(
         fm.folder.id,
         fm.folder.name
     )
@@ -38,7 +38,7 @@ public interface FolderManagerRepository extends JpaRepository<FolderManager, Lo
     """)
     List<RootFolderDto> findByUserId(Long userId);
 
-    @Query("SELECT fm FROM FolderManager fm WHERE fm.folder.id = :folderId AND fm.permission == 'OWNER'")
+    @Query("SELECT fm FROM FolderManager fm WHERE fm.folder.id = :folderId AND fm.permission = 'OWNER'")
     List<FolderManager> findRootByFolderId(Long folderId);
 
     boolean existsByFolderIdAndUserIdAndPermissionIn(
