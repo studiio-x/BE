@@ -39,9 +39,12 @@ public class FolderService {
                 () -> new FolderExceptionHandler(FolderErrorCode.FOLDER_NOT_FOUND)
         );
 
+        folder.updateLinkMode();
+        folderRepository.flush();
+
         List<FolderManagerDto> managers = folderManagerService.getManagers(folder.getParentFolder().getId());
 
-        if (folder.getLinkMode().isLink()) {
+        if (!folder.getLinkMode().isLink()) {
             folderManagerBulkRepository.upsertManagersForFolder(folderId, managers);
             folderRepository.updateAclRootForSubtree(folderId);
         } else {
@@ -50,7 +53,7 @@ public class FolderService {
             folderRepository.updateAclRootForSubtreeToParentAclRoot(folderId);
         }
 
-        folder.updateLinkMode();
+
     }
 
     @Transactional
