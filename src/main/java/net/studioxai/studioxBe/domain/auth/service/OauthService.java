@@ -2,6 +2,7 @@ package net.studioxai.studioxBe.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.studioxai.studioxBe.domain.auth.dto.GoogleCallbackDto;
 import net.studioxai.studioxBe.domain.auth.dto.response.GoogleTokenResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.GoogleUserInfoResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
@@ -36,7 +37,7 @@ public class OauthService {
         return googleOauth.getOauthRedirectURL(redirectUrl);
     }
 
-    public String loginWithGoogle(String code, String redirectUrl) {
+    public GoogleCallbackDto loginWithGoogle(String code, String redirectUrl) {
         validateCode(code);
         validateRedirectUrl(redirectUrl);
 
@@ -45,9 +46,7 @@ public class OauthService {
 
         Map<String, String> tokens = authService.issueTokens(user.getId());
 
-        return redirectUrl +
-                "?accessToken=" + tokens.get("accessToken") +
-                "&refreshToken=" + tokens.get("refreshToken");
+        return GoogleCallbackDto.create(redirectUrl, tokens.get("accessToken"), tokens.get("refreshToken"));
     }
 
     private void validateCode(String code) {
