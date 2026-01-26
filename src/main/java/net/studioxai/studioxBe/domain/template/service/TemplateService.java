@@ -6,6 +6,7 @@ import net.studioxai.studioxBe.domain.template.dto.TemplateCategoryGet;
 import net.studioxai.studioxBe.domain.template.dto.TemplateKeywordGet;
 import net.studioxai.studioxBe.domain.template.dto.response.TemplateByCategoryResponse;
 import net.studioxai.studioxBe.domain.template.dto.response.TemplateByKeywordResponse;
+import net.studioxai.studioxBe.domain.template.dto.response.TemplateKeywordResponse;
 import net.studioxai.studioxBe.domain.template.entity.Template;
 import net.studioxai.studioxBe.domain.template.entity.TemplateKeywordType;
 import net.studioxai.studioxBe.domain.template.exception.TemplateManagerErrorCode;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
 
 
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -59,6 +61,11 @@ public class TemplateService {
         return new TemplateCategoryGet(contents, pageInfo);
     }
 
+    public List<TemplateKeywordResponse> getAllTemplateKeywords() {
+        return Arrays.stream(TemplateKeywordType.values())
+                .map(TemplateKeywordResponse::new)
+                .toList();
+    }
 
     public TemplateKeywordGet getTemplatesByKeyword(TemplateKeywordType keyword, int pageNum, int limit) {
 
