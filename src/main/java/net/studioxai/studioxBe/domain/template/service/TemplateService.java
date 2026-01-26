@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.template.dto.TemplateCategoryGet;
 import net.studioxai.studioxBe.domain.template.dto.TemplateKeywordGet;
+import net.studioxai.studioxBe.domain.template.dto.response.KeywordTemplatesResponse;
 import net.studioxai.studioxBe.domain.template.dto.response.TemplateByCategoryResponse;
 import net.studioxai.studioxBe.domain.template.dto.response.TemplateByKeywordResponse;
 import net.studioxai.studioxBe.domain.template.dto.response.TemplateKeywordResponse;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Pageable;
 
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -67,24 +69,35 @@ public class TemplateService {
                 .toList();
     }
 
-    public TemplateKeywordGet getTemplatesByKeyword(TemplateKeywordType keyword, int pageNum, int limit) {
+    public List<KeywordTemplatesResponse> getTemplatesByKeywords(
+            List<TemplateKeywordType> keywords,
+            int limitPerKeyword
+    ) {
+        List<KeywordTemplatesResponse> result = new ArrayList<>();
 
-        Pageable pageable = PageRequest.of(pageNum, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
+        for (TemplateKeywordType keyword : keywords) {
 
-        Page<TemplateByKeywordResponse> result = templateKeywordRepository.findByKeywordOrderByTemplateCreatedAtDesc(keyword, pageable);
+            Pageable pageable = PageRequest.of(
+                    0,
+                    limitPerKeyword
+            );
 
-        if (result.isEmpty()) {
-            throw new TemplateManagerExceptionHandler(TemplateManagerErrorCode.TEMPLATE_NOT_FOUND_BY_KEYWORD);
+            Page<TemplateByKeywordResponse> page =
+                    templateKeywordRepository.findByKeywordOrderByTemplateCreatedAtDesc(keyword, pageable);
+
+            if (page.isEmpty()) {
+                continue; // 해당 키워드에 템플릿 없으면 스킵
+            }
+
+            result.add(
+                    new KeywordTemplatesResponse(
+                            keyword,
+                            page.getContent()
+                    )
+            );
         }
 
-        PageInfo pageInfo = PageInfo.of(
-                pageNum,
-                limit,
-                result.getTotalPages(),
-                result.getTotalElements()
-        );
-
-        return new TemplateKeywordGet(result.getContent(), pageInfo);
+        return result;
     }
 
 }

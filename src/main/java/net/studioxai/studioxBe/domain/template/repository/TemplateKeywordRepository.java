@@ -15,6 +15,7 @@ public interface TemplateKeywordRepository extends JpaRepository<TemplateKeyword
     select new net.studioxai.studioxBe.domain.template.dto.response.TemplateByKeywordResponse(
         t.id,
         tk.keyword,
+        tk.keyword,
         t.imageUrl,
         t.category
     )
@@ -22,8 +23,12 @@ public interface TemplateKeywordRepository extends JpaRepository<TemplateKeyword
     join tk.template t
     where tk.keyword = :keyword
     order by t.createdAt desc
-    """)
-    Page<TemplateByKeywordResponse> findByKeywordOrderByTemplateCreatedAtDesc(@Param("keyword") TemplateKeywordType keyword, Pageable pageable);
+""")
+    Page<TemplateByKeywordResponse> findByKeywordOrderByTemplateCreatedAtDesc(
+            @Param("keyword") TemplateKeywordType keyword,
+            Pageable pageable
+    );
+
 
 }
 
