@@ -82,11 +82,19 @@ public class CustomAuthController {
     }
 
     @PostMapping("/v1/auth/token")
-    public TokenResponse tokenReissue(
+    public ResponseEntity<Void> tokenReissue(
             HttpServletRequest request
     ) {
         String refreshToken = cookieUtil.getRrefreshTokenValue(request);
-        return authService.reissue(refreshToken);
+        TokenResponse response = authService.reissue(refreshToken);
+
+        ResponseCookie refreshCookie = cookieUtil.getRefreshTokenCookie(response.refreshToken());
+        ResponseCookie accessTokenCookie = cookieUtil.getAccessTokenCookie(response.accessToken());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, accessTokenCookie.toString())
+                .build();
     }
 
 }
