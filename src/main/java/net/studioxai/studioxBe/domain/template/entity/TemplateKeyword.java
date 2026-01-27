@@ -9,7 +9,7 @@ import net.studioxai.studioxBe.global.entity.BaseEntity;
 @Getter
 @NoArgsConstructor
 @Table(name = "template_keyword")
-public class TemplateKeyword{
+public class TemplateKeyword extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
