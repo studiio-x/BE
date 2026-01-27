@@ -1,12 +1,10 @@
 package net.studioxai.studioxBe.domain.folder.repository;
 
 import lombok.RequiredArgsConstructor;
-import net.studioxai.studioxBe.domain.folder.entity.Folder;
-import net.studioxai.studioxBe.domain.user.entity.User;
+import net.studioxai.studioxBe.domain.folder.dto.FolderManagerDto;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -17,26 +15,55 @@ import java.util.List;
 public class FolderManagerBulkRepository {
     private final JdbcTemplate jdbcTemplate;
 
-    @Transactional
-    public void saveAllByBulk(List<User> users, Folder folder) {
-        String sql = "INSERT INTO folder_managers (user_id, folder_id, created_at, updated_at) " +
-                "VALUES (?, ?, NOW(), NOW())";
+    public void upsertManagersForFolder(Long folderId, List<FolderManagerDto> managers) {
+        if (managers == null || managers.isEmpty()) return;
 
-        jdbcTemplate.batchUpdate(sql,
-            new BatchPreparedStatementSetter() {
-                @Override
-                public void setValues(PreparedStatement ps, int i) throws SQLException {
-                    User user = users.get(i);
-                    ps.setLong(1, user.getId());
-                    ps.setLong(2, folder.getId());
-                }
+        String sql = """
+            INSERT INTO folder_managers (folder_id, user_id, permission, link_mode, created_at, updated_at)
+            VALUES (?, ?, ?, (SELECT link_mode FROM folders WHERE folder_id = ?), NOW(), NOW())
+            ON DUPLICATE KEY UPDATE
+                permission = VALUES(permission),
+                link_mode = VALUES(link_mode),
+                updated_at = NOW()
+            """;
 
-                @Override
-                public int getBatchSize() {
-                    return users.size();
-                }
+        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                FolderManagerDto dto = managers.get(i);
+                ps.setLong(1, folderId);
+                ps.setLong(2, dto.userId());
+                ps.setString(3, dto.permission().name()); // Permission enum name
+                ps.setLong(4, folderId);
+            }
+
+            @Override
+            public int getBatchSize() {
+                return managers.size();
+            }
         });
     }
 
-    
+    public void deleteManagersForFolder(Long folderId, List<FolderManagerDto> managers) {
+        if (managers == null || managers.isEmpty()) return;
+
+        String sql = """
+            DELETE FROM folder_managers
+            WHERE folder_id = ?
+              AND user_id = ?
+            """;
+
+        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                ps.setLong(1, folderId);
+                ps.setLong(2, managers.get(i).userId());
+            }
+
+            @Override
+            public int getBatchSize() {
+                return managers.size();
+            }
+        });
+    }
 }
