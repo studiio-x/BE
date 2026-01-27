@@ -72,7 +72,7 @@ public class OauthService {
     }
 
     private User findOrCreateGoogleUser(GoogleUserInfoResponse userInfo) {
-        return userRepository.findByGoogleSub(userInfo.email())
+        return userRepository.findByEmail(userInfo.email())
                 .orElseGet(() -> {
                     User user = User.createGoogleUser(
                             userInfo.sub(),

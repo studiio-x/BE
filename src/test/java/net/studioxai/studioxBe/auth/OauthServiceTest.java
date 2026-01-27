@@ -85,7 +85,7 @@ class OauthServiceTest {
 
         given(googleOauth.requestAccessToken(code)).willReturn(tokenResponse);
         given(googleOauth.requestUserInfo("google-access-token")).willReturn(userInfo);
-        given(userRepository.findByGoogleSub(googleSub)).willReturn(Optional.of(user));
+        given(userRepository.findByEmail("google@test.com")).willReturn(Optional.of(user));
 
         given(authService.issueTokens(userId)).willReturn(
                 Map.of(
@@ -131,7 +131,7 @@ class OauthServiceTest {
 
         given(googleOauth.requestAccessToken(code)).willReturn(tokenResponse);
         given(googleOauth.requestUserInfo("google-access-token")).willReturn(userInfo);
-        given(userRepository.findByGoogleSub(googleSub)).willReturn(Optional.empty());
+        given(userRepository.findByEmail(googleSub)).willReturn(Optional.empty());
         given(passwordEncoder.encode(anyString())).willReturn("encoded-password");
 
         given(userRepository.save(any(User.class)))
