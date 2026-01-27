@@ -84,7 +84,7 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             set -e
-            cd /home/ubuntu/studiox
+            cd /home/ubuntu
 
             # compose 최신화
             sudo curl -o docker-compose-monitoring.yml \
