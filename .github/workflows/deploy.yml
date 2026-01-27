@@ -49,7 +49,7 @@ jobs:
           filters: |
             nginx:
               - 'config/nginx/**'
-            alloy
+            alloy:
               - 'config/alloy/**'
             compose:
               - 'docker-compose.yml'
