@@ -125,7 +125,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./config/alloy/Dockerfile
+          file: ./config/alloy/Dockerfile.alloy
           platforms: linux/amd64
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/alloy
