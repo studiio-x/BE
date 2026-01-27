@@ -98,15 +98,13 @@ public class SecurityConfig {
                     );
         }
 
-
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(PermitAllPatterns).permitAll()
                         .requestMatchers(HttpMethod.GET, GetPermitPatterns).permitAll()
                         .anyRequest().authenticated()
-                )
-                ;
+                );
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

@@ -1,5 +1,6 @@
 package net.studioxai.studioxBe.auth;
 
+import net.studioxai.studioxBe.domain.auth.dto.GoogleCallbackDto;
 import net.studioxai.studioxBe.domain.auth.dto.response.GoogleTokenResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.GoogleUserInfoResponse;
 import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
@@ -94,13 +95,12 @@ class OauthServiceTest {
         );
 
         // when
-        String result = oauthService.loginWithGoogle(code, REDIRECT_URL);
+        GoogleCallbackDto result = oauthService.loginWithGoogle(code, REDIRECT_URL);
 
         // then
-        assertThat(result)
-                .startsWith(REDIRECT_URL)
-                .contains("accessToken=access-token")
-                .contains("refreshToken=refresh-token");
+        assertThat(result.redirectUrl()).isEqualTo(REDIRECT_URL);
+        assertThat(result.accessToken()).isEqualTo("access-token");
+        assertThat(result.refreshToken()).isEqualTo("refresh-token");
 
         verify(userRepository, never()).save(any());
         verify(authService).issueTokens(userId);
@@ -149,13 +149,12 @@ class OauthServiceTest {
         );
 
         // when
-        String result = oauthService.loginWithGoogle(code, REDIRECT_URL);
+        GoogleCallbackDto result = oauthService.loginWithGoogle(code, REDIRECT_URL);
 
         // then
-        assertThat(result)
-                .startsWith(REDIRECT_URL)
-                .contains("accessToken=access-token")
-                .contains("refreshToken=refresh-token");
+        assertThat(result.redirectUrl()).isEqualTo(REDIRECT_URL);
+        assertThat(result.accessToken()).isEqualTo("access-token");
+        assertThat(result.refreshToken()).isEqualTo("refresh-token");
 
         verify(userRepository).save(any(User.class));
         verify(passwordEncoder).encode(anyString());
