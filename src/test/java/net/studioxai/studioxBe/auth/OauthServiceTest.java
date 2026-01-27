@@ -123,7 +123,7 @@ class OauthServiceTest {
 
         GoogleUserInfoResponse userInfo = new GoogleUserInfoResponse(
                 googleSub,
-                "new@test.com",
+                "google@test.com",
                 "newUser",
                 null,
                 true
@@ -131,7 +131,7 @@ class OauthServiceTest {
 
         given(googleOauth.requestAccessToken(code)).willReturn(tokenResponse);
         given(googleOauth.requestUserInfo("google-access-token")).willReturn(userInfo);
-        given(userRepository.findByEmail(googleSub)).willReturn(Optional.empty());
+        given(userRepository.findByEmail("google@test.com")).willReturn(Optional.empty());
         given(passwordEncoder.encode(anyString())).willReturn("encoded-password");
 
         given(userRepository.save(any(User.class)))
