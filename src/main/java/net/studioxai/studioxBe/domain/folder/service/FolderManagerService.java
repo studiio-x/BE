@@ -42,7 +42,7 @@ public class FolderManagerService {
     public FolderManagersResponse getManagers(Long userId, Long folderId) {
         List<FolderManagerDto> folderManagers = getManagers(folderId);
         if (folderManagers.isEmpty()) {
-            throw new FolderManagerExceptionHandler(FolderManagerErrorCode.FOLDER_NOT_FOUND);
+            throw new FolderManagerExceptionHandler(FolderManagerErrorCode.FOLDERMANAGER_NOT_FOUND);
         }
 
         FolderManagerDto me = folderManagers.stream()
