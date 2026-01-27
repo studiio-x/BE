@@ -1,4 +1,4 @@
-package net.studioxai.studioxBe.domain.folder.dto;
+package net.studioxai.studioxBe.domain.folder.dto.response;
 
 import net.studioxai.studioxBe.global.annotation.ImageUrl;
 

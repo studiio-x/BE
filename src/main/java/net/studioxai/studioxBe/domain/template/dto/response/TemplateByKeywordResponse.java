@@ -1,27 +1,18 @@
 package net.studioxai.studioxBe.domain.template.dto.response;
 
 import net.studioxai.studioxBe.domain.template.entity.TemplateKeywordType;
+import net.studioxai.studioxBe.global.annotation.ImageUrl;
 import net.studioxai.studioxBe.global.entity.enums.Category;
 
 public record TemplateByKeywordResponse(
         Long templateId,
-        TemplateKeywordType keyword,
-        String keywordTitle,
-        String imageUrl,
+        TemplateKeywordType keywordType,
+        @ImageUrl String imageUrl,
         Category category
 ) {
-    public TemplateByKeywordResponse(
-            Long templateId,
-            TemplateKeywordType keyword,
-            String imageUrl,
-            Category category
-    ) {
-        this(
-                templateId,
-                keyword,
-                keyword.getTitle(),
-                imageUrl,
-                category
-        );
+    public String getKeywordTitle() {
+        return keywordType.getTitle();
     }
 }
+
+

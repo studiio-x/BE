@@ -13,6 +13,7 @@ import net.studioxai.studioxBe.domain.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -36,7 +37,7 @@ public class OauthService {
         validateRedirectUrl(redirectUrl);
         return googleOauth.getOauthRedirectURL(redirectUrl);
     }
-
+  
     public GoogleCallbackDto loginWithGoogle(String code, String redirectUrl) {
         validateCode(code);
         validateRedirectUrl(redirectUrl);
@@ -72,15 +73,18 @@ public class OauthService {
 
     private User findOrCreateGoogleUser(GoogleUserInfoResponse userInfo) {
         return userRepository.findByGoogleSub(userInfo.sub())
-                .orElseGet(() -> userRepository.save(
-                        User.createGoogleUser(
-                                userInfo.sub(),
-                                userInfo.email(),
-                                userInfo.name(),
-                                passwordEncoder.encode(UUID.randomUUID().toString()),
-                                resolveProfileImage(userInfo)
-                        )
-                ));
+                .orElseGet(() -> {
+                    User user = User.createGoogleUser(
+                            userInfo.sub(),
+                            userInfo.email(),
+                            userInfo.name(),
+                            passwordEncoder.encode(UUID.randomUUID().toString()),
+                            resolveProfileImage(userInfo)
+                    );
+                    userRepository.save(user);
+                    authService.provisioningFolder(user);
+                    return user;
+                });
     }
 
     private String resolveProfileImage(GoogleUserInfoResponse userInfo) {

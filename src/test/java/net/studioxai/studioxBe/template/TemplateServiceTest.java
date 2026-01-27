@@ -1,5 +1,6 @@
 package net.studioxai.studioxBe.template;
 
+import net.studioxai.studioxBe.domain.template.dto.response.KeywordTemplatesResponse;
 import net.studioxai.studioxBe.domain.template.dto.response.TemplateByCategoryResponse;
 import net.studioxai.studioxBe.domain.template.dto.response.TemplateByKeywordResponse;
 import net.studioxai.studioxBe.domain.template.dto.TemplateCategoryGet;
@@ -20,7 +21,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 
 import java.util.List;
-
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
 
@@ -103,66 +103,51 @@ class TemplateServiceTest {
      * ========================= */
 
     @Test
-    @DisplayName("[getTemplatesByKeyword] 정상 조회 시 TemplateKeywordGet 반환")
-    void getTemplatesByKeyword_ok() {
-        // given
-        TemplateKeywordType keyword = TemplateKeywordType.OUTDOOR;
-        int pageNum = 0;
-        int limit = 5;
+    @DisplayName("[getTemplatesByKeywords] 정상 조회")
+    void getTemplatesByKeywords_ok() {
+        TemplateKeywordType keyword = TemplateKeywordType.GENERAL_DISPLAY;
 
         TemplateByKeywordResponse dto =
                 new TemplateByKeywordResponse(
-                        2L,
+                        1L,
                         keyword,
-                        "아웃도어",
-                        "image-url",
+                        "https://dummy.com/img1.jpg",
                         Category.IMAGE
                 );
 
-        Page<TemplateByKeywordResponse> page =
-                new PageImpl<>(
-                        List.of(dto),
-                        PageRequest.of(pageNum, limit),
-                        1
-                );
-
         given(templateKeywordRepository.findByKeywordOrderByTemplateCreatedAtDesc(
-                eq(keyword),
-                any(Pageable.class)
-        )).willReturn(page);
+                any(),
+                any()
+        )).willReturn(new PageImpl<>(List.of(dto)));
 
-        // when
-        TemplateKeywordGet result =
-                templateService.getTemplatesByKeyword(keyword, pageNum, limit);
+        List<KeywordTemplatesResponse> result =
+                templateService.getTemplatesByKeywords(List.of(keyword), 10);
 
-        // then
-        assertThat(result.templates())
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).keyword()).isEqualTo(keyword);
+        assertThat(result.get(0).templates())
                 .hasSize(1)
-                .extracting("templateId", "keywordTitle", "imageUrl")
-                .containsExactly(tuple(2L, "아웃도어", "image-url"));
-
-        assertThat(result.pageInfo())
-                .extracting("pageNum", "limit", "totalPages", "totalElements")
-                .containsExactly(0, 5, 1, 1L);
+                .extracting("templateId", "imageUrl")
+                .containsExactly(tuple(1L, "https://dummy.com/img1.jpg"));
     }
+
 
     @Test
-    @DisplayName("[getTemplatesByKeyword] 결과가 없으면 예외 발생")
-    void getTemplatesByKeyword_empty() {
-        // given
-        TemplateKeywordType keyword = TemplateKeywordType.OUTDOOR;
-
-        Page<TemplateByKeywordResponse> emptyPage =
-                new PageImpl<>(List.of(), PageRequest.of(0, 5), 0);
+    @DisplayName("[getTemplatesByKeywords] 템플릿이 없어도 키워드는 내려준다")
+    void getTemplatesByKeywords_emptyTemplates() {
+        TemplateKeywordType keyword = TemplateKeywordType.GENERAL_DISPLAY;
 
         given(templateKeywordRepository.findByKeywordOrderByTemplateCreatedAtDesc(
-                eq(keyword),
-                any(Pageable.class)
-        )).willReturn(emptyPage);
+                any(),
+                any()
+        )).willReturn(Page.empty());
 
-        // when & then
-        assertThatThrownBy(() ->
-                templateService.getTemplatesByKeyword(keyword, 0, 5)
-        ).isInstanceOf(TemplateManagerExceptionHandler.class);
+        List<KeywordTemplatesResponse> result =
+                templateService.getTemplatesByKeywords(List.of(keyword), 10);
+
+        assertThat(result).isEmpty();
+
     }
+
+
 }
