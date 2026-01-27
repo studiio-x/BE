@@ -1,6 +1,5 @@
-package net.studioxai.studioxBe.domain.template.dto;
+package net.studioxai.studioxBe.domain.template.dto.response;
 
-import net.studioxai.studioxBe.domain.template.dto.response.TemplateByCategoryResponse;
 import net.studioxai.studioxBe.global.dto.PageInfo;
 
 import java.util.List;

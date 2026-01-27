@@ -2,9 +2,7 @@ package net.studioxai.studioxBe.domain.template.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.studioxai.studioxBe.domain.template.dto.TemplateCategoryGet;
-import net.studioxai.studioxBe.domain.template.dto.TemplateKeywordGet;
-import net.studioxai.studioxBe.domain.template.dto.request.TemplatesByKeywordsRequest;
+import net.studioxai.studioxBe.domain.template.dto.response.TemplateCategoryGet;
 import net.studioxai.studioxBe.domain.template.dto.response.KeywordTemplatesResponse;
 import net.studioxai.studioxBe.domain.template.dto.response.TemplateKeywordResponse;
 import net.studioxai.studioxBe.domain.template.entity.TemplateKeywordType;

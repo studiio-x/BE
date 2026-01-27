@@ -1,10 +1,8 @@
 package net.studioxai.studioxBe.template;
 
 import net.studioxai.studioxBe.domain.template.dto.response.KeywordTemplatesResponse;
-import net.studioxai.studioxBe.domain.template.dto.response.TemplateByCategoryResponse;
 import net.studioxai.studioxBe.domain.template.dto.response.TemplateByKeywordResponse;
-import net.studioxai.studioxBe.domain.template.dto.TemplateCategoryGet;
-import net.studioxai.studioxBe.domain.template.dto.TemplateKeywordGet;
+import net.studioxai.studioxBe.domain.template.dto.response.TemplateCategoryGet;
 import net.studioxai.studioxBe.domain.template.entity.Template;
 import net.studioxai.studioxBe.domain.template.entity.TemplateKeywordType;
 import net.studioxai.studioxBe.domain.template.repository.TemplateKeywordRepository;
