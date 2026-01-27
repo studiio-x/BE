@@ -3,7 +3,7 @@ package net.studioxai.studioxBe.auth;
 import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
-import net.studioxai.studioxBe.domain.project.service.ProjectService;
+import net.studioxai.studioxBe.domain.folder.service.FolderService;
 import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
@@ -27,6 +27,9 @@ import java.util.Optional;
 import org.assertj.core.api.Assertions;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.willDoNothing;
+
 @ExtendWith(MockitoExtension.class)
 public class AuthServiceTest {
     @Mock
@@ -47,11 +50,11 @@ public class AuthServiceTest {
     @InjectMocks
     private AuthService authService;
 
-    @Mock
-    private ProjectService projectService;
-
     @Captor
     private ArgumentCaptor<User> userCaptor;
+
+    @Mock
+    private FolderService folderService;
 
     @Test
     @DisplayName("로그인 성공 - 이메일/비밀번호 일치 시 토큰과 유저 정보 반환")
@@ -196,11 +199,11 @@ public class AuthServiceTest {
 
         LoginRequest request = new LoginRequest(email, rawPassword);
 
-        Mockito.doNothing().when(emailVerificationService).checkEmailVerification(email);
+        willDoNothing().given(emailVerificationService).checkEmailVerification(email);
 
         BDDMockito.given(passwordEncoder.encode(rawPassword)).willReturn(encodedPassword);
 
-        BDDMockito.given(userRepository.save(Mockito.any(User.class)))
+        BDDMockito.given(userRepository.saveAndFlush(any(User.class)))
                 .willAnswer(invocation -> {
                     User saved = invocation.getArgument(0);
                     ReflectionTestUtils.setField(saved, "id", newUserId);
@@ -219,17 +222,21 @@ public class AuthServiceTest {
         Assertions.assertThat(response.accessToken()).isEqualTo(accessToken);
         Assertions.assertThat(response.refreshToken()).isEqualTo(refreshToken);
 
+        // then - 호출 검증
         Mockito.verify(emailVerificationService).checkEmailVerification(email);
         Mockito.verify(passwordEncoder).encode(rawPassword);
 
-        Mockito.verify(userRepository).save(userCaptor.capture());
+        Mockito.verify(userRepository).saveAndFlush(userCaptor.capture());
         User savedUser = userCaptor.getValue();
 
+        Assertions.assertThat(savedUser.getId()).isEqualTo(newUserId);
         Assertions.assertThat(savedUser.getEmail()).isEqualTo(email);
         Assertions.assertThat(savedUser.getUsername()).isEqualTo("newuser");
         Assertions.assertThat(savedUser.getPassword()).isEqualTo(encodedPassword);
         Assertions.assertThat(savedUser.getRegisterPath()).isEqualTo(RegisterPath.CUSTOM);
 
+        Mockito.verify(jwtProvider).createAccessToken(newUserId);
+        Mockito.verify(jwtProvider).createRefreshToken(newUserId);
         Mockito.verify(tokenService).saveRefreshToken(refreshToken, newUserId);
     }
 

@@ -9,10 +9,20 @@ import org.springframework.http.HttpStatus;
 @Getter
 @AllArgsConstructor
 public enum FolderManagerErrorCode implements BaseErrorCode {
+    // 400 BAD_REQUEST
+
+    // 403 FORBIDDEN
     USER_NO_FOLDER_AUTHORITY(HttpStatus.FORBIDDEN, "FOLDERMANAGER_403_1", "해당 폴더에 대한 권한이 없습니다."),
+    OWNER_PERMISSION_CHANGE_FORBIDDEN(HttpStatus.FORBIDDEN, "FOLDERMANAGER_403_2", "해당 프로젝트의 소유주의 권한을 변경할 수 없습니다."),
+
+    // 404 NOT_FOUND
     FOLDER_NOT_FOUND(HttpStatus.NOT_FOUND, "FOLDERMANAGER_404_1", "해당하는 폴더가 존재하지 않습니다."),
-    PROJECT_FOLDER_NOT_FOUND(HttpStatus.NOT_FOUND, "FOLDERMANAGER_404_2", "프로젝트에 권한이 있는 폴더가 존재하지 않습니다."),
-    USER_ALREADY_FOLDER_MANAGER(HttpStatus.CONFLICT, "FOLDERMANAGER_409_1", "이미 폴더 매니저로 등록된 유저입니다."),;
+    FOLDERMANAGER_NOT_FOUND(HttpStatus.NOT_FOUND, "FOLDERMANAGER_404_2", "해당하는 관리자가 존재하지 않습니다."),
+
+    // 409 CONFLICT
+    USER_ALREADY_FOLDER_MANAGER(HttpStatus.CONFLICT, "FOLDERMANAGER_409_1", "이미 폴더 매니저로 등록된 유저입니다."),
+    FOLDER_PARENT_RELATION_EXISTS(HttpStatus.CONFLICT, "FOLDERMANAGER_409_2", "상위 폴더와의 연관을 먼저 끊어야합니다."),
+    MANAGER_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "FOLDERMANAGER_409_3", "프로젝트의 관리자를 5명 이상 초대할 수 없습니다."),;
 
     private final HttpStatus status;
     private final String code;

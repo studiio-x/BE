@@ -5,11 +5,11 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.studioxai.studioxBe.global.util.CookieUtil;
 import net.studioxai.studioxBe.global.dto.ErrorReason;
 import net.studioxai.studioxBe.global.error.ErrorResponse;
 import net.studioxai.studioxBe.global.error.GlobalErrorCode;
@@ -29,6 +29,7 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
+    private final CookieUtil cookieUtil;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -80,11 +81,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String resolveToken(HttpServletRequest req) {
-        String auth = req.getHeader("Authorization");
-        if (auth != null && auth.startsWith("Bearer ")) {
-            return auth.substring(7);
-        }
-        return null;
+        return cookieUtil.getAccessTokenValue(req);
     }
 
     private void writeErrorResponse(HttpServletResponse response, GlobalErrorCode errorCode) throws IOException {
