@@ -6,6 +6,7 @@ import net.studioxai.studioxBe.domain.folder.dto.projection.RootFolderProjection
 import net.studioxai.studioxBe.domain.folder.entity.ClosureFolder;
 import net.studioxai.studioxBe.domain.folder.entity.enums.Permission;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -115,6 +116,22 @@ public interface ClosureFolderRepository extends JpaRepository<ClosureFolder, Lo
     WHERE fm.user_id = :userId
     """, nativeQuery = true)
     List<RootFolderProjection> findMyFolders(@Param("userId") Long userId);
+
+    @Query("""
+        select cf.descendantFolder.id
+        from ClosureFolder cf
+        where cf.ancestorFolder.id = :ancestorId
+          and cf.depth > 0
+    """)
+    List<Long> findDescendantFolderIds(@Param("ancestorId") Long ancestorId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+        delete from ClosureFolder cf
+        where cf.ancestorFolder.id = :ancestorId
+          and cf.depth > 0
+    """)
+    int deleteEdgesByAncestor(@Param("ancestorId") Long ancestorId);
 
 
 }

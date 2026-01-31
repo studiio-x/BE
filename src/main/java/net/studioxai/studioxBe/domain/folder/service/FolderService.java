@@ -10,10 +10,7 @@ import net.studioxai.studioxBe.domain.folder.dto.response.MyFolderResponse;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.folder.exception.FolderErrorCode;
 import net.studioxai.studioxBe.domain.folder.exception.FolderExceptionHandler;
-import net.studioxai.studioxBe.domain.folder.repository.ClosureFolderInsertRepository;
-import net.studioxai.studioxBe.domain.folder.repository.ClosureFolderRepository;
-import net.studioxai.studioxBe.domain.folder.repository.FolderManagerBulkRepository;
-import net.studioxai.studioxBe.domain.folder.repository.FolderRepository;
+import net.studioxai.studioxBe.domain.folder.repository.*;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +28,7 @@ public class FolderService {
     private final ClosureFolderInsertRepository closureFolderInsertRepository;
     private final ClosureFolderRepository closureFolderRepository;
     private final FolderManagerBulkRepository folderManagerBulkRepository;
+    private final FolderManagerRepository folderManagerRepository;
 
     @Transactional
     public void changeLinkMode(Long userId, Long folderId) {
@@ -92,6 +90,27 @@ public class FolderService {
                 .toList();
 
         return MyFolderResponse.create(myProject, sharedProjects);
+    }
+
+    @Transactional
+    public void deleteFolder(Long userId, Long folderId) {
+        folderManagerService.isUserWritable(userId, folderId);
+
+        Folder folder = folderRepository.findById(folderId).orElseThrow(
+                () -> new FolderExceptionHandler(FolderErrorCode.FOLDER_NOT_FOUND)
+        );
+
+        List<Long> subFolderIds = closureFolderRepository.findDescendantFolderIds(folderId);
+
+        if (!subFolderIds.isEmpty()) {
+            folderManagerRepository.deleteAllByFolderIds(subFolderIds);
+        }
+
+        closureFolderRepository.deleteEdgesByAncestor(folder.getId());
+        folderRepository.deleteAllByIdsIn(subFolderIds);
+
+        // TODO: 하위 프로젝트 (cutOut Image 삭제)
+
     }
 
 }

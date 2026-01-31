@@ -42,4 +42,11 @@ public interface FolderRepository extends JpaRepository<Folder, Long> {
             @Param("folderId") Long folderId
     );
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+        delete from Folder f
+        where f.id in :folderIds
+    """)
+    int deleteAllByIdsIn(@Param("folderIds") List<Long> folderIds);
+
 }

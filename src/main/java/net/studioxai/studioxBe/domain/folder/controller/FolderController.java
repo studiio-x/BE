@@ -18,6 +18,23 @@ import java.util.List;
 public class FolderController {
     private final FolderService folderService;
 
+    // TODO: 하위 폴더 조회 API
+
+    
+    @DeleteMapping("/v1/folder/{foolderId}")
+    public void folderDelete(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long folderId
+    ) {
+        folderService.deleteFolder(principal.userId(), folderId);
+    }
+
+    // TODO: 폴더 이름 변경 API
+
+    // TODO: 폴더 이동 API
+
+
+
     @PostMapping("/v1/folder/{rootFolderId}")
     public void folderAdd(
             @AuthenticationPrincipal JwtUserPrincipal principal,
