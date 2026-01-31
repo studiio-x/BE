@@ -20,8 +20,8 @@ public class FolderController {
 
     // TODO: 하위 폴더 조회 API
 
-    
-    @DeleteMapping("/v1/folder/{foolderId}")
+
+    @DeleteMapping("/v1/folder/{folderId}")
     public void folderDelete(
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @PathVariable Long folderId
@@ -29,7 +29,14 @@ public class FolderController {
         folderService.deleteFolder(principal.userId(), folderId);
     }
 
-    // TODO: 폴더 이름 변경 API
+    @PutMapping("/v1/folder/{folderId}/name")
+    public void folderNameUpdate(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long folderId,
+            @RequestBody @Valid FolderCreateRequest folderCreateRequest
+    ) {
+        folderService.updateFolderName(principal.userId(), folderId, folderCreateRequest);
+    }
 
     // TODO: 폴더 이동 API
 
@@ -51,7 +58,7 @@ public class FolderController {
         return folderService.findFolders(principal.userId());
     }
 
-    @PutMapping("/v1/folder/{folderId}")
+    @PutMapping("/v1/folder/{folderId}/link")
     public void folderUnlinked(
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @PathVariable Long folderId

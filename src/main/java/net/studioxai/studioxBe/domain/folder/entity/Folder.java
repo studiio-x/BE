@@ -73,6 +73,10 @@ public class Folder extends BaseEntity {
         this.linkMode = this.linkMode.toggle();
     }
 
+    public void updateName(String newName) {
+        this.name = newName;
+    }
+
     @Builder(access = AccessLevel.PRIVATE)
     private Folder(
             String name,

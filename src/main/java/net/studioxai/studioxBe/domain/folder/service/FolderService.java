@@ -113,4 +113,15 @@ public class FolderService {
 
     }
 
+    @Transactional
+    public void updateFolderName(Long userId, Long folderId, FolderCreateRequest folderCreateRequest) {
+        folderManagerService.isUserWritable(userId, folderId);
+
+        Folder folder = folderRepository.findById(folderId).orElseThrow(
+                () -> new FolderExceptionHandler(FolderErrorCode.FOLDER_NOT_FOUND)
+        );
+
+        folder.updateName(folderCreateRequest.name());
+    }
+
 }
