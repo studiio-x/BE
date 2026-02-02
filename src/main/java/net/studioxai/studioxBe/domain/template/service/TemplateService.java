@@ -68,10 +68,8 @@ public class TemplateService {
                 .toList();
     }
 
-    public List<KeywordTemplatesResponse> getTemplatesByKeywords(
-            List<TemplateKeywordType> keywords,
-            int limitPerKeyword
-    ) {
+    public List<KeywordTemplatesResponse> getTemplatesByKeywords(List<TemplateKeywordType> keywords, int limitPerKeyword) {
+
         List<KeywordTemplatesResponse> result = new ArrayList<>();
 
         for (TemplateKeywordType keyword : keywords) {

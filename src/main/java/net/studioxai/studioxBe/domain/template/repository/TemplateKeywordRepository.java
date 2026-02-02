@@ -23,10 +23,7 @@ public interface TemplateKeywordRepository extends JpaRepository<TemplateKeyword
     where tk.keyword = :keyword
     order by t.createdAt desc
 """)
-    Page<TemplateByKeywordResponse> findByKeywordOrderByTemplateCreatedAtDesc(
-            @Param("keyword") TemplateKeywordType keyword,
-            Pageable pageable
-    );
+    Page<TemplateByKeywordResponse> findByKeywordOrderByTemplateCreatedAtDesc(@Param("keyword") TemplateKeywordType keyword, Pageable pageable);
 
 
 }
