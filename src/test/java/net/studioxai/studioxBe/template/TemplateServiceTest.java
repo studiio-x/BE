@@ -147,5 +147,48 @@ class TemplateServiceTest {
 
     }
 
+    @Test
+    @DisplayName("[searchTemplatesByKeyword] 한글 검색어로 정상 조회")
+    void searchTemplatesByKeyword_ok() {
+        // given
+        String searchText = "일반";
+        TemplateKeywordType keywordType = TemplateKeywordType.GENERAL_DISPLAY;
+
+        TemplateByKeywordResponse dto =
+                new TemplateByKeywordResponse(
+                        1L,
+                        keywordType,
+                        "https://dummy.com/search.jpg",
+                        Category.IMAGE
+                );
+
+        given(templateKeywordRepository.searchByKeyword(keywordType))
+                .willReturn(List.of(dto));
+
+        // when
+        List<TemplateByKeywordResponse> result =
+                templateService.searchTemplatesByKeyword(searchText);
+
+        // then
+        assertThat(result)
+                .hasSize(1)
+                .extracting("templateId", "imageUrl", "keyword")
+                .containsExactly(
+                        tuple(1L, "https://dummy.com/search.jpg", keywordType)
+                );
+    }
+
+    @Test
+    @DisplayName("[searchTemplatesByKeyword] 키워드 매칭 실패 시 예외 발생")
+    void searchTemplatesByKeyword_notFound() {
+        // given
+        String searchText = "없는키워드";
+
+        // when & then
+        assertThatThrownBy(() ->
+                templateService.searchTemplatesByKeyword(searchText)
+        ).isInstanceOf(TemplateManagerExceptionHandler.class);
+    }
+
 
 }

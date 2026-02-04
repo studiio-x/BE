@@ -97,4 +97,18 @@ public class TemplateService {
         return result;
     }
 
+    public List<TemplateByKeywordResponse> searchTemplatesByKeyword(String searchText) {
+
+        if (searchText == null || searchText.isBlank()) {
+            return List.of();
+        }
+
+        TemplateKeywordType keywordType = TemplateKeywordType
+                .findByTitleLike(searchText)
+                .orElseThrow(() -> new TemplateManagerExceptionHandler(TemplateManagerErrorCode.TEMPLATE_NOT_FOUND_BY_KEYWORD)
+                );
+
+        return templateKeywordRepository.searchByKeyword(keywordType);
+    }
+
 }
