@@ -170,12 +170,13 @@ class TemplateServiceTest {
                 templateService.searchTemplatesByKeyword(searchText);
 
         // then
-        assertThat(result)
-                .hasSize(1)
-                .extracting("templateId", "imageUrl", "keyword")
-                .containsExactly(
-                        tuple(1L, "https://dummy.com/search.jpg", keywordType)
-                );
+        assertThat(result).hasSize(1);
+
+        TemplateByKeywordResponse response = result.get(0);
+        assertThat(response.templateId()).isEqualTo(1L);
+        assertThat(response.imageUrl()).isEqualTo("https://dummy.com/search.jpg");
+        assertThat(response.keywordType()).isEqualTo(keywordType);
+        assertThat(response.getKeywordTitle()).isEqualTo("일반 디스플레이");
     }
 
     @Test
