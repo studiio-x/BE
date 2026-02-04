@@ -38,7 +38,15 @@ public class FolderController {
         folderService.updateFolderName(principal.userId(), folderId, folderCreateRequest);
     }
 
-    // TODO: 폴더 이동 API
+    @PutMapping("/v1/folder/{targetFolderId}/{destinationFolderId}")
+    public void folderAclRootUpdate(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long targetFolderId,
+            @PathVariable Long destinationFolderId
+    ) {
+        folderService.moveFolder(principal.userId(), targetFolderId, destinationFolderId);
+    }
+
 
 
 

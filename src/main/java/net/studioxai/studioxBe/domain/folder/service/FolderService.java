@@ -29,6 +29,7 @@ public class FolderService {
     private final ClosureFolderRepository closureFolderRepository;
     private final FolderManagerBulkRepository folderManagerBulkRepository;
     private final FolderManagerRepository folderManagerRepository;
+    private final ClosureFolderMoveRepository closureFolderMoveRepository;
 
     @Transactional
     public void changeLinkMode(Long userId, Long folderId) {
@@ -123,5 +124,36 @@ public class FolderService {
 
         folder.updateName(folderCreateRequest.name());
     }
+
+    @Transactional
+    public void moveFolder(Long userId, Long targetFolderId, Long destinationFolderId) {
+        folderManagerService.isUserWritable(userId, targetFolderId);
+        folderManagerService.isUserWritable(userId, destinationFolderId);
+
+        Folder targetFolder = folderRepository.findById(targetFolderId).orElseThrow(
+                () -> new FolderExceptionHandler(FolderErrorCode.FOLDER_NOT_FOUND)
+        );
+
+        Folder destinationFolder = folderRepository.findById(destinationFolderId).orElseThrow(
+                () -> new FolderExceptionHandler(FolderErrorCode.FOLDER_NOT_FOUND)
+        );
+
+        targetFolder.move(destinationFolder);
+        moveSubtree(targetFolderId, destinationFolderId);
+    }
+
+    private void moveSubtree(Long targetFolderId, Long destinationFolderId) {
+        if (closureFolderMoveRepository.existsPath(targetFolderId, destinationFolderId)) {
+            throw new FolderExceptionHandler(FolderErrorCode.INVALID_FOLDER_HIERARCHY_MOVE);
+        }
+
+        if (targetFolderId.equals(destinationFolderId)) {
+            throw new FolderExceptionHandler(FolderErrorCode.INVALID_MOVE_FOLDER_TO_ITSELF);
+        }
+
+        closureFolderMoveRepository.deleteOldAncestorLinks(targetFolderId);
+        closureFolderMoveRepository.insertNewAncestorLinks(targetFolderId, destinationFolderId);
+    }
+
 
 }
