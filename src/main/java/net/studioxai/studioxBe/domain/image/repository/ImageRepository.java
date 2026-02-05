@@ -17,7 +17,7 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
 
     @Query("""
     SELECT i FROM Image i
-    WHERE i.cutoutImage.folder = :folder
+    WHERE i.project.folder = :folder
     ORDER BY i.createdAt DESC
     """)
     List<Image> findByFolder(
@@ -27,8 +27,8 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
 
     @Query("""
     SELECT i FROM Image i
-    WHERE i.cutoutImage.folder IN :folders
-    ORDER BY i.cutoutImage.folder.id ASC, i.createdAt DESC
+    WHERE i.project.folder IN :folders
+    ORDER BY i.project.folder.id ASC, i.createdAt DESC
     """)
     List<Image> findByFolders(
             @Param("folders") List<Folder> folders

@@ -4,8 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record ImageGenerateRequest(
-        @NotNull Long cutoutImageId,
-        @NotNull Long templateId,
-        @NotBlank String prompt
+        @NotBlank String cutoutObjectKey,
+        @NotNull Long templateId
 ) {
 }

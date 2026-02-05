@@ -6,7 +6,7 @@ public record CutoutResponse(
         String cutoutObjectKey,
         @ImageUrl String cutoutImageUrl
 ) {
-    public static CutoutResponse of(String objectKey) {
-        return new CutoutResponse(objectKey, objectKey);
+    public static CutoutResponse of(String objectKey, String imageUrl) {
+        return new CutoutResponse(objectKey, imageUrl);
     }
 }

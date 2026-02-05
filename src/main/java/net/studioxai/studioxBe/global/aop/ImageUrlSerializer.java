@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ImageUrlSerializer extends JsonSerializer<Object> {
     @Value("${server.image-domain}")
     private String imageDomain;
@@ -54,3 +56,5 @@ public class ImageUrlSerializer extends JsonSerializer<Object> {
         return imageDomain + image;
     }
 }
+
+

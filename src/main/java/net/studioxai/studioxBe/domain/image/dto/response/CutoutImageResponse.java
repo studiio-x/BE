@@ -1,6 +1,6 @@
 package net.studioxai.studioxBe.domain.image.dto.response;
 
-import net.studioxai.studioxBe.domain.image.entity.CutoutImage;
+import net.studioxai.studioxBe.domain.image.entity.Project;
 import net.studioxai.studioxBe.global.annotation.ImageUrl;
 
 public record CutoutImageResponse(
@@ -9,13 +9,13 @@ public record CutoutImageResponse(
         Long templateId,
         Long folderId
 ) {
-    public static CutoutImageResponse from(CutoutImage cutoutImage) {
+    public static CutoutImageResponse from(Project project) {
         return new CutoutImageResponse(
-                cutoutImage.getId(),
-                cutoutImage.getCutoutImageUrl(),
-                cutoutImage.getTemplate().getId(),
-                cutoutImage.getFolder() != null
-                        ? cutoutImage.getFolder().getId()
+                project.getId(),
+                project.getCutoutImageUrl(),
+                project.getTemplate().getId(),
+                project.getFolder() != null
+                        ? project.getFolder().getId()
                         : null
         );
     }

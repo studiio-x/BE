@@ -24,7 +24,7 @@ public class ImageController {
         return ResponseEntity.ok(imageService.issueRawPresign(principal.userId()));
     }
 
-    // 검증 후 AI 누끼 → cutout을 S3에 저장 → URL 반환
+
     @PostMapping("/v1/image/cutout")
     public ResponseEntity<CutoutResponse> cutout(@AuthenticationPrincipal JwtUserPrincipal principal, @RequestBody @Valid CutoutRequest request) {
 
@@ -34,7 +34,7 @@ public class ImageController {
     @PostMapping("/v1/image/generate")
     public ResponseEntity<ImageGenerateResponse> generate(@AuthenticationPrincipal JwtUserPrincipal principal, @RequestBody @Valid ImageGenerateRequest request) {
 
-        return ResponseEntity.ok(imageService.generate(principal.userId(), request));
+        return ResponseEntity.ok(imageService.generateResultImage(principal.userId(), request));
     }
 
     @GetMapping("/v1/image/cutout/{cutoutImageId}")

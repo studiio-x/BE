@@ -1,5 +1,7 @@
 package net.studioxai.studioxBe.infra.ai.gemini;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.image.exception.ImageErrorCode;
@@ -12,6 +14,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Base64;
 import java.util.List;
 
 @Component
@@ -20,38 +23,30 @@ import java.util.List;
 public class GeminiImageClient {
 
     private final RestTemplate restTemplate;
-    private final GeminiProperties properties;
+    private final GeminiProperties props;
+    private final ObjectMapper objectMapper;
 
     /* ======================
      * Public API
      * ====================== */
 
-    /**
-     * 배경 제거 (누끼)
-     */
     public String removeBackground(String base64Image) {
 
         String prompt = """
-        Remove the background completely from the image.
+            Remove the background completely from the image.
 
-        Requirements:
-        - Keep only the main subject
-        - Preserve original shape and details
-        - Background must be fully transparent
-        - Do NOT add shadows
-        - Do NOT add new objects
-        - Output must be a clean PNG
+            Requirements:
+            - Keep only the main subject
+            - Preserve original shape and details
+            - Background must be fully transparent
+            - Do NOT add shadows
+            - Do NOT add new objects
+            - Output must be a clean PNG
         """;
 
-        return generateImageInternal(
-                List.of(imagePart(base64Image)),
-                prompt
-        );
+        return generateImageInternal(List.of(imagePart(base64Image)), prompt);
     }
 
-    /**
-     * cutout + template 합성
-     */
     public String generateCompositeImage(
             String cutoutBase64,
             String templateBase64,
@@ -66,39 +61,48 @@ public class GeminiImageClient {
         );
     }
 
-    private String generateImageInternal(List<GeminiGenerateRequest.Part> imageParts, String prompt) {
-        GeminiGenerateRequest request =
+    private String generateImageInternal(
+            List<GeminiGenerateRequest.Part> imageParts,
+            String prompt
+    ) {
+
+        String url = props.baseUrl()
+                + "/v1beta/models/"
+                + props.model()
+                + ":generateContent";
+
+        GeminiGenerateRequest requestBody =
                 GeminiGenerateRequest.of(prompt, imageParts);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("x-goog-api-key", properties.apiKey());
+        headers.set("x-goog-api-key", props.apiKey());
 
-        HttpEntity<GeminiGenerateRequest> entity =
-                new HttpEntity<>(request, headers);
+        HttpEntity<GeminiGenerateRequest> request =
+                new HttpEntity<>(requestBody, headers);
 
-        try {
-            ResponseEntity<GeminiGenerateResponse> response =
-                    restTemplate.postForEntity(
-                            properties.baseUrl()
-                                    + "/v1beta/models/"
-                                    + properties.model()
-                                    + ":generateContent",
-                            entity,
-                            GeminiGenerateResponse.class
-                    );
+        ResponseEntity<String> response =
+                restTemplate.postForEntity(url, request, String.class);
 
-            GeminiGenerateResponse body = response.getBody();
-            if (body == null || body.candidates().isEmpty()) {
-                throw new IllegalStateException("Empty Gemini response");
-            }
-
-            return extractBase64Image(body);
-
-        } catch (Exception e) {
-            log.error("[Gemini IMAGE ERROR]", e);
-            throw new AiExceptionHandler(AiErrorCode.AI_CALL_FAILED);
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            log.error("Gemini API error status={}, body={}",
+                    response.getStatusCode(), response.getBody());
+            throw new AiExceptionHandler(AiErrorCode.AI_INVALID_RESPONSE);
         }
+
+        log.info("Gemini raw response = {}", response.getBody());
+
+        String base64 = extractImageBase64(response.getBody());
+        log.info("Gemini image base64 length = {}", base64.length());
+
+        byte[] decoded = Base64.getDecoder().decode(base64);
+        log.info("Decoded image bytes = {}", decoded.length);
+
+        if (decoded.length == 0) {
+            throw new ImageExceptionHandler(ImageErrorCode.GEMINI_RESPONSE_INVALID);
+        }
+
+        return base64;
     }
 
     private GeminiGenerateRequest.Part imagePart(String base64Image) {
@@ -111,20 +115,30 @@ public class GeminiImageClient {
         );
     }
 
-    private String extractBase64Image(GeminiGenerateResponse response) {
+    private String extractImageBase64(String responseBody) {
         try {
-            return response.candidates()
+            JsonNode root = objectMapper.readTree(responseBody);
+
+            JsonNode parts = root.path("candidates")
                     .get(0)
-                    .content()
-                    .parts()
-                    .stream()
-                    .filter(p -> p.inline_data() != null)
-                    .findFirst()
-                    .orElseThrow()
-                    .inline_data()
-                    .data();
+                    .path("content")
+                    .path("parts");
+
+            for (JsonNode part : parts) {
+                JsonNode inlineData = part.path("inlineData");
+                if (!inlineData.isMissingNode()) {
+                    String base64 = inlineData.path("data").asText();
+                    if (!base64.isBlank()) {
+                        return base64;
+                    }
+                }
+            }
+
+            throw new ImageExceptionHandler(ImageErrorCode.GEMINI_RESPONSE_INVALID);
+
         } catch (Exception e) {
-            throw new AiExceptionHandler(AiErrorCode.AI_INVALID_RESPONSE);
+            log.error("Failed to parse Gemini response", e);
+            throw new ImageExceptionHandler(ImageErrorCode.GEMINI_RESPONSE_INVALID);
         }
     }
 }

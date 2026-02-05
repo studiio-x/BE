@@ -7,8 +7,11 @@ public record RawPresignResponse(
         String rawObjectKey,
         @ImageUrl String rawImageUrl
 ) {
-    public static RawPresignResponse of(String uploadUrl, String objectKey) {
-        return new RawPresignResponse(uploadUrl, objectKey, objectKey); // url은 serializer가 변환
+
+    public static RawPresignResponse of(String uploadUrl, String objectKey, String imageUrl) {
+        return new RawPresignResponse(uploadUrl, objectKey, imageUrl);
     }
 }
+
+
 

@@ -12,16 +12,16 @@ import net.studioxai.studioxBe.global.entity.BaseEntity;
 @Entity
 @Getter
 @NoArgsConstructor
-@Table(name = "raw_images")
-public class CutoutImage extends BaseEntity {
+@Table(name = "project")
+public class Project extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "raw_image_id")
+    @Column(name = "project_id")
     private Long id;
 
-    @Column(name = "cutout_image_url", nullable = false)
-    private String cutoutImageUrl;
+    @Column(name = "cutout_image_object_key", nullable = false)
+    private String cutoutImageObjectKey;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "template_id", nullable = false)
@@ -31,25 +31,25 @@ public class CutoutImage extends BaseEntity {
     @JoinColumn(name = "folder_id", nullable = true)
     private Folder folder;
 
-    public static CutoutImage create(
-            String cutoutImageUrl,
+    public static Project create(
+            String cutoutImageObjectKey,
             Template template,
             Folder folder
     ) {
-        return CutoutImage.builder()
-                .cutoutImageUrl(cutoutImageUrl)
+        return Project.builder()
+                .cutoutImageObjectKey(cutoutImageObjectKey)
                 .template(template)
                 .folder(folder)
                 .build();
     }
 
     @Builder(access = AccessLevel.PRIVATE)
-    private CutoutImage(
-            String cutoutImageUrl,
+    private Project(
+            String cutoutImageObjectKey,
             Template template,
             Folder folder
     ) {
-        this.cutoutImageUrl = cutoutImageUrl;
+        this.cutoutImageObjectKey = cutoutImageObjectKey;
         this.template = template;
         this.folder = folder;
     }

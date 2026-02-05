@@ -1,16 +1,15 @@
 package net.studioxai.studioxBe.image;
 
-import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.image.dto.request.CutoutRequest;
 import net.studioxai.studioxBe.domain.image.dto.request.ImageGenerateRequest;
 import net.studioxai.studioxBe.domain.image.dto.response.CutoutResponse;
 import net.studioxai.studioxBe.domain.image.dto.response.ImageGenerateResponse;
 import net.studioxai.studioxBe.domain.image.dto.response.RawPresignResponse;
-import net.studioxai.studioxBe.domain.image.entity.CutoutImage;
+import net.studioxai.studioxBe.domain.image.entity.Project;
 import net.studioxai.studioxBe.domain.image.entity.Image;
 import net.studioxai.studioxBe.domain.image.exception.ImageErrorCode;
 import net.studioxai.studioxBe.domain.image.exception.ImageExceptionHandler;
-import net.studioxai.studioxBe.domain.image.repository.CutoutImageRepository;
+import net.studioxai.studioxBe.domain.image.repository.ProjectRepository;
 import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
 import net.studioxai.studioxBe.domain.image.service.ImageService;
 import net.studioxai.studioxBe.domain.template.entity.Template;
@@ -25,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -41,7 +39,7 @@ class ImageServiceTest {
 
     /* ===== Mock ===== */
     @Mock private ImageRepository imageRepository;
-    @Mock private CutoutImageRepository cutoutImageRepository;
+    @Mock private ProjectRepository cutoutImageRepository;
     @Mock private TemplateRepository templateRepository;
     @Mock private S3UrlHandler s3UrlHandler;
     @Mock private S3Client s3Client;
@@ -54,29 +52,6 @@ class ImageServiceTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(imageService, "bucket", "test-bucket");
-    }
-
-    /* ======================================================
-     * getImagesByFolder
-     * ====================================================== */
-
-    @Test
-    @DisplayName("[getImagesByFolder] 폴더와 개수를 받아 이미지 URL 리스트 반환")
-    void getImagesByFolder_success() {
-        Folder folder = mock(Folder.class);
-
-        Image img1 = mock(Image.class);
-        Image img2 = mock(Image.class);
-
-        given(img1.getImageUrl()).willReturn("url1");
-        given(img2.getImageUrl()).willReturn("url2");
-
-        given(imageRepository.findByFolder(eq(folder), any(Pageable.class)))
-                .willReturn(List.of(img1, img2));
-
-        List<String> result = imageService.getImagesByFolder(folder, 2);
-
-        assertThat(result).containsExactly("url1", "url2");
     }
 
     /* ======================================================
@@ -133,7 +108,7 @@ class ImageServiceTest {
     @Test
     @DisplayName("[generate] cutout + template 합성 성공")
     void generate_success() {
-        CutoutImage cutout = mock(CutoutImage.class);
+        Project cutout = mock(Project.class);
         Template template = mock(Template.class);
 
         given(cutout.getCutoutImageUrl()).willReturn("images/cutout/a.png");
