@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface TemplateKeywordRepository extends JpaRepository<TemplateKeyword, Long> {
 
     @Query("""
@@ -23,11 +25,20 @@ public interface TemplateKeywordRepository extends JpaRepository<TemplateKeyword
     where tk.keyword = :keyword
     order by t.createdAt desc
 """)
-    Page<TemplateByKeywordResponse> findByKeywordOrderByTemplateCreatedAtDesc(
-            @Param("keyword") TemplateKeywordType keyword,
-            Pageable pageable
+    Page<TemplateByKeywordResponse> findByKeywordOrderByTemplateCreatedAtDesc(@Param("keyword") TemplateKeywordType keyword, Pageable pageable);
+
+    @Query("""
+        select new net.studioxai.studioxBe.domain.template.dto.response.TemplateByKeywordResponse(
+            t.id,
+            tk.keyword,
+            t.imageUrl,
+            t.category
+        )
+        from TemplateKeyword tk
+        join tk.template t
+        where tk.keyword = :keyword
+    """)
+    List<TemplateByKeywordResponse> searchByKeyword(@Param("keyword") TemplateKeywordType keyword
     );
-
-
 }
 

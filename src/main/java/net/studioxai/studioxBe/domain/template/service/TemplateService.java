@@ -2,7 +2,7 @@ package net.studioxai.studioxBe.domain.template.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.studioxai.studioxBe.domain.template.dto.TemplateCategoryGet;
+import net.studioxai.studioxBe.domain.template.dto.response.TemplateCategoryGet;
 import net.studioxai.studioxBe.domain.template.dto.response.KeywordTemplatesResponse;
 import net.studioxai.studioxBe.domain.template.dto.response.TemplateByCategoryResponse;
 import net.studioxai.studioxBe.domain.template.dto.response.TemplateByKeywordResponse;
@@ -68,10 +68,8 @@ public class TemplateService {
                 .toList();
     }
 
-    public List<KeywordTemplatesResponse> getTemplatesByKeywords(
-            List<TemplateKeywordType> keywords,
-            int limitPerKeyword
-    ) {
+    public List<KeywordTemplatesResponse> getTemplatesByKeywords(List<TemplateKeywordType> keywords, int limitPerKeyword) {
+
         List<KeywordTemplatesResponse> result = new ArrayList<>();
 
         for (TemplateKeywordType keyword : keywords) {
@@ -97,6 +95,20 @@ public class TemplateService {
         }
 
         return result;
+    }
+
+    public List<TemplateByKeywordResponse> searchTemplatesByKeyword(String searchText) {
+
+        if (searchText == null || searchText.isBlank()) {
+            return List.of();
+        }
+
+        TemplateKeywordType keywordType = TemplateKeywordType
+                .findByTitleLike(searchText)
+                .orElseThrow(() -> new TemplateManagerExceptionHandler(TemplateManagerErrorCode.TEMPLATE_NOT_FOUND_BY_KEYWORD)
+                );
+
+        return templateKeywordRepository.searchByKeyword(keywordType);
     }
 
 }

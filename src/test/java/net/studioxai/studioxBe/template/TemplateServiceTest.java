@@ -1,10 +1,8 @@
 package net.studioxai.studioxBe.template;
 
 import net.studioxai.studioxBe.domain.template.dto.response.KeywordTemplatesResponse;
-import net.studioxai.studioxBe.domain.template.dto.response.TemplateByCategoryResponse;
 import net.studioxai.studioxBe.domain.template.dto.response.TemplateByKeywordResponse;
-import net.studioxai.studioxBe.domain.template.dto.TemplateCategoryGet;
-import net.studioxai.studioxBe.domain.template.dto.TemplateKeywordGet;
+import net.studioxai.studioxBe.domain.template.dto.response.TemplateCategoryGet;
 import net.studioxai.studioxBe.domain.template.entity.Template;
 import net.studioxai.studioxBe.domain.template.entity.TemplateKeywordType;
 import net.studioxai.studioxBe.domain.template.repository.TemplateKeywordRepository;
@@ -147,6 +145,50 @@ class TemplateServiceTest {
 
         assertThat(result).isEmpty();
 
+    }
+
+    @Test
+    @DisplayName("[searchTemplatesByKeyword] 한글 검색어로 정상 조회")
+    void searchTemplatesByKeyword_ok() {
+        // given
+        String searchText = "일반";
+        TemplateKeywordType keywordType = TemplateKeywordType.GENERAL_DISPLAY;
+
+        TemplateByKeywordResponse dto =
+                new TemplateByKeywordResponse(
+                        1L,
+                        keywordType,
+                        "https://dummy.com/search.jpg",
+                        Category.IMAGE
+                );
+
+        given(templateKeywordRepository.searchByKeyword(keywordType))
+                .willReturn(List.of(dto));
+
+        // when
+        List<TemplateByKeywordResponse> result =
+                templateService.searchTemplatesByKeyword(searchText);
+
+        // then
+        assertThat(result).hasSize(1);
+
+        TemplateByKeywordResponse response = result.get(0);
+        assertThat(response.templateId()).isEqualTo(1L);
+        assertThat(response.imageUrl()).isEqualTo("https://dummy.com/search.jpg");
+        assertThat(response.keywordType()).isEqualTo(keywordType);
+        assertThat(response.getKeywordTitle()).isEqualTo("일반 디스플레이");
+    }
+
+    @Test
+    @DisplayName("[searchTemplatesByKeyword] 키워드 매칭 실패 시 예외 발생")
+    void searchTemplatesByKeyword_notFound() {
+        // given
+        String searchText = "없는키워드";
+
+        // when & then
+        assertThatThrownBy(() ->
+                templateService.searchTemplatesByKeyword(searchText)
+        ).isInstanceOf(TemplateManagerExceptionHandler.class);
     }
 
 
