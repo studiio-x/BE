@@ -3,12 +3,13 @@ package net.studioxai.studioxBe.domain.template.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import net.studioxai.studioxBe.global.entity.BaseEntity;
 
 @Entity
 @Getter
 @NoArgsConstructor
 @Table(name = "template_keyword")
-public class TemplateKeyword {
+public class TemplateKeyword extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -1,9 +1,8 @@
 package net.studioxai.studioxBe.template;
 
-import net.studioxai.studioxBe.domain.template.dto.response.TemplateByCategoryResponse;
+import net.studioxai.studioxBe.domain.template.dto.response.KeywordTemplatesResponse;
 import net.studioxai.studioxBe.domain.template.dto.response.TemplateByKeywordResponse;
-import net.studioxai.studioxBe.domain.template.dto.TemplateCategoryGet;
-import net.studioxai.studioxBe.domain.template.dto.TemplateKeywordGet;
+import net.studioxai.studioxBe.domain.template.dto.response.TemplateCategoryGet;
 import net.studioxai.studioxBe.domain.template.entity.Template;
 import net.studioxai.studioxBe.domain.template.entity.TemplateKeywordType;
 import net.studioxai.studioxBe.domain.template.repository.TemplateKeywordRepository;
@@ -20,7 +19,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 
 import java.util.List;
-
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
 
@@ -103,66 +101,95 @@ class TemplateServiceTest {
      * ========================= */
 
     @Test
-    @DisplayName("[getTemplatesByKeyword] 정상 조회 시 TemplateKeywordGet 반환")
-    void getTemplatesByKeyword_ok() {
-        // given
-        TemplateKeywordType keyword = TemplateKeywordType.OUTDOOR;
-        int pageNum = 0;
-        int limit = 5;
+    @DisplayName("[getTemplatesByKeywords] 정상 조회")
+    void getTemplatesByKeywords_ok() {
+        TemplateKeywordType keyword = TemplateKeywordType.GENERAL_DISPLAY;
 
         TemplateByKeywordResponse dto =
                 new TemplateByKeywordResponse(
-                        2L,
+                        1L,
                         keyword,
-                        "아웃도어",
-                        "image-url",
+                        "https://dummy.com/img1.jpg",
                         Category.IMAGE
                 );
 
-        Page<TemplateByKeywordResponse> page =
-                new PageImpl<>(
-                        List.of(dto),
-                        PageRequest.of(pageNum, limit),
-                        1
-                );
+        given(templateKeywordRepository.findByKeywordOrderByTemplateCreatedAtDesc(
+                any(),
+                any()
+        )).willReturn(new PageImpl<>(List.of(dto)));
+
+        List<KeywordTemplatesResponse> result =
+                templateService.getTemplatesByKeywords(List.of(keyword), 10);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).keyword()).isEqualTo(keyword);
+        assertThat(result.get(0).templates())
+                .hasSize(1)
+                .extracting("templateId", "imageUrl")
+                .containsExactly(tuple(1L, "https://dummy.com/img1.jpg"));
+    }
+
+
+    @Test
+    @DisplayName("[getTemplatesByKeywords] 템플릿이 없어도 키워드는 내려준다")
+    void getTemplatesByKeywords_emptyTemplates() {
+        TemplateKeywordType keyword = TemplateKeywordType.GENERAL_DISPLAY;
 
         given(templateKeywordRepository.findByKeywordOrderByTemplateCreatedAtDesc(
-                eq(keyword),
-                any(Pageable.class)
-        )).willReturn(page);
+                any(),
+                any()
+        )).willReturn(Page.empty());
 
-        // when
-        TemplateKeywordGet result =
-                templateService.getTemplatesByKeyword(keyword, pageNum, limit);
+        List<KeywordTemplatesResponse> result =
+                templateService.getTemplatesByKeywords(List.of(keyword), 10);
 
-        // then
-        assertThat(result.templates())
-                .hasSize(1)
-                .extracting("templateId", "keywordTitle", "imageUrl")
-                .containsExactly(tuple(2L, "아웃도어", "image-url"));
+        assertThat(result).isEmpty();
 
-        assertThat(result.pageInfo())
-                .extracting("pageNum", "limit", "totalPages", "totalElements")
-                .containsExactly(0, 5, 1, 1L);
     }
 
     @Test
-    @DisplayName("[getTemplatesByKeyword] 결과가 없으면 예외 발생")
-    void getTemplatesByKeyword_empty() {
+    @DisplayName("[searchTemplatesByKeyword] 한글 검색어로 정상 조회")
+    void searchTemplatesByKeyword_ok() {
         // given
-        TemplateKeywordType keyword = TemplateKeywordType.OUTDOOR;
+        String searchText = "일반";
+        TemplateKeywordType keywordType = TemplateKeywordType.GENERAL_DISPLAY;
 
-        Page<TemplateByKeywordResponse> emptyPage =
-                new PageImpl<>(List.of(), PageRequest.of(0, 5), 0);
+        TemplateByKeywordResponse dto =
+                new TemplateByKeywordResponse(
+                        1L,
+                        keywordType,
+                        "https://dummy.com/search.jpg",
+                        Category.IMAGE
+                );
 
-        given(templateKeywordRepository.findByKeywordOrderByTemplateCreatedAtDesc(
-                eq(keyword),
-                any(Pageable.class)
-        )).willReturn(emptyPage);
+        given(templateKeywordRepository.searchByKeyword(keywordType))
+                .willReturn(List.of(dto));
+
+        // when
+        List<TemplateByKeywordResponse> result =
+                templateService.searchTemplatesByKeyword(searchText);
+
+        // then
+        assertThat(result).hasSize(1);
+
+        TemplateByKeywordResponse response = result.get(0);
+        assertThat(response.templateId()).isEqualTo(1L);
+        assertThat(response.imageUrl()).isEqualTo("https://dummy.com/search.jpg");
+        assertThat(response.keywordType()).isEqualTo(keywordType);
+        assertThat(response.getKeywordTitle()).isEqualTo("일반 디스플레이");
+    }
+
+    @Test
+    @DisplayName("[searchTemplatesByKeyword] 키워드 매칭 실패 시 예외 발생")
+    void searchTemplatesByKeyword_notFound() {
+        // given
+        String searchText = "없는키워드";
 
         // when & then
         assertThatThrownBy(() ->
-                templateService.getTemplatesByKeyword(keyword, 0, 5)
+                templateService.searchTemplatesByKeyword(searchText)
         ).isInstanceOf(TemplateManagerExceptionHandler.class);
     }
+
+
 }

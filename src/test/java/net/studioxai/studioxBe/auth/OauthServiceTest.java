@@ -1,5 +1,6 @@
 package net.studioxai.studioxBe.auth;
 
+import net.studioxai.studioxBe.domain.auth.dto.GoogleCallbackDto;
 import net.studioxai.studioxBe.domain.auth.dto.response.GoogleTokenResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.GoogleUserInfoResponse;
 import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
@@ -84,7 +85,7 @@ class OauthServiceTest {
 
         given(googleOauth.requestAccessToken(code)).willReturn(tokenResponse);
         given(googleOauth.requestUserInfo("google-access-token")).willReturn(userInfo);
-        given(userRepository.findByGoogleSub(googleSub)).willReturn(Optional.of(user));
+        given(userRepository.findByEmail("google@test.com")).willReturn(Optional.of(user));
 
         given(authService.issueTokens(userId)).willReturn(
                 Map.of(
@@ -94,13 +95,12 @@ class OauthServiceTest {
         );
 
         // when
-        String result = oauthService.loginWithGoogle(code, REDIRECT_URL);
+        GoogleCallbackDto result = oauthService.loginWithGoogle(code, REDIRECT_URL);
 
         // then
-        assertThat(result)
-                .startsWith(REDIRECT_URL)
-                .contains("accessToken=access-token")
-                .contains("refreshToken=refresh-token");
+        assertThat(result.redirectUrl()).isEqualTo(REDIRECT_URL);
+        assertThat(result.accessToken()).isEqualTo("access-token");
+        assertThat(result.refreshToken()).isEqualTo("refresh-token");
 
         verify(userRepository, never()).save(any());
         verify(authService).issueTokens(userId);
@@ -123,7 +123,7 @@ class OauthServiceTest {
 
         GoogleUserInfoResponse userInfo = new GoogleUserInfoResponse(
                 googleSub,
-                "new@test.com",
+                "google@test.com",
                 "newUser",
                 null,
                 true
@@ -131,7 +131,7 @@ class OauthServiceTest {
 
         given(googleOauth.requestAccessToken(code)).willReturn(tokenResponse);
         given(googleOauth.requestUserInfo("google-access-token")).willReturn(userInfo);
-        given(userRepository.findByGoogleSub(googleSub)).willReturn(Optional.empty());
+        given(userRepository.findByEmail("google@test.com")).willReturn(Optional.empty());
         given(passwordEncoder.encode(anyString())).willReturn("encoded-password");
 
         given(userRepository.save(any(User.class)))
@@ -149,13 +149,12 @@ class OauthServiceTest {
         );
 
         // when
-        String result = oauthService.loginWithGoogle(code, REDIRECT_URL);
+        GoogleCallbackDto result = oauthService.loginWithGoogle(code, REDIRECT_URL);
 
         // then
-        assertThat(result)
-                .startsWith(REDIRECT_URL)
-                .contains("accessToken=access-token")
-                .contains("refreshToken=refresh-token");
+        assertThat(result.redirectUrl()).isEqualTo(REDIRECT_URL);
+        assertThat(result.accessToken()).isEqualTo("access-token");
+        assertThat(result.refreshToken()).isEqualTo("refresh-token");
 
         verify(userRepository).save(any(User.class));
         verify(passwordEncoder).encode(anyString());

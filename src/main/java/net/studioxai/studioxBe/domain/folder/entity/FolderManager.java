@@ -5,6 +5,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import net.studioxai.studioxBe.domain.folder.entity.enums.LinkMode;
+import net.studioxai.studioxBe.domain.folder.entity.enums.Permission;
+import net.studioxai.studioxBe.domain.folder.entity.enums.SourceType;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.global.entity.BaseEntity;
 
@@ -26,16 +29,51 @@ public class FolderManager extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "permission", nullable = false)
+    private Permission permission;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "link_mode", nullable = false)
+    private LinkMode linkMode;
+
     @Builder(access = AccessLevel.PRIVATE)
-    public FolderManager(User user, Folder folder) {
+    public FolderManager(User user, Folder folder, Permission permission, LinkMode linkMode) {
         this.user = user;
         this.folder = folder;
+        this.permission = permission;
+        this.linkMode = linkMode;
     }
 
-    public static FolderManager create(User user, Folder folder) {
+    public static FolderManager createRootManager(User user, Folder folder) {
         return FolderManager.builder()
                 .user(user)
                 .folder(folder)
+                .permission(Permission.OWNER)
+                .linkMode(LinkMode.LINK)
                 .build();
+    }
+
+    public static FolderManager createWriter(User user, Folder folder) {
+        return FolderManager.builder()
+                .user(user)
+                .folder(folder)
+                .permission(Permission.WRITE)
+                .linkMode(folder.getLinkMode())
+                .build();
+    }
+
+    public static FolderManager create(User user, Folder folder, Permission permission) {
+        return FolderManager.builder()
+                .user(user)
+                .folder(folder)
+                .permission(permission)
+                .linkMode(folder.getLinkMode())
+                .build();
+    }
+
+
+    public void updateDirectPermission() {
+        this.permission = this.permission.toggle();
     }
 }

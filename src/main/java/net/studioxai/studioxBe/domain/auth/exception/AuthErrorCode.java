@@ -7,6 +7,7 @@ import net.studioxai.studioxBe.global.error.BaseErrorCode;
 import org.springframework.http.HttpStatus;
 
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @Getter
 @RequiredArgsConstructor
@@ -22,6 +23,7 @@ public enum AuthErrorCode implements BaseErrorCode {
 
     //401
     WRONG_ID_OR_PASSWORD(HttpStatus.UNAUTHORIZED, "USER_401_1", "아이디 또는 비밀번호가 일치하지 않습니다."),
+    NO_TOKEN(UNAUTHORIZED, "AUTH_401_1", "토큰이 존재하지 않습니다"),
 
     //403
     EMAIL_NOT_VERIFIED(HttpStatus.FORBIDDEN, "USER_403_1", "이메일 인증이 필요합니다."),
