@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.image.exception.ImageErrorCode;
 import net.studioxai.studioxBe.domain.image.exception.ImageExceptionHandler;
 import net.studioxai.studioxBe.infra.ai.dto.request.GeminiGenerateRequest;
-import net.studioxai.studioxBe.infra.ai.dto.response.GeminiGenerateResponse;
 import net.studioxai.studioxBe.infra.ai.exception.AiErrorCode;
 import net.studioxai.studioxBe.infra.ai.exception.AiExceptionHandler;
 import org.springframework.http.*;
@@ -85,18 +84,12 @@ public class GeminiImageClient {
                 restTemplate.postForEntity(url, request, String.class);
 
         if (!response.getStatusCode().is2xxSuccessful()) {
-            log.error("Gemini API error status={}, body={}",
-                    response.getStatusCode(), response.getBody());
             throw new AiExceptionHandler(AiErrorCode.AI_INVALID_RESPONSE);
         }
 
-        log.info("Gemini raw response = {}", response.getBody());
-
         String base64 = extractImageBase64(response.getBody());
-        log.info("Gemini image base64 length = {}", base64.length());
 
         byte[] decoded = Base64.getDecoder().decode(base64);
-        log.info("Decoded image bytes = {}", decoded.length);
 
         if (decoded.length == 0) {
             throw new ImageExceptionHandler(ImageErrorCode.GEMINI_RESPONSE_INVALID);
@@ -137,7 +130,6 @@ public class GeminiImageClient {
             throw new ImageExceptionHandler(ImageErrorCode.GEMINI_RESPONSE_INVALID);
 
         } catch (Exception e) {
-            log.error("Failed to parse Gemini response", e);
             throw new ImageExceptionHandler(ImageErrorCode.GEMINI_RESPONSE_INVALID);
         }
     }

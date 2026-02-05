@@ -1,6 +1,6 @@
 package net.studioxai.studioxBe.domain.image.dto.request;
 import jakarta.validation.constraints.NotBlank;
 
-public record CutoutRequest(
+public record CutoutImageGenerateRequest(
         @NotBlank String rawObjectKey
 ) {}

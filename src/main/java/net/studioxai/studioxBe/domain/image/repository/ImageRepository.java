@@ -15,29 +15,10 @@ import java.util.Optional;
 @Repository
 public interface ImageRepository extends JpaRepository<Image, Long> {
 
-    @Query("""
-    SELECT i FROM Image i
-    WHERE i.project.folder = :folder
-    ORDER BY i.createdAt DESC
-    """)
-    List<Image> findByFolder(
-            @Param("folder") Folder folder,
-            Pageable pageable
-    );
-
-    @Query("""
-    SELECT i FROM Image i
-    WHERE i.project.folder IN :folders
-    ORDER BY i.project.folder.id ASC, i.createdAt DESC
-    """)
-    List<Image> findByFolders(
-            @Param("folders") List<Folder> folders
-    );
-
     @EntityGraph(attributePaths = {
-            "cutoutImage",
-            "cutoutImage.template",
-            "cutoutImage.folder"
+            "project",
+            "project.template",
+            "project.folder"
     })
     Optional<Image> findDetailById(Long id);
 

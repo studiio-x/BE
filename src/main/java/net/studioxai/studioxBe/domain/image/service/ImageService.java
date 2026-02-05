@@ -3,8 +3,7 @@ package net.studioxai.studioxBe.domain.image.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.studioxai.studioxBe.domain.folder.entity.Folder;
-import net.studioxai.studioxBe.domain.image.dto.request.CutoutRequest;
+import net.studioxai.studioxBe.domain.image.dto.request.CutoutImageGenerateRequest;
 import net.studioxai.studioxBe.domain.image.dto.request.ImageGenerateRequest;
 import net.studioxai.studioxBe.domain.image.dto.response.*;
 import net.studioxai.studioxBe.domain.image.entity.Image;
@@ -26,6 +25,8 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+import java.io.InputStream;
+import java.net.URL;
 import java.util.Base64;
 
 
@@ -52,28 +53,10 @@ public class ImageService {
     @Value("${server.image-domain}")
     private String imageDomain;
 
-    public Map<Long, List<String>> getImagesByFolders(List<Folder> folders, int count) {
-        Map<Long, List<String>> result = new LinkedHashMap<>();
-
-        for (Image image : imageRepository.findByFolders(folders)) {
-            Folder folder = image.getProject().getFolder();
-            if (folder == null) continue;
-
-            result.computeIfAbsent(folder.getId(), k -> new ArrayList<>());
-
-            List<String> urls = result.get(folder.getId());
-            if (urls.size() < count) {
-                urls.add(image.getImageUrl());
-            }
-        }
-        return result;
-    }
-
-
-    public RawPresignResponse issueRawPresign(Long userId) {
+    public PresignResponse issuePresign(Long userId) {
         S3Url s3Url = s3UrlHandler.handle("images/raw");
 
-        return RawPresignResponse.of(
+        return PresignResponse.of(
                 s3Url.getUploadUrl(),
                 s3Url.getObjectKey(),
                 imageDomain + s3Url.getObjectKey()
@@ -81,46 +64,33 @@ public class ImageService {
     }
 
     @Transactional
-    public CutoutResponse cutout(Long userId, CutoutRequest request) {
+    public CutoutImageGenerateResponse generateCutoutImage(Long userId, CutoutImageGenerateRequest request) {
 
-        // 1. S3 RAW 이미지 → Base64
-        String rawImageBase64 =
-                s3ImageLoader.loadAsBase64(request.rawObjectKey());
+        String rawImageBase64 = s3ImageLoader.loadAsBase64(request.rawObjectKey());
 
-        // 2. Gemini 누끼 요청
-        String cutoutBase64 =
-                geminiImageClient.removeBackground(rawImageBase64);
+        String cutoutBase64 = geminiImageClient.removeBackground(rawImageBase64);
 
-        // 3. Base64 → byte[]
         byte[] cutoutBytes = Base64.getDecoder().decode(cutoutBase64);
 
-        // 4. S3 저장
-        String cutoutObjectKey =
-                "images/cutout/" + UUID.randomUUID() + ".png";
+        String cutoutImageObjectKey = "images/cutout/" + UUID.randomUUID() + ".png";
 
-        uploadToS3(cutoutObjectKey, cutoutBytes);
+        uploadToS3(cutoutImageObjectKey, cutoutBytes);
 
-        return CutoutResponse.of(cutoutObjectKey, imageDomain + cutoutObjectKey);
+        return CutoutImageGenerateResponse.of(cutoutImageObjectKey, imageDomain + cutoutImageObjectKey);
     }
 
     @Transactional
-    public ImageGenerateResponse generateResultImage(Long userId, ImageGenerateRequest request) {
+    public ImageGenerateResponse generateImage(Long userId, ImageGenerateRequest request) {
 
-        // 1. Template 조회 (이건 그대로)
-        Template template =
-                templateRepository.findById(request.templateId())
-                        .orElseThrow(() ->
-                                new ImageExceptionHandler(ImageErrorCode.TEMPLATE_NOT_FOUND));
+        Template template = templateRepository.findById(request.templateId())
+                        .orElseThrow(() -> new ImageExceptionHandler(ImageErrorCode.TEMPLATE_NOT_FOUND));
 
-        // 2. S3에서 Base64 로드
-        String cutoutBase64 =
-                s3ImageLoader.loadAsBase64(request.cutoutObjectKey());
+        String cutoutBase64 = s3ImageLoader.loadAsBase64(request.cutoutImageObjectKey());
 
         String templateBase64 =
-                s3ImageLoader.loadAsBase64(template.getImageUrl());
+                loadUrlAsBase64(template.getImageUrl());
 
-        // 3. 고정 프롬프트
-        String fixedPrompt = """
+        String prompt = """
             Composite the provided cutout image naturally into the template image.
     
             Requirements:
@@ -132,33 +102,37 @@ public class ImageService {
             - Output must be a clean PNG
         """;
 
-        // 4. Gemini 합성
-        String resultBase64 =
-                geminiImageClient.generateCompositeImage(
+        String imageBase64 = geminiImageClient.generateCompositeImage(
                         cutoutBase64,
                         templateBase64,
-                        fixedPrompt
+                        prompt
                 );
 
-        byte[] resultBytes = Base64.getDecoder().decode(resultBase64);
+        byte[] imageBytes = Base64.getDecoder().decode(imageBase64);
 
-        // 5. S3 업로드
-        String resultKey = "images/result/" + UUID.randomUUID() + ".png";
+        String imageObjectKey = "images/result/" + UUID.randomUUID() + ".png";
 
-        uploadToS3(resultKey, resultBytes);
+        uploadToS3(imageObjectKey, imageBytes);
 
-        // 6. DB 저장
-        Project cutoutImage = Project.create(
-                resultKey,
+        Project project = Project.create(
+                request.cutoutImageObjectKey(),
                 template,
-                null    // folder 아직 없으면 null
+                null
         );
-        projectRepository.save(cutoutImage);
+        projectRepository.save(project);
 
-        return ImageGenerateResponse.of(cutoutImage);
+        Image image = Image.create(
+                project,
+                imageObjectKey
+        );
+        imageRepository.save(image);
+
+        //return ImageGenerateResponse.of(image);
+        return new ImageGenerateResponse(
+                image.getId(),
+                imageDomain + image.getImageObjectKey()
+        );
     }
-
-
 
     private void uploadToS3(String objectKey, byte[] bytes) {
         try {
@@ -176,21 +150,26 @@ public class ImageService {
     }
 
 
-    public CutoutImageResponse getCutoutImage(Long cutoutImageId) {
-        Project cutoutImage =
-                projectRepository.findWithTemplateAndFolderById(cutoutImageId)
-                        .orElseThrow(() ->
-                                new ImageExceptionHandler(ImageErrorCode.CUTOUT_IMAGE_NOT_FOUND));
+    public ProjectDetailResponse getProject(Long projectId) {
+        Project project = projectRepository.findWithTemplateAndFolderById(projectId)
+                        .orElseThrow(() -> new ImageExceptionHandler(ImageErrorCode.CUTOUT_IMAGE_NOT_FOUND));
 
-        return CutoutImageResponse.from(cutoutImage);
+        return ProjectDetailResponse.from(project);
     }
 
-    public ImageResponse getImage(Long imageId) {
-        Image image =
-                imageRepository.findDetailById(imageId)
-                        .orElseThrow(() ->
-                                new ImageExceptionHandler(ImageErrorCode.IMAGE_NOT_FOUND));
+    public ImageDetailResponse getImage(Long imageId) {
+        Image image = imageRepository.findDetailById(imageId)
+                        .orElseThrow(() -> new ImageExceptionHandler(ImageErrorCode.IMAGE_NOT_FOUND));
 
-        return ImageResponse.from(image);
+        return ImageDetailResponse.from(image);
+    }
+
+    private String loadUrlAsBase64(String imageUrl) {
+        try (InputStream is = new URL(imageUrl).openStream()) {
+            byte[] bytes = is.readAllBytes();
+            return Base64.getEncoder().encodeToString(bytes);
+        } catch (Exception e) {
+            throw new ImageExceptionHandler(ImageErrorCode.TEMPLATE_LOAD_FAILED);
+        }
     }
 }

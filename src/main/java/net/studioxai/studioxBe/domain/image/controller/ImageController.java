@@ -2,7 +2,7 @@ package net.studioxai.studioxBe.domain.image.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import net.studioxai.studioxBe.domain.image.dto.request.CutoutRequest;
+import net.studioxai.studioxBe.domain.image.dto.request.CutoutImageGenerateRequest;
 import net.studioxai.studioxBe.domain.image.dto.request.ImageGenerateRequest;
 import net.studioxai.studioxBe.domain.image.dto.response.*;
 import net.studioxai.studioxBe.domain.image.service.ImageService;
@@ -19,36 +19,33 @@ public class ImageController {
     private final ImageService imageService;
 
     @GetMapping("/v1/image/raw/presign")
-    public ResponseEntity<RawPresignResponse> issueRawPresign(@AuthenticationPrincipal JwtUserPrincipal principal) {
+    public ResponseEntity<PresignResponse> issuePresign(@AuthenticationPrincipal JwtUserPrincipal principal) {
 
-        return ResponseEntity.ok(imageService.issueRawPresign(principal.userId()));
+        return ResponseEntity.ok(imageService.issuePresign(principal.userId()));
     }
-
 
     @PostMapping("/v1/image/cutout")
-    public ResponseEntity<CutoutResponse> cutout(@AuthenticationPrincipal JwtUserPrincipal principal, @RequestBody @Valid CutoutRequest request) {
+    public ResponseEntity<CutoutImageGenerateResponse> generateCutoutImage(@AuthenticationPrincipal JwtUserPrincipal principal, @RequestBody @Valid CutoutImageGenerateRequest request) {
 
-        return ResponseEntity.ok(imageService.cutout(principal.userId(), request));
+        return ResponseEntity.ok(imageService.generateCutoutImage(principal.userId(), request));
     }
 
-    @PostMapping("/v1/image/generate")
-    public ResponseEntity<ImageGenerateResponse> generate(@AuthenticationPrincipal JwtUserPrincipal principal, @RequestBody @Valid ImageGenerateRequest request) {
+    @PostMapping("/v1/image/composite")
+    public ResponseEntity<ImageGenerateResponse> generateImage(@AuthenticationPrincipal JwtUserPrincipal principal, @RequestBody @Valid ImageGenerateRequest request) {
 
-        return ResponseEntity.ok(imageService.generateResultImage(principal.userId(), request));
+        return ResponseEntity.ok(imageService.generateImage(principal.userId(), request));
     }
 
-    @GetMapping("/v1/image/cutout/{cutoutImageId}")
-    public ResponseEntity<CutoutImageResponse> getCutoutImage(@PathVariable Long cutoutImageId) {
+    @GetMapping("/v1/image/projects/{projectId}")
+    public ResponseEntity<ProjectDetailResponse> getProject(@PathVariable Long projectId) {
 
-        return ResponseEntity.ok(imageService.getCutoutImage(cutoutImageId));
+        return ResponseEntity.ok(imageService.getProject(projectId));
     }
 
-    @GetMapping("/{imageId}")
-    public ResponseEntity<ImageResponse> getImage(@PathVariable Long imageId) {
+    @GetMapping("/v1/image/images/{imageId}")
+    public ResponseEntity<ImageDetailResponse> getImage(@PathVariable Long imageId) {
 
         return ResponseEntity.ok(imageService.getImage(imageId));
     }
-
-
 
 }
