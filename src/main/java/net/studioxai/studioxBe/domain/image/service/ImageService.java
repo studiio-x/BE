@@ -164,7 +164,7 @@ public class ImageService {
         return ImageDetailResponse.from(image);
     }
 
-    private String loadUrlAsBase64(String imageUrl) {
+    public String loadUrlAsBase64(String imageUrl) {
         try (InputStream is = new URL(imageUrl).openStream()) {
             byte[] bytes = is.readAllBytes();
             return Base64.getEncoder().encodeToString(bytes);
