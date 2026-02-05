@@ -39,7 +39,7 @@ public interface ClosureFolderRepository extends JpaRepository<ClosureFolder, Lo
         u.profile_image  AS profileUrl,
         u.username       AS username,
         u.email          AS email,
-        fm_final.permission AS permission -- fm -> fm_final로 수정
+        fm_final.permission AS permission
     FROM (
         SELECT
             fm.user_id,

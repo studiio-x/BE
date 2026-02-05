@@ -223,7 +223,7 @@ class FolderServiceTest {
 
     @Test
     @DisplayName("findFolders: isOwner=1은 myProject, isOwner=0은 sharedProjects로 분리")
-    void findFolders_success() {
+    void findMyFoldes_success() {
         // given
         Long userId = 1L;
 
@@ -235,7 +235,7 @@ class FolderServiceTest {
         when(closureFolderRepository.findMyFolders(userId)).thenReturn(rows);
 
         // when
-        MyFolderResponse res = sut().findFolders(userId);
+        MyFolderResponse res = sut().findMyFoldes(userId);
 
         // then
         assertThat(res).isNotNull();

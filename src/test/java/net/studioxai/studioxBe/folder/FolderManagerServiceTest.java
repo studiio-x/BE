@@ -528,7 +528,7 @@ class FolderManagerServiceTest {
 
     @Test
     @DisplayName("isUserAdmin: readable(WRITE/OWNER) 이면 통과")
-    void isUserAdmin_success() {
+    void isUserReadable_success() {
         // given
         Long userId = 1L;
         Long folderId = 10L;
@@ -542,7 +542,7 @@ class FolderManagerServiceTest {
                 .thenReturn(Optional.of(Permission.WRITE));
 
         // when
-        sut().isUserAdmin(userId, folderId);
+        sut().isUserReadable(userId, folderId);
 
         // then
         verify(closureFolderRepository).findPermission(folderId, aclRootId, userId);

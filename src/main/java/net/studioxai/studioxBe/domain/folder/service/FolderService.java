@@ -2,16 +2,23 @@ package net.studioxai.studioxBe.domain.folder.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.studioxai.studioxBe.domain.folder.dto.FoldersDto;
 import net.studioxai.studioxBe.domain.folder.dto.projection.RootFolderProjection;
 import net.studioxai.studioxBe.domain.folder.dto.request.FolderCreateRequest;
 import net.studioxai.studioxBe.domain.folder.dto.RootFolderDto;
 import net.studioxai.studioxBe.domain.folder.dto.FolderManagerDto;
+import net.studioxai.studioxBe.domain.folder.dto.response.FoldersResponse;
 import net.studioxai.studioxBe.domain.folder.dto.response.MyFolderResponse;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.folder.exception.FolderErrorCode;
 import net.studioxai.studioxBe.domain.folder.exception.FolderExceptionHandler;
 import net.studioxai.studioxBe.domain.folder.repository.*;
 import net.studioxai.studioxBe.domain.user.entity.User;
+import net.studioxai.studioxBe.global.dto.PageInfo;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +37,28 @@ public class FolderService {
     private final FolderManagerBulkRepository folderManagerBulkRepository;
     private final FolderManagerRepository folderManagerRepository;
     private final ClosureFolderMoveRepository closureFolderMoveRepository;
+
+    public FoldersResponse findFoldersByFolderId(Long userId, Long folderId, Sort.Direction sort, int pageNum, int limit) {
+        folderManagerService.isUserReadable(userId, folderId);
+        Folder folder = folderRepository.findById(folderId).orElseThrow(
+                () -> new FolderExceptionHandler(FolderErrorCode.FOLDER_NOT_FOUND)
+        );
+
+        PageRequest pageRequest = PageRequest.of(pageNum, limit, Sort.by(sort, "createdAt"));
+
+        Page<Folder> folders = folderRepository.findByParentFolder(folder, pageRequest);
+        List<FoldersDto> folderDtos = folders.stream()
+                .map(f -> FoldersDto.create(
+                        f.getId(),
+                        f.getName(),
+                        null
+                ))
+                .toList();
+
+        PageInfo pageInfo = PageInfo.of(pageNum, limit, folders.getTotalPages(), folders.getTotalElements());
+
+        return FoldersResponse.create(folderDtos, pageInfo);
+    }
 
     @Transactional
     public void changeLinkMode(Long userId, Long folderId) {
@@ -77,7 +106,7 @@ public class FolderService {
         closureFolderInsertRepository.insertClosureForNewFolder(parentFolder.getId(), subFolder.getId());
     }
 
-    public MyFolderResponse findFolders(Long userId) {
+    public MyFolderResponse findMyFoldes(Long userId) {
         List<RootFolderProjection> rows = closureFolderRepository.findMyFolders(userId);
 
         List<RootFolderDto> myProject = rows.stream()

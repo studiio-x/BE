@@ -3,14 +3,13 @@ package net.studioxai.studioxBe.domain.folder.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import net.studioxai.studioxBe.domain.folder.dto.request.FolderCreateRequest;
-import net.studioxai.studioxBe.domain.folder.dto.RootFolderDto;
+import net.studioxai.studioxBe.domain.folder.dto.response.FoldersResponse;
 import net.studioxai.studioxBe.domain.folder.dto.response.MyFolderResponse;
 import net.studioxai.studioxBe.domain.folder.service.FolderService;
 import net.studioxai.studioxBe.global.jwt.JwtUserPrincipal;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api")
@@ -18,7 +17,16 @@ import java.util.List;
 public class FolderController {
     private final FolderService folderService;
 
-    // TODO: 하위 폴더 조회 API
+    @GetMapping("/v1/folder/{folderId}")
+    public FoldersResponse foldersByFolderId(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long folderId,
+            @RequestParam(required = true, defaultValue = "desc") Sort.Direction sort,
+            @RequestParam(required = true) int pageNum,
+            @RequestParam(required = true) int limit
+    ) {
+        return folderService.findFoldersByFolderId(principal.userId(), folderId, sort, pageNum, limit);
+    }
 
 
     @DeleteMapping("/v1/folder/{folderId}")
@@ -47,9 +55,6 @@ public class FolderController {
         folderService.moveFolder(principal.userId(), targetFolderId, destinationFolderId);
     }
 
-
-
-
     @PostMapping("/v1/folder/{rootFolderId}")
     public void folderAdd(
             @AuthenticationPrincipal JwtUserPrincipal principal,
@@ -63,7 +68,7 @@ public class FolderController {
     public MyFolderResponse myfolders(
             @AuthenticationPrincipal JwtUserPrincipal principal
     ) {
-        return folderService.findFolders(principal.userId());
+        return folderService.findMyFoldes(principal.userId());
     }
 
     @PutMapping("/v1/folder/{folderId}/link")

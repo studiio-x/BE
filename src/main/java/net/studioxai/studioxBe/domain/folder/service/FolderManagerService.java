@@ -19,9 +19,6 @@ import net.studioxai.studioxBe.domain.folder.repository.ClosureFolderRepository;
 import net.studioxai.studioxBe.domain.folder.repository.FolderManagerRepository;
 import net.studioxai.studioxBe.domain.folder.repository.FolderRepository;
 import net.studioxai.studioxBe.domain.user.entity.User;
-import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
-import net.studioxai.studioxBe.domain.user.exception.UserExceptionHandler;
-import net.studioxai.studioxBe.domain.user.repository.UserRepository;
 import net.studioxai.studioxBe.domain.user.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -149,7 +146,7 @@ public class FolderManagerService {
         }
     }
 
-    public void isUserAdmin(Long userId, Long folderId) {
+    public void isUserReadable(Long userId, Long folderId) {
         if (!getPermission(userId, folderId).isReadable()) {
             throw new FolderManagerExceptionHandler(FolderManagerErrorCode.FOLDERMANAGER_NOT_FOUND);
         }
