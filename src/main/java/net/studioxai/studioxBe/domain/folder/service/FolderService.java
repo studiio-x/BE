@@ -134,13 +134,15 @@ public class FolderService {
         );
 
         List<Long> subFolderIds = closureFolderRepository.findDescendantFolderIds(folderId);
+        folderManagerRepository.deleteAllByFolderIds(subFolderIds);
 
-        if (!subFolderIds.isEmpty()) {
-            folderManagerRepository.deleteAllByFolderIds(subFolderIds);
+        closureFolderRepository.deleteByAncestorIds(subFolderIds);
+        closureFolderRepository.deleteByDescendantIds(subFolderIds);
+
+        for (Long id : subFolderIds) {
+            folderRepository.deleteById(id);
+            folderRepository.flush();
         }
-
-        closureFolderRepository.deleteEdgesByAncestor(folder.getId());
-        folderRepository.deleteAllByIdsIn(subFolderIds);
 
         // TODO: 하위 프로젝트 (cutOut Image 삭제)
 

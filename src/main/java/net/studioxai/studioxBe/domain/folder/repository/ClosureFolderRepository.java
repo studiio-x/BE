@@ -121,17 +121,18 @@ public interface ClosureFolderRepository extends JpaRepository<ClosureFolder, Lo
         select cf.descendantFolder.id
         from ClosureFolder cf
         where cf.ancestorFolder.id = :ancestorId
-          and cf.depth > 0
+          and cf.depth >= 0
+        order by cf.depth desc
     """)
     List<Long> findDescendantFolderIds(@Param("ancestorId") Long ancestorId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("""
-        delete from ClosureFolder cf
-        where cf.ancestorFolder.id = :ancestorId
-          and cf.depth > 0
-    """)
-    int deleteEdgesByAncestor(@Param("ancestorId") Long ancestorId);
+    @Query("delete from ClosureFolder cf where cf.ancestorFolder.id in :ancestorIds")
+    int deleteByAncestorIds(@Param("ancestorIds") List<Long> ancestorIds);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from ClosureFolder cf where cf.descendantFolder.id in :descendantIds")
+    int deleteByDescendantIds(@Param("descendantIds") List<Long> descendantIds);
 
     @Query(value = """
     SELECT EXISTS (
