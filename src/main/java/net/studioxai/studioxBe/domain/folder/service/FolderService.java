@@ -39,10 +39,11 @@ public class FolderService {
     private final ClosureFolderMoveRepository closureFolderMoveRepository;
 
     public FoldersResponse findFoldersByFolderId(Long userId, Long folderId, Sort.Direction sort, int pageNum, int limit) {
-        folderManagerService.isUserReadable(userId, folderId);
         Folder folder = folderRepository.findById(folderId).orElseThrow(
                 () -> new FolderExceptionHandler(FolderErrorCode.FOLDER_NOT_FOUND)
         );
+
+        folderManagerService.canVisited(userId, folderId, folder.getAclRootFolderId());
 
         PageRequest pageRequest = PageRequest.of(pageNum, limit, Sort.by(sort, "createdAt"));
 

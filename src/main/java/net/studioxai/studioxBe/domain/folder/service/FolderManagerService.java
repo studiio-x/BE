@@ -140,16 +140,34 @@ public class FolderManagerService {
         return folderManagerRepository.findByUserId(userId);
     }
 
+    public void canVisited(Long userId, Long folderId, Long aclRootFolderId) {
+        boolean canReadHere = canRead(userId, folderId, aclRootFolderId);
+        Long canTraverse = closureFolderRepository.existsReadableDescendant(folderId, aclRootFolderId, userId);
+        boolean canVisit = canReadHere || (canTraverse > 0);
+
+        log.info("canVisited folderId={}, aclRoot={}, user={}, canReadHere={}, descendantCheck={}",
+                folderId, aclRootFolderId, userId, canReadHere, canTraverse);
+        if (!canVisit) {
+            throw new FolderManagerExceptionHandler(FolderManagerErrorCode.USER_NO_FOLDER_AUTHORITY);
+        }
+
+    }
+
     public void isUserWritable(Long userId, Long folderId) {
         if (!getPermission(userId, folderId).isWritable()) {
             throw new FolderManagerExceptionHandler(FolderManagerErrorCode.USER_NO_FOLDER_AUTHORITY);
         }
     }
 
-    public void isUserReadable(Long userId, Long folderId) {
+    public boolean isUserReadable(Long userId, Long folderId) {
         if (!getPermission(userId, folderId).isReadable()) {
             throw new FolderManagerExceptionHandler(FolderManagerErrorCode.FOLDERMANAGER_NOT_FOUND);
         }
+        return true;
+    }
+
+    private boolean canRead(Long userId, Long folderId, Long aclRootFolderId) {
+        return closureFolderRepository.findPermission(folderId, aclRootFolderId, userId).map(Permission::isReadable).orElse(false);
     }
 
     private Permission getPermission(Long userId, Long folderId) {

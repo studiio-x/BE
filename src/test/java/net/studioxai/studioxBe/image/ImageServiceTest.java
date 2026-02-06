@@ -2,8 +2,6 @@ package net.studioxai.studioxBe.image;
 
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.image.entity.Image;
-import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
-import net.studioxai.studioxBe.domain.image.service.ImageService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

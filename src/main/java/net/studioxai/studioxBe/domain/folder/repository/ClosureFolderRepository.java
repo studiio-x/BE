@@ -133,5 +133,28 @@ public interface ClosureFolderRepository extends JpaRepository<ClosureFolder, Lo
     """)
     int deleteEdgesByAncestor(@Param("ancestorId") Long ancestorId);
 
+    @Query(value = """
+    SELECT EXISTS (
+        SELECT 1
+        FROM closure_folders down
+        JOIN folders fd
+          ON fd.folder_id = down.descendant_folder_id
+        JOIN closure_folders cf
+          ON cf.descendant_folder_id = down.descendant_folder_id
+        JOIN folder_managers fm
+          ON fm.folder_id = cf.ancestor_folder_id
+         AND fm.user_id = :userId
+         AND fm.permission IN ('READ','WRITE','OWNER')
+        JOIN closure_folders cr
+          ON cr.ancestor_folder_id = fd.acl_root_folder_id
+         AND cr.descendant_folder_id = cf.ancestor_folder_id
+        WHERE down.ancestor_folder_id = :folderId
+          AND down.depth > 0
+        LIMIT 1
+    )
+    """, nativeQuery = true)
+    Long existsReadableDescendant(@Param("folderId") Long folderId,
+                                     @Param("aclRootFolderId") Long aclRootFolderId,
+                                     @Param("userId") Long userId);
 
 }
