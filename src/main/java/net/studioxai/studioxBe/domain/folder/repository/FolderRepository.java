@@ -22,13 +22,14 @@ public interface FolderRepository extends JpaRepository<Folder, Long> {
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
-        UPDATE folders f
-        JOIN closure_folders cf
-          ON cf.descendant_folder_id = f.folder_id
-        SET f.acl_root_folder_id = :newRootId
-        WHERE cf.ancestor_folder_id = :newRootId
-        """, nativeQuery = true)
+    UPDATE folders f
+    JOIN closure_folders cf
+      ON cf.descendant_folder_id = f.folder_id
+    SET f.acl_root_folder_id = :newRootId
+    WHERE cf.ancestor_folder_id = :targetFolderId
+    """, nativeQuery = true)
     int updateAclRootForSubtree(
+            @Param("targetFolderId") Long targetFolderId,
             @Param("newRootId") Long newRootId
     );
 

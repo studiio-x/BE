@@ -78,7 +78,7 @@ public class Folder extends BaseEntity {
     }
 
     public void move(Folder destinationFolder) {
-        this.parentFolder = destinationFolder.getParentFolder();
+        this.parentFolder = destinationFolder;
         this.aclRootFolderId = destinationFolder.getAclRootFolderId();
     }
 

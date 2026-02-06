@@ -75,7 +75,7 @@ public class FolderService {
 
         if (!folder.getLinkMode().isLink()) {
             folderManagerBulkRepository.upsertManagersForFolder(folderId, managers);
-            folderRepository.updateAclRootForSubtree(folderId);
+            folderRepository.updateAclRootForSubtree(folderId, folderId);
         } else {
 
             folderManagerBulkRepository.deleteManagersForFolder(folderId, managers);
@@ -170,6 +170,10 @@ public class FolderService {
 
         targetFolder.move(destinationFolder);
         moveSubtree(targetFolderId, destinationFolderId);
+
+        folderRepository.updateAclRootForSubtree(targetFolderId, destinationFolder.getAclRootFolderId());
+
+        // TODO: 이미지 folder 변경
     }
 
     private void moveSubtree(Long targetFolderId, Long destinationFolderId) {
