@@ -56,6 +56,8 @@ public class FolderService {
                 ))
                 .toList();
 
+        // TODO: 이미지 6개 함께 노출되도록 로직 수정
+
         PageInfo pageInfo = PageInfo.of(pageNum, limit, folders.getTotalPages(), folders.getTotalElements());
 
         return FoldersResponse.create(folderDtos, pageInfo);
