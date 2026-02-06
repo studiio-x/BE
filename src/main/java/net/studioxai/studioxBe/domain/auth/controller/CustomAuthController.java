@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.auth.dto.request.EmailVerificationRequest;
 import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
+import net.studioxai.studioxBe.domain.auth.dto.response.EmailValidationResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
 import net.studioxai.studioxBe.domain.auth.service.AuthService;
@@ -79,6 +80,13 @@ public class CustomAuthController {
                 .status(HttpStatus.SEE_OTHER)
                 .header("Location", callbackUrl)
                 .build();
+    }
+
+    @GetMapping("/v1/auth/email/validation")
+    public EmailValidationResponse emailValidation(
+            @RequestParam String email
+    ) {
+        return emailVerificationService.getEmailValidation(email);
     }
 
     @PostMapping("/v1/auth/token")

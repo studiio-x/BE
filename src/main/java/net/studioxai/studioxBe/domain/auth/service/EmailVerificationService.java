@@ -5,6 +5,8 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.auth.dto.request.EmailVerificationRequest;
+import net.studioxai.studioxBe.domain.auth.dto.response.EmailValidationResponse;
+import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
 import net.studioxai.studioxBe.domain.auth.entity.EmailVerificationToken;
 import net.studioxai.studioxBe.domain.auth.entity.VerifiedEmail;
 import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
@@ -12,8 +14,10 @@ import net.studioxai.studioxBe.domain.auth.exception.AuthExceptionHandler;
 import net.studioxai.studioxBe.domain.auth.repository.EmailVerificationTokenRepository;
 import net.studioxai.studioxBe.domain.user.repository.UserRepository;
 import net.studioxai.studioxBe.domain.auth.repository.VerifiedEmailRepository;
+import net.studioxai.studioxBe.domain.user.service.UserService;
 import net.studioxai.studioxBe.global.jwt.JwtProperties;
 import net.studioxai.studioxBe.global.jwt.JwtProvider;
+import net.studioxai.studioxBe.infra.redis.repository.TokenRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -26,6 +30,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RequiredArgsConstructor
 @Slf4j
 public class EmailVerificationService {
+    private final UserService userService;
     @Value("${server.server-url}")
     private String serverUrl;
 
@@ -35,6 +40,7 @@ public class EmailVerificationService {
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
     private final VerifiedEmailRepository verifiedEmailRepository;
     private final UserRepository userRepository;
+    private final TokenRepository tokenRepository;
 
     private final JwtProvider jwtProvider;
     private final JwtProperties jwtProperties;
@@ -59,6 +65,11 @@ public class EmailVerificationService {
         EmailVerificationToken tokenEntity = getAndValidateToken(email, token);
         createVerifiedEmail(tokenEntity);
         return tokenEntity.getCallbackUrl();
+    }
+
+    public EmailValidationResponse getEmailValidation(String email) {
+        boolean isAvailable = verifiedEmailRepository.findById(email).isPresent();
+        return EmailValidationResponse.create(email, isAvailable);
     }
 
     private void validateDuplicateSignup(String email) {
