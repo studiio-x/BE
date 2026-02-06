@@ -172,6 +172,7 @@ public class FolderService {
                 () -> new FolderExceptionHandler(FolderErrorCode.FOLDER_NOT_FOUND)
         );
 
+        validateFolderMove(targetFolderId, destinationFolderId);
         targetFolder.move(destinationFolder);
         moveSubtree(targetFolderId, destinationFolderId);
 
@@ -181,6 +182,11 @@ public class FolderService {
     }
 
     private void moveSubtree(Long targetFolderId, Long destinationFolderId) {
+        closureFolderMoveRepository.deleteOldAncestorLinks(targetFolderId);
+        closureFolderMoveRepository.insertNewAncestorLinks(targetFolderId, destinationFolderId);
+    }
+
+    private void validateFolderMove(Long targetFolderId, Long destinationFolderId) {
         if (closureFolderMoveRepository.existsPath(targetFolderId, destinationFolderId)) {
             throw new FolderExceptionHandler(FolderErrorCode.INVALID_FOLDER_HIERARCHY_MOVE);
         }
@@ -188,10 +194,6 @@ public class FolderService {
         if (targetFolderId.equals(destinationFolderId)) {
             throw new FolderExceptionHandler(FolderErrorCode.INVALID_MOVE_FOLDER_TO_ITSELF);
         }
-
-        closureFolderMoveRepository.deleteOldAncestorLinks(targetFolderId);
-        closureFolderMoveRepository.insertNewAncestorLinks(targetFolderId, destinationFolderId);
     }
-
 
 }
