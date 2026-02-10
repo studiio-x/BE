@@ -127,6 +127,8 @@ public class ImageService {
         );
         imageRepository.save(image);
 
+        project.updateRepresentativeImage(imageObjectKey);
+
         //return ImageGenerateResponse.of(image);
         return new ImageGenerateResponse(
                 image.getId(),

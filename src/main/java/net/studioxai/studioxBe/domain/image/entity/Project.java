@@ -31,6 +31,12 @@ public class Project extends BaseEntity {
     @JoinColumn(name = "folder_id", nullable = true)
     private Folder folder;
 
+    @Column(name = "title", nullable = false)
+    private String title;
+
+    @Column(name = "representative_image_object_key")
+    private String representativeImageObjectKey;
+
     public static Project create(
             String cutoutImageObjectKey,
             Template template,
@@ -40,18 +46,26 @@ public class Project extends BaseEntity {
                 .cutoutImageObjectKey(cutoutImageObjectKey)
                 .template(template)
                 .folder(folder)
+                .representativeImageObjectKey(null)
                 .build();
+    }
+
+    public void updateRepresentativeImage(String imageObjectKey) {
+        this.representativeImageObjectKey = imageObjectKey;
     }
 
     @Builder(access = AccessLevel.PRIVATE)
     private Project(
             String cutoutImageObjectKey,
             Template template,
-            Folder folder
+            Folder folder,
+            String representativeImageObjectKey
     ) {
         this.cutoutImageObjectKey = cutoutImageObjectKey;
         this.template = template;
         this.folder = folder;
+        this.title = "제목을 입력하세요.";
+        this.representativeImageObjectKey = representativeImageObjectKey;
     }
 }
 

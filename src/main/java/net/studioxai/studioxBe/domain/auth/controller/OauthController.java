@@ -33,7 +33,7 @@ public class OauthController {
 
 
     // 구글 로그인 콜백(인가 코드 수신)
-    @GetMapping("/oauth/google/callback")
+    @GetMapping("/v1/oauth/google/callback")
     public ResponseEntity<Void> googleCallback(@RequestParam String code, @RequestParam String state) {
 
         GoogleCallbackDto googleCallbackDto = oauthService.loginWithGoogle(code, state);

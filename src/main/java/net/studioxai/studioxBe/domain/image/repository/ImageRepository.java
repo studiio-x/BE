@@ -22,7 +22,6 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
     })
     Optional<Image> findDetailById(Long id);
 
-
-
+    Optional<Image> findTopByProjectIdOrderByCreatedAtDesc(Long projectId);
 
 }
