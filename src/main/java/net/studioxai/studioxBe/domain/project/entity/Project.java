@@ -1,4 +1,4 @@
-package net.studioxai.studioxBe.domain.image.entity;
+package net.studioxai.studioxBe.domain.project.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

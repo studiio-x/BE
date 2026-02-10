@@ -7,11 +7,12 @@ import net.studioxai.studioxBe.domain.image.dto.request.CutoutImageGenerateReque
 import net.studioxai.studioxBe.domain.image.dto.request.ImageGenerateRequest;
 import net.studioxai.studioxBe.domain.image.dto.response.*;
 import net.studioxai.studioxBe.domain.image.entity.Image;
-import net.studioxai.studioxBe.domain.image.entity.Project;
+import net.studioxai.studioxBe.domain.project.dto.response.ProjectDashboardResponse;
+import net.studioxai.studioxBe.domain.project.entity.Project;
 import net.studioxai.studioxBe.domain.image.exception.ImageErrorCode;
 import net.studioxai.studioxBe.domain.image.exception.ImageExceptionHandler;
 import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
-import net.studioxai.studioxBe.domain.image.repository.ProjectRepository;
+import net.studioxai.studioxBe.domain.project.repository.ProjectRepository;
 import net.studioxai.studioxBe.domain.template.entity.Template;
 import net.studioxai.studioxBe.domain.template.repository.TemplateRepository;
 import net.studioxai.studioxBe.infra.ai.gemini.GeminiImageClient;

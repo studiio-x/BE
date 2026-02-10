@@ -4,9 +4,9 @@ import net.studioxai.studioxBe.domain.image.dto.request.CutoutImageGenerateReque
 import net.studioxai.studioxBe.domain.image.dto.request.ImageGenerateRequest;
 import net.studioxai.studioxBe.domain.image.dto.response.*;
 import net.studioxai.studioxBe.domain.image.entity.Image;
-import net.studioxai.studioxBe.domain.image.entity.Project;
+import net.studioxai.studioxBe.domain.project.entity.Project;
 import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
-import net.studioxai.studioxBe.domain.image.repository.ProjectRepository;
+import net.studioxai.studioxBe.domain.project.repository.ProjectRepository;
 import net.studioxai.studioxBe.domain.image.service.ImageService;
 import net.studioxai.studioxBe.domain.template.entity.Template;
 import net.studioxai.studioxBe.domain.template.repository.TemplateRepository;
@@ -24,7 +24,6 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
-import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Optional;
 

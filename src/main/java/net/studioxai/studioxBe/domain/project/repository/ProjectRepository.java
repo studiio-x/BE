@@ -1,6 +1,6 @@
-package net.studioxai.studioxBe.domain.image.repository;
+package net.studioxai.studioxBe.domain.project.repository;
 
-import net.studioxai.studioxBe.domain.image.entity.Project;
+import net.studioxai.studioxBe.domain.project.entity.Project;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
