@@ -2,9 +2,9 @@ package net.studioxai.studioxBe.domain.auth.dto.response;
 
 public record EmailValidationResponse(
         String email,
-        boolean isAvailable
+        boolean isVerified
 ) {
-    public static EmailValidationResponse create(String email, boolean isAvailable) {
-        return new EmailValidationResponse(email, isAvailable);
+    public static EmailValidationResponse create(String email, boolean isVerified) {
+        return new EmailValidationResponse(email, isVerified);
     }
 }
