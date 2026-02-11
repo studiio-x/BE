@@ -227,7 +227,7 @@ class FolderServiceTest {
 
     @Test
     @DisplayName("findFolders: isOwner=1은 myProject, isOwner=0은 sharedProjects로 분리")
-    void findMyFoldes_success() {
+    void getMyFolders_success() {
         // given
         Long userId = 1L;
 
@@ -239,7 +239,7 @@ class FolderServiceTest {
         when(closureFolderRepository.findMyFolders(userId)).thenReturn(rows);
 
         // when
-        MyFolderResponse res = sut().findMyFoldes(userId);
+        MyFolderResponse res = sut().getMyFolders(userId);
 
         // then
         assertThat(res).isNotNull();
@@ -268,7 +268,7 @@ class FolderServiceTest {
     }
 
     @Test
-    void findFoldersByFolderId_folderNotFound_throw() {
+    void getFoldersByFolderId_folderNotFound_throw() {
         // given
         Long userId = 1L;
         Long folderId = 10L;
@@ -277,15 +277,15 @@ class FolderServiceTest {
 
         // when & then
         assertThatThrownBy(() ->
-                sut().findFoldersByFolderId(userId, folderId, Sort.Direction.DESC, 0, 10)
+                sut().getFoldersByFolderId(userId, folderId, Sort.Direction.DESC, 0, 10)
         ).isInstanceOf(FolderExceptionHandler.class);
 
-        verify(folderManagerService, never()).canVisited(anyLong(), anyLong(), any());
+        verify(folderManagerService, never()).canVisit(anyLong(), anyLong(), any());
         verify(folderRepository, never()).findByParentFolder(any(), any(Pageable.class));
     }
 
     @Test
-    void findFoldersByFolderId_success_returnsDtosAndPageInfo() {
+    void getFoldersByFolderId_success_returnsDtosAndPageInfo() {
         // given
         Long userId = 1L;
         Long folderId = 10L;
@@ -317,10 +317,10 @@ class FolderServiceTest {
                 .thenReturn(page);
 
         // when
-        FoldersResponse res = sut().findFoldersByFolderId(userId, folderId, sort, pageNum, limit);
+        FoldersResponse res = sut().getFoldersByFolderId(userId, folderId, sort, pageNum, limit);
 
         // then
-        verify(folderManagerService).canVisited(userId, folderId, 999L);
+        verify(folderManagerService).canVisit(userId, folderId, 999L);
         verify(folderRepository).findByParentFolder(eq(parent), any(Pageable.class));
 
         assertThat(res).isNotNull();

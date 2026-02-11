@@ -577,7 +577,7 @@ class FolderManagerServiceTest {
                 .thenReturn(0L);
 
         // when + then (no exception)
-        assertThatCode(() -> sut().canVisited(userId, folderId, aclRootId))
+        assertThatCode(() -> sut().canVisit(userId, folderId, aclRootId))
                 .doesNotThrowAnyException();
 
         verify(closureFolderRepository).findPermission(folderId, aclRootId, userId);
@@ -586,7 +586,7 @@ class FolderManagerServiceTest {
 
     @Test
     @DisplayName("canVisited: 현재 폴더에서 읽기 불가 + 하위 readable descendant 없으면 예외")
-    void canVisited_whenCannotReadAndNoReadableDescendant_thenThrow() {
+    void canVisit_whenCannotReadAndNoReadableDescendant_thenThrow() {
         // given
         Long userId = 1L;
         Long folderId = 10L;
@@ -598,7 +598,7 @@ class FolderManagerServiceTest {
                 .thenReturn(0L);
 
         // when + then
-        assertThatThrownBy(() -> sut().canVisited(userId, folderId, aclRootId))
+        assertThatThrownBy(() -> sut().canVisit(userId, folderId, aclRootId))
                 .isInstanceOf(FolderManagerExceptionHandler.class);
 
         verify(closureFolderRepository).findPermission(folderId, aclRootId, userId);
@@ -607,7 +607,7 @@ class FolderManagerServiceTest {
 
     @Test
     @DisplayName("canVisited: 현재 폴더에서 읽기 불가여도 하위 readable descendant 있으면 통과")
-    void canVisited_whenCannotReadButHasReadableDescendant_thenPass() {
+    void canVisit_whenCannotReadButHasReadableDescendant_thenPass() {
         // given
         Long userId = 1L;
         Long folderId = 10L;
@@ -619,7 +619,7 @@ class FolderManagerServiceTest {
                 .thenReturn(1L); // canTraverse > 0
 
         // when + then
-        assertThatCode(() -> sut().canVisited(userId, folderId, aclRootId))
+        assertThatCode(() -> sut().canVisit(userId, folderId, aclRootId))
                 .doesNotThrowAnyException();
 
         verify(closureFolderRepository).findPermission(folderId, aclRootId, userId);

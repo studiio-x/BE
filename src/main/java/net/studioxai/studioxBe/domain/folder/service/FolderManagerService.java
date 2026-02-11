@@ -140,7 +140,7 @@ public class FolderManagerService {
         return folderManagerRepository.findByUserId(userId);
     }
 
-    public void canVisited(Long userId, Long folderId, Long aclRootFolderId) {
+    public void canVisit(Long userId, Long folderId, Long aclRootFolderId) {
         boolean canReadHere = canRead(userId, folderId, aclRootFolderId);
         Long canTraverse = closureFolderRepository.existsReadableDescendant(folderId, aclRootFolderId, userId);
         boolean canVisit = canReadHere || (canTraverse > 0);

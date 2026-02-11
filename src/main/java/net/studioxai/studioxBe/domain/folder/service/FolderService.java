@@ -17,7 +17,6 @@ import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.global.dto.PageInfo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,12 +37,12 @@ public class FolderService {
     private final FolderManagerRepository folderManagerRepository;
     private final ClosureFolderMoveRepository closureFolderMoveRepository;
 
-    public FoldersResponse findFoldersByFolderId(Long userId, Long folderId, Sort.Direction sort, int pageNum, int limit) {
+    public FoldersResponse getFoldersByFolderId(Long userId, Long folderId, Sort.Direction sort, int pageNum, int limit) {
         Folder folder = folderRepository.findById(folderId).orElseThrow(
                 () -> new FolderExceptionHandler(FolderErrorCode.FOLDER_NOT_FOUND)
         );
 
-        folderManagerService.canVisited(userId, folderId, folder.getAclRootFolderId());
+        folderManagerService.canVisit(userId, folderId, folder.getAclRootFolderId());
 
         PageRequest pageRequest = PageRequest.of(pageNum, limit, Sort.by(sort, "createdAt"));
 
@@ -109,7 +108,7 @@ public class FolderService {
         closureFolderInsertRepository.insertClosureForNewFolder(parentFolder.getId(), subFolder.getId());
     }
 
-    public MyFolderResponse findMyFoldes(Long userId) {
+    public MyFolderResponse getMyFolders(Long userId) {
         List<RootFolderProjection> rows = closureFolderRepository.findMyFolders(userId);
 
         List<RootFolderDto> myProject = rows.stream()

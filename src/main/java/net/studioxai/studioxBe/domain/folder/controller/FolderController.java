@@ -25,7 +25,7 @@ public class FolderController {
             @RequestParam(required = true) int pageNum,
             @RequestParam(required = true) int limit
     ) {
-        return folderService.findFoldersByFolderId(principal.userId(), folderId, sort, pageNum, limit);
+        return folderService.getFoldersByFolderId(principal.userId(), folderId, sort, pageNum, limit);
     }
 
 
@@ -68,7 +68,7 @@ public class FolderController {
     public MyFolderResponse myfolders(
             @AuthenticationPrincipal JwtUserPrincipal principal
     ) {
-        return folderService.findMyFoldes(principal.userId());
+        return folderService.getMyFolders(principal.userId());
     }
 
     @PutMapping("/v1/folder/{folderId}/link")
