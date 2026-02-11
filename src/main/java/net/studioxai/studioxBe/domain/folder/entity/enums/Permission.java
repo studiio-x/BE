@@ -11,7 +11,7 @@ public enum Permission {
             throw new FolderManagerExceptionHandler(FolderManagerErrorCode.OWNER_PERMISSION_CHANGE_FORBIDDEN);
         }
     },
-    READ(true, false) {
+    READ(false, true) {
         @Override
         public Permission toggle() {
             return WRITE;

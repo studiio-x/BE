@@ -16,7 +16,9 @@ public enum FolderErrorCode implements BaseErrorCode {
     FOLDER_NOT_FOUND(HttpStatus.NOT_FOUND, "FOLDER_NOT_FOUND", "해당하는 폴더를 찾을 수 없습니다."),
 
     // 409 CONFILCT
-    ACL_ROOT_SET_ONLY_FOR_ROOT(HttpStatus.CONFLICT, "FOLDER_409_1", "프로젝트만 acl id를 자기 자신으로 변경할 수 있습니다.");
+    ACL_ROOT_SET_ONLY_FOR_ROOT(HttpStatus.CONFLICT, "FOLDER_409_1", "프로젝트만 acl id를 자기 자신으로 변경할 수 있습니다."),
+    INVALID_FOLDER_HIERARCHY_MOVE(HttpStatus.CONFLICT, "FOLDER_409_2", "폴더 계층 구조 이동이 올바르지 않습니다."),
+    INVALID_MOVE_FOLDER_TO_ITSELF(HttpStatus.CONFLICT, "FOLDER_409_3", "자기 자신으로 폴더를 이동할 수 없습니다.");
 
 
     private final HttpStatus status;

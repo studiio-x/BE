@@ -73,6 +73,15 @@ public class Folder extends BaseEntity {
         this.linkMode = this.linkMode.toggle();
     }
 
+    public void updateName(String newName) {
+        this.name = newName;
+    }
+
+    public void move(Folder destinationFolder) {
+        this.parentFolder = destinationFolder;
+        this.aclRootFolderId = destinationFolder.getAclRootFolderId();
+    }
+
     @Builder(access = AccessLevel.PRIVATE)
     private Folder(
             String name,
