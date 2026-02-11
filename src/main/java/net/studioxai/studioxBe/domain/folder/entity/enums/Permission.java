@@ -4,16 +4,16 @@ import net.studioxai.studioxBe.domain.folder.exception.FolderManagerErrorCode;
 import net.studioxai.studioxBe.domain.folder.exception.FolderManagerExceptionHandler;
 
 public enum Permission {
-    OWNER(true, true, false),
+    OWNER(true, true, true),
+    FULL_ACCESS(true, true, true),
     READ(true, false, false),
-    WRITE(true, true, false),
-    FULL_ACCESS(true, true, true),;
+    WRITE(true, true, false),;
 
+    private final boolean canShare;
     private final boolean canWrite;
     private final boolean canRead;
-    private final boolean canShare;
 
-    Permission(boolean canWrite, boolean canRead, boolean canShare) {
+    Permission(boolean canWrite, boolean canShare,boolean canRead) {
         this.canWrite = canWrite;
         this.canRead = canRead;
         this.canShare = canShare;
