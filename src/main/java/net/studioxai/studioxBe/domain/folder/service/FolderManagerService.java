@@ -55,9 +55,9 @@ public class FolderManagerService {
     }
 
     @Transactional
-    public void updatePermission(Long actorUserId, Long targetUserId, Long folderId) {
-        isUserWritable(actorUserId, folderId);
-        Permission permission = getPermission(targetUserId, folderId);
+    public void updatePermission(Long actorUserId, Long targetUserId, Long folderId, Permission permission) {
+        isUserShareable(actorUserId, folderId);
+        Permission userPermission = getPermission(targetUserId, folderId);
 
         Folder folder = folderRepository.findById(folderId)
                 .orElseThrow(() -> new FolderExceptionHandler(FolderErrorCode.FOLDER_NOT_FOUND));
@@ -72,11 +72,11 @@ public class FolderManagerService {
                     User targetUser = userService.getUserByIdOrThrow(targetUserId);
 
                     return folderManagerRepository.save(
-                            FolderManager.create(targetUser, folder, permission)
+                            FolderManager.create(targetUser, folder, userPermission)
                     );
                 });
 
-        folderManager.updateDirectPermission();
+        folderManager.updateDirectPermission(permission);
 
     }
 
@@ -86,7 +86,7 @@ public class FolderManagerService {
                 () -> new FolderManagerExceptionHandler(FolderManagerErrorCode.FOLDER_NOT_FOUND)
         );
 
-        isUserWritable(userId, folderId);
+        isUserShareable(userId, folderId);
 
         long count = closureFolderRepository.countManagers(folderId, folder.getAclRootFolderId());
         if (count >= 5) {
@@ -168,6 +168,12 @@ public class FolderManagerService {
 
     private boolean canRead(Long userId, Long folderId, Long aclRootFolderId) {
         return closureFolderRepository.findPermission(folderId, aclRootFolderId, userId).map(Permission::isReadable).orElse(false);
+    }
+
+    public void isUserShareable(Long userId, Long folderId) {
+        if (!getPermission(userId, folderId).isShareable()) {
+            throw new FolderManagerExceptionHandler(FolderManagerErrorCode.USER_NO_FOLDER_AUTHORITY);
+        }
     }
 
     private Permission getPermission(Long userId, Long folderId) {

@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import net.studioxai.studioxBe.domain.folder.dto.request.FolderManagerAddRequest;
 import net.studioxai.studioxBe.domain.folder.dto.response.FolderManagersResponse;
+import net.studioxai.studioxBe.domain.folder.entity.enums.Permission;
 import net.studioxai.studioxBe.domain.folder.service.FolderManagerService;
 import net.studioxai.studioxBe.global.jwt.JwtUserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,9 +29,10 @@ public class FolderManagerController {
     public void folderManagerUpdate(
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @PathVariable Long folderId,
-            @PathVariable Long targetUserId
+            @PathVariable Long targetUserId,
+            @RequestParam Permission permission
     ) {
-        folderManagerService.updatePermission(principal.userId(), targetUserId, folderId);
+        folderManagerService.updatePermission(principal.userId(), targetUserId, folderId, permission);
     }
 
     @GetMapping("/v1/folder/manager/{folderId}")

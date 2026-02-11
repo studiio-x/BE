@@ -73,7 +73,7 @@ public class FolderManager extends BaseEntity {
     }
 
 
-    public void updateDirectPermission() {
-        this.permission = this.permission.toggle();
+    public void updateDirectPermission(Permission permission) {
+        this.permission = permission;
     }
 }
