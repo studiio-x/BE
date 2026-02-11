@@ -1,6 +1,10 @@
 package net.studioxai.studioxBe.domain.folder.repository;
 
+import net.studioxai.studioxBe.domain.folder.dto.FoldersDto;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -14,15 +18,18 @@ import java.util.Optional;
 public interface FolderRepository extends JpaRepository<Folder, Long> {
     Optional<Long> findAclRootIdById(Long folderId);
 
+    Page<Folder> findByParentFolder(Folder folder, Pageable pageable);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
-        UPDATE folders f
-        JOIN closure_folders cf
-          ON cf.descendant_folder_id = f.folder_id
-        SET f.acl_root_folder_id = :newRootId
-        WHERE cf.ancestor_folder_id = :newRootId
-        """, nativeQuery = true)
+    UPDATE folders f
+    JOIN closure_folders cf
+      ON cf.descendant_folder_id = f.folder_id
+    SET f.acl_root_folder_id = :newRootId
+    WHERE cf.ancestor_folder_id = :targetFolderId
+    """, nativeQuery = true)
     int updateAclRootForSubtree(
+            @Param("targetFolderId") Long targetFolderId,
             @Param("newRootId") Long newRootId
     );
 
@@ -41,5 +48,12 @@ public interface FolderRepository extends JpaRepository<Folder, Long> {
     int updateAclRootForSubtreeToParentAclRoot(
             @Param("folderId") Long folderId
     );
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+        delete from Folder f
+        where f.id in :folderIds
+    """)
+    int deleteAllByIdsIn(@Param("folderIds") List<Long> folderIds);
 
 }

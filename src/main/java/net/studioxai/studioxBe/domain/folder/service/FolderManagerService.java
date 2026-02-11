@@ -19,9 +19,6 @@ import net.studioxai.studioxBe.domain.folder.repository.ClosureFolderRepository;
 import net.studioxai.studioxBe.domain.folder.repository.FolderManagerRepository;
 import net.studioxai.studioxBe.domain.folder.repository.FolderRepository;
 import net.studioxai.studioxBe.domain.user.entity.User;
-import net.studioxai.studioxBe.domain.user.exception.UserErrorCode;
-import net.studioxai.studioxBe.domain.user.exception.UserExceptionHandler;
-import net.studioxai.studioxBe.domain.user.repository.UserRepository;
 import net.studioxai.studioxBe.domain.user.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -143,16 +140,34 @@ public class FolderManagerService {
         return folderManagerRepository.findByUserId(userId);
     }
 
+    public void canVisit(Long userId, Long folderId, Long aclRootFolderId) {
+        boolean canReadHere = canRead(userId, folderId, aclRootFolderId);
+        Long canTraverse = closureFolderRepository.existsReadableDescendant(folderId, aclRootFolderId, userId);
+        boolean canVisit = canReadHere || (canTraverse > 0);
+
+        log.info("canVisited folderId={}, aclRoot={}, user={}, canReadHere={}, descendantCheck={}",
+                folderId, aclRootFolderId, userId, canReadHere, canTraverse);
+        if (!canVisit) {
+            throw new FolderManagerExceptionHandler(FolderManagerErrorCode.USER_NO_FOLDER_AUTHORITY);
+        }
+
+    }
+
     public void isUserWritable(Long userId, Long folderId) {
         if (!getPermission(userId, folderId).isWritable()) {
             throw new FolderManagerExceptionHandler(FolderManagerErrorCode.USER_NO_FOLDER_AUTHORITY);
         }
     }
 
-    public void isUserAdmin(Long userId, Long folderId) {
+    public boolean isUserReadable(Long userId, Long folderId) {
         if (!getPermission(userId, folderId).isReadable()) {
             throw new FolderManagerExceptionHandler(FolderManagerErrorCode.FOLDERMANAGER_NOT_FOUND);
         }
+        return true;
+    }
+
+    private boolean canRead(Long userId, Long folderId, Long aclRootFolderId) {
+        return closureFolderRepository.findPermission(folderId, aclRootFolderId, userId).map(Permission::isReadable).orElse(false);
     }
 
     public void isUserShareable(Long userId, Long folderId) {
