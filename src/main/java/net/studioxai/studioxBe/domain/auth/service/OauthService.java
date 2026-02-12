@@ -14,7 +14,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.UriUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
@@ -38,16 +40,19 @@ public class OauthService {
         return googleOauth.getOauthRedirectURL(redirectUrl);
     }
   
-    public GoogleCallbackDto loginWithGoogle(String code, String redirectUrl) {
+    public GoogleCallbackDto loginWithGoogle(String code, String state) {
         validateCode(code);
-        validateRedirectUrl(redirectUrl);
+
+        String decodedRedirectUrl = UriUtils.decode(state, StandardCharsets.UTF_8);
+
+        validateRedirectUrl(decodedRedirectUrl);
 
         GoogleUserInfoResponse userInfo = getGoogleUserInfo(code);
         User user = findOrCreateGoogleUser(userInfo);
 
         Map<String, String> tokens = authService.issueTokens(user.getId());
 
-        return GoogleCallbackDto.create(redirectUrl, tokens.get("accessToken"), tokens.get("refreshToken"));
+        return GoogleCallbackDto.create(decodedRedirectUrl, tokens.get("accessToken"), tokens.get("refreshToken"));
     }
 
     private void validateCode(String code) {
