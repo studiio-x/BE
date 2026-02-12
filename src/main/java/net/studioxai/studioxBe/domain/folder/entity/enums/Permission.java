@@ -4,34 +4,19 @@ import net.studioxai.studioxBe.domain.folder.exception.FolderManagerErrorCode;
 import net.studioxai.studioxBe.domain.folder.exception.FolderManagerExceptionHandler;
 
 public enum Permission {
-    OWNER(true, true) {
+    OWNER(true, true, true),
+    FULL_ACCESS(true, true, true),
+    READ(true, false, false),
+    WRITE(true, true, false),;
 
-        @Override
-        public Permission toggle() {
-            throw new FolderManagerExceptionHandler(FolderManagerErrorCode.OWNER_PERMISSION_CHANGE_FORBIDDEN);
-        }
-    },
-    READ(true, false) {
-        @Override
-        public Permission toggle() {
-            return WRITE;
-        }
-    },
-    WRITE(true, true) {
-        @Override
-        public Permission toggle() {
-            return READ;
-        }
-    };
-
-    public abstract Permission toggle();
-
+    private final boolean canShare;
     private final boolean canWrite;
     private final boolean canRead;
 
-    Permission(boolean canWrite, boolean canRead) {
+    Permission(boolean canWrite, boolean canShare,boolean canRead) {
         this.canWrite = canWrite;
         this.canRead = canRead;
+        this.canShare = canShare;
     }
 
     public boolean isWritable() {
@@ -41,5 +26,7 @@ public enum Permission {
     public boolean isReadable() {
         return canRead;
     }
+
+    public boolean isShareable() { return canShare; }
 
 }
