@@ -13,7 +13,7 @@ public interface TemplateRepository extends JpaRepository<Template, Long> {
     @Query("""
         select new net.studioxai.studioxBe.domain.template.dto.response.TemplateByCategoryResponse(
             t.id,
-            t.imageUrl
+            t.imageObjectKey
         )
         from Template t
         where t.category = :category

@@ -7,6 +7,7 @@ import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.folder.exception.FolderErrorCode;
 import net.studioxai.studioxBe.domain.folder.exception.FolderExceptionHandler;
 import net.studioxai.studioxBe.domain.folder.repository.FolderRepository;
+import net.studioxai.studioxBe.domain.folder.service.FolderManagerService;
 import net.studioxai.studioxBe.domain.image.dto.request.CutoutImageGenerateRequest;
 import net.studioxai.studioxBe.domain.image.dto.request.ImageGenerateRequest;
 import net.studioxai.studioxBe.domain.image.dto.response.*;
@@ -51,13 +52,12 @@ public class ImageService {
     private final FolderRepository folderRepository;
 
     private final S3UrlHandler s3UrlHandler;
-    private final S3Client s3Client;
     private final S3ImageLoader s3ImageLoader;
     private final S3ImageUploader s3ImageUploader;
+
     private final GeminiImageClient geminiImageClient;
 
-    @Value("${BUCKET_NAME}")
-    private String bucket;
+    private final FolderManagerService folderManagerService;
 
     public PresignResponse issuePresign() {
         S3Url s3Url = s3UrlHandler.handle("images/raw");
@@ -73,7 +73,7 @@ public class ImageService {
 
         //TODO: 결제 검증 로직 추가
 
-        //TODO: 권한 검증 로직 추가
+        folderManagerService.isUserWritable(userId, request.folderId());
 
         String rawImageBase64 = s3ImageLoader.loadAsBase64(request.rawObjectKey());
 
@@ -100,10 +100,10 @@ public class ImageService {
 
         //TODO: 결제 검증 로직 추가
 
-        //TODO: 권한 검증 로직 추가
-
         Project project = projectRepository.findById(request.projectId())
                 .orElseThrow(() -> new ProjectExceptionHandler(ProjectErrorCode.PROJECT_NOT_FOUND));
+
+        folderManagerService.isUserWritable(userId, project.getFolder().getId());
 
         Template template = templateRepository.findById(request.templateId())
                         .orElseThrow(() -> new ImageExceptionHandler(ImageErrorCode.TEMPLATE_NOT_FOUND));
