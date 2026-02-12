@@ -1,4 +1,4 @@
-package net.studioxai.studioxBe.domain.project.entity;
+package net.studioxai.studioxBe.domain.image.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -20,15 +20,15 @@ public class Project extends BaseEntity {
     @Column(name = "project_id")
     private Long id;
 
-    @Column(name = "cutout_image_object_key", nullable = false)
+    @Column(name = "cutout_image_object_key", nullable = true)
     private String cutoutImageObjectKey;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "template_id", nullable = false)
+    @JoinColumn(name = "template_id", nullable = true)
     private Template template;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "folder_id", nullable = true)
+    @JoinColumn(name = "folder_id", nullable = false)
     private Folder folder;
 
     @Column(name = "title", nullable = false)
@@ -52,6 +52,14 @@ public class Project extends BaseEntity {
 
     public void updateRepresentativeImage(String imageObjectKey) {
         this.representativeImageObjectKey = imageObjectKey;
+    }
+
+    public void updateCutoutImageObjectKey(String cutoutImageObjectKey) {
+        this.cutoutImageObjectKey = cutoutImageObjectKey;
+    }
+
+    public void updateTemplate(Template template) {
+        this.template = template;
     }
 
     @Builder(access = AccessLevel.PRIVATE)

@@ -3,20 +3,26 @@ package net.studioxai.studioxBe.domain.image.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.studioxai.studioxBe.domain.folder.entity.Folder;
+import net.studioxai.studioxBe.domain.folder.exception.FolderErrorCode;
+import net.studioxai.studioxBe.domain.folder.exception.FolderExceptionHandler;
+import net.studioxai.studioxBe.domain.folder.repository.FolderRepository;
 import net.studioxai.studioxBe.domain.image.dto.request.CutoutImageGenerateRequest;
 import net.studioxai.studioxBe.domain.image.dto.request.ImageGenerateRequest;
 import net.studioxai.studioxBe.domain.image.dto.response.*;
 import net.studioxai.studioxBe.domain.image.entity.Image;
-import net.studioxai.studioxBe.domain.project.dto.response.ProjectDashboardResponse;
-import net.studioxai.studioxBe.domain.project.entity.Project;
+import net.studioxai.studioxBe.domain.image.entity.Project;
 import net.studioxai.studioxBe.domain.image.exception.ImageErrorCode;
 import net.studioxai.studioxBe.domain.image.exception.ImageExceptionHandler;
+import net.studioxai.studioxBe.domain.image.exception.ProjectErrorCode;
+import net.studioxai.studioxBe.domain.image.exception.ProjectExceptionHandler;
 import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
-import net.studioxai.studioxBe.domain.project.repository.ProjectRepository;
+import net.studioxai.studioxBe.domain.image.repository.ProjectRepository;
 import net.studioxai.studioxBe.domain.template.entity.Template;
 import net.studioxai.studioxBe.domain.template.repository.TemplateRepository;
 import net.studioxai.studioxBe.infra.ai.gemini.GeminiImageClient;
 import net.studioxai.studioxBe.infra.s3.S3ImageLoader;
+import net.studioxai.studioxBe.infra.s3.S3ImageUploader;
 import net.studioxai.studioxBe.infra.s3.S3Url;
 import net.studioxai.studioxBe.infra.s3.S3UrlHandler;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,131 +48,84 @@ public class ImageService {
     private final ImageRepository imageRepository;
     private final ProjectRepository projectRepository;
     private final TemplateRepository templateRepository;
+    private final FolderRepository folderRepository;
 
     private final S3UrlHandler s3UrlHandler;
     private final S3Client s3Client;
-    private final GeminiImageClient geminiImageClient;
     private final S3ImageLoader s3ImageLoader;
+    private final S3ImageUploader s3ImageUploader;
+    private final GeminiImageClient geminiImageClient;
 
     @Value("${BUCKET_NAME}")
     private String bucket;
 
-    @Value("${server.image-domain}")
-    private String imageDomain;
-
-    public PresignResponse issuePresign(Long userId) {
+    public PresignResponse issuePresign() {
         S3Url s3Url = s3UrlHandler.handle("images/raw");
 
         return PresignResponse.of(
                 s3Url.getUploadUrl(),
-                s3Url.getObjectKey(),
-                imageDomain + s3Url.getObjectKey()
+                s3Url.getObjectKey()
         );
     }
 
     @Transactional
     public CutoutImageGenerateResponse generateCutoutImage(Long userId, CutoutImageGenerateRequest request) {
 
+        //TODO: 결제 검증 로직 추가
+
+        //TODO: 권한 검증 로직 추가
+
         String rawImageBase64 = s3ImageLoader.loadAsBase64(request.rawObjectKey());
 
         String cutoutBase64 = geminiImageClient.removeBackground(rawImageBase64);
-
         byte[] cutoutBytes = Base64.getDecoder().decode(cutoutBase64);
 
-        String cutoutImageObjectKey = "images/cutout/" + UUID.randomUUID() + ".png";
+        Folder folder = folderRepository.findById(request.folderId())
+                .orElseThrow(() -> new FolderExceptionHandler(FolderErrorCode.FOLDER_NOT_FOUND));
 
-        uploadToS3(cutoutImageObjectKey, cutoutBytes);
+        Project project = Project.create(null, null, folder);
+        projectRepository.save(project);
 
-        return CutoutImageGenerateResponse.of(cutoutImageObjectKey, imageDomain + cutoutImageObjectKey);
+        String cutoutImageObjectKey = "images/" + project.getId() + "/cutout/" + UUID.randomUUID() + ".png";
+
+        s3ImageUploader.upload(cutoutImageObjectKey, cutoutBytes);
+
+        project.updateCutoutImageObjectKey(cutoutImageObjectKey);
+
+        return CutoutImageGenerateResponse.of(project.getId(), cutoutImageObjectKey);
     }
 
     @Transactional
     public ImageGenerateResponse generateImage(Long userId, ImageGenerateRequest request) {
 
+        //TODO: 결제 검증 로직 추가
+
+        //TODO: 권한 검증 로직 추가
+
+        Project project = projectRepository.findById(request.projectId())
+                .orElseThrow(() -> new ProjectExceptionHandler(ProjectErrorCode.PROJECT_NOT_FOUND));
+
         Template template = templateRepository.findById(request.templateId())
                         .orElseThrow(() -> new ImageExceptionHandler(ImageErrorCode.TEMPLATE_NOT_FOUND));
 
         String cutoutBase64 = s3ImageLoader.loadAsBase64(request.cutoutImageObjectKey());
+        String templateBase64 = s3ImageLoader.loadAsBase64(template.getImageObjectKey());
 
-        String templateBase64 =
-                loadUrlAsBase64(template.getImageUrl());
+        String compositeBase64 = geminiImageClient.generateCompositeImage(cutoutBase64, templateBase64);
+        byte[] imageBytes = Base64.getDecoder().decode(compositeBase64);
 
-        String prompt = """
-            Naturally composite the provided cutout product image into the template background.
-            
-            Requirements:
-            - Place the cutout subject realistically within the template
-            - Match perspective, scale, and alignment
-            - Preserve original colors and details
-            - Do NOT add new objects
-            - Do NOT alter the template background
-            - Output must be a clean PNG
-                
-            Key Refinements:
-            - Lighting & Shadow: Generate realistic soft shadows beneath and behind the product that match the template's light source.\s
-            - Global Illumination: Ensure the product reflects the ambient colors and tones of the background for a cohesive look.
-            - Seamless Integration: Blend the contact points naturally so the product appears to be sitting "in" the fabric/surface, not just floating on top.
-            - Perspective & Scale: Maintain perfect 3D perspective and relative scale consistent with the template.
-            - Preservation: Keep the product's original logo and essential details intact.
-            - Quality: Output a high-resolution, clean PNG with no artifacts.
-        """;
+        String imageObjectKey = "images/" + project.getId() + "/result/" + UUID.randomUUID() + ".png";
+        s3ImageUploader.upload(imageObjectKey, imageBytes);
 
-        String imageBase64 = geminiImageClient.generateCompositeImage(
-                        cutoutBase64,
-                        templateBase64,
-                        prompt
-                );
-
-        byte[] imageBytes = Base64.getDecoder().decode(imageBase64);
-
-        String imageObjectKey = "images/result/" + UUID.randomUUID() + ".png";
-
-        uploadToS3(imageObjectKey, imageBytes);
-
-        Project project = Project.create(
-                request.cutoutImageObjectKey(),
-                template,
-                null
-        );
-        projectRepository.save(project);
-
-        Image image = Image.create(
-                project,
-                imageObjectKey
-        );
-        imageRepository.save(image);
-
+        project.updateTemplate(template);
         project.updateRepresentativeImage(imageObjectKey);
 
-        //return ImageGenerateResponse.of(image);
-        return new ImageGenerateResponse(
-                image.getId(),
-                imageDomain + image.getImageObjectKey()
-        );
+        Image image = Image.create(project, imageObjectKey);
+        imageRepository.save(image);
+
+        return ImageGenerateResponse.of(image);
     }
 
-    private void uploadToS3(String objectKey, byte[] bytes) {
-        try {
-            s3Client.putObject(
-                    PutObjectRequest.builder()
-                            .bucket(bucket)
-                            .key(objectKey)
-                            .contentType("image/png")
-                            .build(),
-                    RequestBody.fromBytes(bytes)
-            );
-        } catch (Exception e) {
-            throw new ImageExceptionHandler(ImageErrorCode.S3_UPLOAD_FAILED);
-        }
-    }
-
-
-    public ProjectDetailResponse getProject(Long projectId) {
-        Project project = projectRepository.findWithTemplateAndFolderById(projectId)
-                        .orElseThrow(() -> new ImageExceptionHandler(ImageErrorCode.CUTOUT_IMAGE_NOT_FOUND));
-
-        return ProjectDetailResponse.from(project);
-    }
 
     public ImageDetailResponse getImage(Long imageId) {
         Image image = imageRepository.findDetailById(imageId)
@@ -175,12 +134,4 @@ public class ImageService {
         return ImageDetailResponse.from(image);
     }
 
-    public String loadUrlAsBase64(String imageUrl) {
-        try (InputStream is = new URL(imageUrl).openStream()) {
-            byte[] bytes = is.readAllBytes();
-            return Base64.getEncoder().encodeToString(bytes);
-        } catch (Exception e) {
-            throw new ImageExceptionHandler(ImageErrorCode.TEMPLATE_LOAD_FAILED);
-        }
-    }
 }

@@ -1,9 +1,9 @@
-package net.studioxai.studioxBe.domain.project.service;
+package net.studioxai.studioxBe.domain.image.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.studioxai.studioxBe.domain.project.dto.response.ProjectDashboardResponse;
-import net.studioxai.studioxBe.domain.project.repository.ProjectRepository;
+import net.studioxai.studioxBe.domain.image.dto.response.ProjectDashboardResponse;
+import net.studioxai.studioxBe.domain.image.repository.ProjectRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -19,9 +19,9 @@ public class ImageController {
     private final ImageService imageService;
 
     @GetMapping("/v1/image/raw/presign")
-    public ResponseEntity<PresignResponse> issuePresign(@AuthenticationPrincipal JwtUserPrincipal principal) {
+    public ResponseEntity<PresignResponse> issuePresign() {
 
-        return ResponseEntity.ok(imageService.issuePresign(principal.userId()));
+        return ResponseEntity.ok(imageService.issuePresign());
     }
 
     @PostMapping("/v1/image/cutout")
@@ -30,19 +30,13 @@ public class ImageController {
         return ResponseEntity.ok(imageService.generateCutoutImage(principal.userId(), request));
     }
 
-    @PostMapping("/v1/image/composite")
+    @PostMapping("/v1/image")
     public ResponseEntity<ImageGenerateResponse> generateImage(@AuthenticationPrincipal JwtUserPrincipal principal, @RequestBody @Valid ImageGenerateRequest request) {
 
         return ResponseEntity.ok(imageService.generateImage(principal.userId(), request));
     }
 
-    @GetMapping("/v1/image/projects/{projectId}")
-    public ResponseEntity<ProjectDetailResponse> getProject(@PathVariable Long projectId) {
-
-        return ResponseEntity.ok(imageService.getProject(projectId));
-    }
-
-    @GetMapping("/v1/image/images/{imageId}")
+    @GetMapping("/v1/image/{imageId}")
     public ResponseEntity<ImageDetailResponse> getImage(@PathVariable Long imageId) {
 
         return ResponseEntity.ok(imageService.getImage(imageId));

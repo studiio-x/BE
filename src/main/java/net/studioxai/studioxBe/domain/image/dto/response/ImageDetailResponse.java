@@ -6,7 +6,7 @@ import net.studioxai.studioxBe.global.annotation.ImageUrl;
 public record ImageDetailResponse(
         Long imageId,
         @ImageUrl String imageUrl,
-        Long cutoutImageId,
+        Long projectId,
         Long templateId,
         Long folderId
 ) {

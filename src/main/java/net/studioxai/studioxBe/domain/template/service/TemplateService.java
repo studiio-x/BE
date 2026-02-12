@@ -48,7 +48,7 @@ public class TemplateService {
                 templates.getContent().stream()
                         .map(t -> new TemplateByCategoryResponse(
                                 t.getId(),
-                                t.getImageUrl()
+                                t.getImageObjectKey()
                         ))
                         .toList();
 

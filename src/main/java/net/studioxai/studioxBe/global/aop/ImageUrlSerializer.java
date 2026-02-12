@@ -17,7 +17,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ImageUrlSerializer extends JsonSerializer<Object> {
+public class ImageUrlSerializer extends JsonSerializer<Object> implements ContextualSerializer {
     @Value("${server.image-domain}")
     private String imageDomain;
 

@@ -8,8 +8,8 @@ public record PresignResponse(
         @ImageUrl String rawImageUrl
 ) {
 
-    public static PresignResponse of(String uploadUrl, String objectKey, String imageUrl) {
-        return new PresignResponse(uploadUrl, objectKey, imageUrl);
+    public static PresignResponse of(String uploadUrl, String objectKey) {
+        return new PresignResponse(uploadUrl, objectKey, objectKey);
     }
 }
 

@@ -23,6 +23,6 @@ public class Template extends BaseEntity {
     @Column(name = "category", nullable = false)
     private Category category;
 
-    @Column(name = "image_url", nullable = false)
-    private String imageUrl;
+    @Column(name = "image_object_key", nullable = false)
+    private String imageObjectKey;
 }

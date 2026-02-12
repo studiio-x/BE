@@ -1,9 +1,11 @@
 package net.studioxai.studioxBe.infra.s3;
 
 import lombok.RequiredArgsConstructor;
+import net.studioxai.studioxBe.domain.image.dto.response.PresignResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;

@@ -4,9 +4,9 @@ import net.studioxai.studioxBe.domain.image.dto.request.CutoutImageGenerateReque
 import net.studioxai.studioxBe.domain.image.dto.request.ImageGenerateRequest;
 import net.studioxai.studioxBe.domain.image.dto.response.*;
 import net.studioxai.studioxBe.domain.image.entity.Image;
-import net.studioxai.studioxBe.domain.project.entity.Project;
+import net.studioxai.studioxBe.domain.image.entity.Project;
 import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
-import net.studioxai.studioxBe.domain.project.repository.ProjectRepository;
+import net.studioxai.studioxBe.domain.image.repository.ProjectRepository;
 import net.studioxai.studioxBe.domain.image.service.ImageService;
 import net.studioxai.studioxBe.domain.template.entity.Template;
 import net.studioxai.studioxBe.domain.template.repository.TemplateRepository;
@@ -56,7 +56,7 @@ class ImageServiceTest {
 
         when(s3UrlHandler.handle("images/raw")).thenReturn(s3Url);
 
-        PresignResponse response = imageService.issuePresign(1L);
+        PresignResponse response = imageService.issuePresign();
 
         assertThat(response.uploadUrl()).isEqualTo("uploadUrl");
         assertThat(response.rawImageObjectKey()).isEqualTo("images/raw/test.png");

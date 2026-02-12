@@ -1,8 +1,8 @@
-package net.studioxai.studioxBe.domain.project.controller;
+package net.studioxai.studioxBe.domain.image.controller;
 
 import lombok.RequiredArgsConstructor;
-import net.studioxai.studioxBe.domain.project.dto.response.ProjectDashboardResponse;
-import net.studioxai.studioxBe.domain.project.service.ProjectService;
+import net.studioxai.studioxBe.domain.image.dto.response.ProjectDashboardResponse;
+import net.studioxai.studioxBe.domain.image.service.ProjectService;
 import net.studioxai.studioxBe.global.jwt.JwtUserPrincipal;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

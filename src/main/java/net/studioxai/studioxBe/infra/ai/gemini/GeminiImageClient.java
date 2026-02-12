@@ -25,13 +25,7 @@ public class GeminiImageClient {
     private final GeminiProperties props;
     private final ObjectMapper objectMapper;
 
-    /* ======================
-     * Public API
-     * ====================== */
-
-    public String removeBackground(String base64Image) {
-
-        String prompt = """
+    String CUTOUT_PROMPT = """
             Remove the background completely from the image.
 
             Requirements:
@@ -43,22 +37,41 @@ public class GeminiImageClient {
             - Output must be a clean PNG
         """;
 
-        return generateImageInternal(List.of(imagePart(base64Image)), prompt);
+    private static final String COMPOSITE_PROMPT = """
+        Naturally composite the provided cutout product image into the template background.
+        
+        Requirements:
+        - Place the cutout subject realistically within the template
+        - Match perspective, scale, and alignment
+        - Preserve original colors and details
+        - Do NOT add new objects
+        - Do NOT alter the template background
+        - Output must be a clean PNG
+            
+        Key Refinements:
+        - Lighting & Shadow: Generate realistic soft shadows beneath and behind the product that match the template's light source.
+        - Global Illumination: Ensure the product reflects the ambient colors and tones of the background for a cohesive look.
+        - Seamless Integration: Blend the contact points naturally so the product appears to be sitting "in" the fabric/surface, not just floating on top.
+        - Perspective & Scale: Maintain perfect 3D perspective and relative scale consistent with the template.
+        - Preservation: Keep the product's original logo and essential details intact.
+        - Quality: Output a high-resolution, clean PNG with no artifacts.
+    """;
+
+    public String removeBackground(String base64Image) {
+        return generateImageInternal(List.of(imagePart(base64Image)), CUTOUT_PROMPT);
     }
 
-    public String generateCompositeImage(
-            String cutoutBase64,
-            String templateBase64,
-            String prompt
-    ) {
+    public String generateCompositeImage(String cutoutBase64, String templateBase64) {
         return generateImageInternal(
                 List.of(
                         imagePart(templateBase64),
                         imagePart(cutoutBase64)
                 ),
-                prompt
+                COMPOSITE_PROMPT
         );
     }
+
+
 
     private String generateImageInternal(
             List<GeminiGenerateRequest.Part> imageParts,

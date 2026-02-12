@@ -49,11 +49,4 @@ public class OauthController {
                 .build();
     }
 
-    //백엔드 개발용
-    @GetMapping("/test")
-    public String test(@RequestParam String accessToken) {
-        log.info("accessToken = {}", accessToken);
-        return "ACCESS TOKEN = " + accessToken;
-    }
-
 }

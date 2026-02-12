@@ -1,6 +1,6 @@
-package net.studioxai.studioxBe.domain.project.dto.response;
+package net.studioxai.studioxBe.domain.image.dto.response;
 
-import net.studioxai.studioxBe.domain.project.entity.Project;
+import net.studioxai.studioxBe.domain.image.entity.Project;
 import net.studioxai.studioxBe.global.annotation.ImageUrl;
 
 public record ProjectDashboardResponse(
