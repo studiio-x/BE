@@ -1,117 +1,199 @@
 package net.studioxai.studioxBe.image;
 
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
+import net.studioxai.studioxBe.domain.folder.repository.FolderRepository;
+import net.studioxai.studioxBe.domain.folder.service.FolderManagerService;
+import net.studioxai.studioxBe.domain.image.dto.request.CutoutImageGenerateRequest;
+import net.studioxai.studioxBe.domain.image.dto.request.ImageGenerateRequest;
+import net.studioxai.studioxBe.domain.image.dto.response.*;
 import net.studioxai.studioxBe.domain.image.entity.Image;
+import net.studioxai.studioxBe.domain.image.entity.Project;
 import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
+import net.studioxai.studioxBe.domain.image.repository.ProjectRepository;
 import net.studioxai.studioxBe.domain.image.service.ImageService;
+import net.studioxai.studioxBe.domain.template.entity.Template;
+import net.studioxai.studioxBe.domain.template.repository.TemplateRepository;
+import net.studioxai.studioxBe.infra.ai.gemini.GeminiImageClient;
+import net.studioxai.studioxBe.infra.s3.S3ImageLoader;
+import net.studioxai.studioxBe.infra.s3.S3ImageUploader;
+import net.studioxai.studioxBe.infra.s3.S3Url;
+import net.studioxai.studioxBe.infra.s3.S3UrlHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Pageable;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import java.util.List;
-import java.util.Map;
+import java.util.Base64;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ImageServiceTest {
 
-    @Mock
-    private ImageRepository imageRepository;
+    @Mock private ImageRepository imageRepository;
+    @Mock private ProjectRepository projectRepository;
+    @Mock private TemplateRepository templateRepository;
+    @Mock private FolderRepository folderRepository;
+
+    @Mock private S3UrlHandler s3UrlHandler;
+    @Mock private S3ImageLoader s3ImageLoader;
+    @Mock private S3ImageUploader s3ImageUploader;
+    @Mock private GeminiImageClient geminiImageClient;
+
+    @Mock private FolderManagerService folderManagerService;
 
     @InjectMocks
     private ImageService imageService;
 
     @Test
-    @DisplayName("[getImagesByFolder] 폴더와 개수를 받아 이미지 URL 리스트를 반환한다")
-    void getImagesByFolder_success() {
-        // given
+    @DisplayName("Presign URL 발급 성공")
+    void issuePresign_success() {
+
+        S3Url s3Url = S3Url.to("uploadUrl", "images/raw/test.png");
+
+        when(s3UrlHandler.handle("images/raw")).thenReturn(s3Url);
+
+        PresignResponse response = imageService.issuePresign();
+
+        assertThat(response.uploadUrl()).isEqualTo("uploadUrl");
+        assertThat(response.rawImageObjectKey()).isEqualTo("images/raw/test.png");
+    }
+
+    @Test
+    @DisplayName("컷아웃 이미지 생성 성공")
+    void generateCutoutImage_success() {
+        Long userId = 1L;
+        Long folderId = 10L;
+
+        CutoutImageGenerateRequest request =
+                new CutoutImageGenerateRequest("images/raw/input.png", folderId);
+
         Folder folder = mock(Folder.class);
 
-        Image img1 = mock(Image.class);
-        Image img2 = mock(Image.class);
+        when(folderRepository.findById(folderId))
+                .thenReturn(Optional.of(folder));
 
-        given(img1.getImageUrl()).willReturn("url1");
-        given(img2.getImageUrl()).willReturn("url2");
+        doNothing().when(folderManagerService)
+                .isUserWritable(userId, folderId);
 
-        given(imageRepository.findByFolderOrderByCreatedAt(eq(folder), any(Pageable.class)))
-                .willReturn(List.of(img1, img2));
+        when(projectRepository.save(any(Project.class)))
+                .thenAnswer(invocation -> {
+                    Project p = invocation.getArgument(0);
+                    ReflectionTestUtils.setField(p, "id", 100L);
+                    return p;
+                });
 
-        int count = 2;
+        String raw = Base64.getEncoder().encodeToString("raw".getBytes());
+        String cutout = Base64.getEncoder().encodeToString("cutout".getBytes());
 
-        // when
-        List<String> result = imageService.getImagesByFolder(folder, count);
+        when(s3ImageLoader.loadAsBase64(anyString())).thenReturn(raw);
+        when(geminiImageClient.removeBackground(anyString())).thenReturn(cutout);
 
-        // then
-        assertThat(result).containsExactly("url1", "url2");
+        CutoutImageGenerateResponse response =
+                imageService.generateCutoutImage(userId, request);
 
-        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        verify(imageRepository).findByFolderOrderByCreatedAt(eq(folder), pageableCaptor.capture());
+        assertThat(response.projectId()).isEqualTo(100L);
+        assertThat(response.cutoutImageObjectKey())
+                .contains("images/100/cutout/");
 
-        Pageable usedPageable = pageableCaptor.getValue();
-        assertThat(usedPageable.getPageNumber()).isEqualTo(0);
-        assertThat(usedPageable.getPageSize()).isEqualTo(count);
-    }
-
-    @Test
-    @DisplayName("[getImagesByFolders] 여러 폴더에 대한 이미지를 폴더별로 그룹핑하고 각 폴더당 최대 개수만큼만 반환한다")
-    void getImagesByFolders_groupAndLimit() {
-        // given
-        Folder folder1 = mock(Folder.class);
-        Folder folder2 = mock(Folder.class);
-
-        given(folder1.getId()).willReturn(1L);
-        given(folder2.getId()).willReturn(2L);
-
-        List<Folder> folders = List.of(folder1, folder2);
-
-        Image img1 = mock(Image.class);
-        Image img2 = mock(Image.class);
-        Image img3 = mock(Image.class);
-        Image img4 = mock(Image.class);
-
-        given(img1.getFolder()).willReturn(folder1);
-        given(img2.getFolder()).willReturn(folder1);
-        given(img3.getFolder()).willReturn(folder1);
-        given(img4.getFolder()).willReturn(folder2);
-
-        given(img1.getImageUrl()).willReturn("f1_img1");
-        given(img2.getImageUrl()).willReturn("f1_img2");
-        given(img4.getImageUrl()).willReturn("f2_img1");
-
-        given(imageRepository.findByFolderInOrderByFolderIdAndCreatedAtDesc(folders))
-                .willReturn(List.of(img1, img2, img3, img4));
-
-        int count = 2;
-        // when
-        Map<Long, List<String>> result = imageService.getImagesByFolders(folders, count);
-
-        // then
-        assertThat(result).hasSize(2);
-        assertThat(result.get(1L)).containsExactly("f1_img1", "f1_img2"); // 3개 중 앞 2개만
-        assertThat(result.get(2L)).containsExactly("f2_img1");            // 1개 뿐이므로 그대로
-
-        verify(imageRepository).findByFolderInOrderByFolderIdAndCreatedAtDesc(folders);
-    }
+        verify(s3ImageUploader, times(1))
+                .upload(anyString(), any());
+        }
 
     @Test
-    @DisplayName("[getImagesByFolders] 이미지가 하나도 없으면 빈 Map을 반환한다")
-    void getImagesByFolders_empty() {
+    @DisplayName("합성 이미지 생성 성공")
+    void generateImage_success() {
+
         // given
-        List<Folder> folders = List.of();
-        given(imageRepository.findByFolderInOrderByFolderIdAndCreatedAtDesc(folders))
-                .willReturn(List.of());
+        Long userId = 1L;
+        Long projectId = 100L;
+        Long templateId = 20L;
+
+        // --- Folder mock ---
+        Folder folder = mock(Folder.class);
+        when(folder.getId()).thenReturn(10L);
+
+        // --- Project mock ---
+        Project project = mock(Project.class);
+        when(project.getId()).thenReturn(projectId);
+        when(project.getFolder()).thenReturn(folder);
+
+        // --- Template mock ---
+        Template template = mock(Template.class);
+        when(template.getImageObjectKey())
+                .thenReturn("templates/template.png");
+
+        // --- Repository stubbing ---
+        when(projectRepository.findById(projectId))
+                .thenReturn(Optional.of(project));
+
+        when(templateRepository.findById(templateId))
+                .thenReturn(Optional.of(template));
+
+        // --- 권한 검증 ---
+        doNothing().when(folderManagerService)
+                .isUserWritable(eq(userId), eq(10L));
+
+        // --- Base64 데이터 (디코딩 가능한 값) ---
+        String encoded = Base64.getEncoder()
+                .encodeToString("test".getBytes());
+
+        when(s3ImageLoader.loadAsBase64(anyString()))
+                .thenReturn(encoded);
+
+        when(geminiImageClient.generateCompositeImage(anyString(), anyString()))
+                .thenReturn(encoded);
+
+        when(imageRepository.save(any(Image.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        ImageGenerateRequest request =
+                new ImageGenerateRequest(
+                        "images/100/cutout/test.png",
+                        templateId,
+                        projectId
+                );
 
         // when
-        Map<Long, List<String>> result = imageService.getImagesByFolders(folders, 3);
+        ImageGenerateResponse response =
+                imageService.generateImage(userId, request);
 
         // then
-        assertThat(result).isEmpty();
+        assertThat(response).isNotNull();
+
+        // 업로드 검증
+        verify(s3ImageUploader, times(1))
+                .upload(contains("images/100/result/"), any());
+
+        // 도메인 상태 변경 검증
+        verify(project, times(1)).updateTemplate(template);
+        verify(project, times(1)).updateRepresentativeImage(anyString());
+    }
+
+
+
+    @Test
+    @DisplayName("이미지 상세 조회 성공")
+    void getImage_success() {
+
+        Template template = mock(Template.class);
+        when(template.getId()).thenReturn(10L);
+
+        Project project = mock(Project.class);
+        when(project.getTemplate()).thenReturn(template);
+
+        Image image = mock(Image.class);
+        when(image.getProject()).thenReturn(project);
+
+        when(imageRepository.findDetailById(1L))
+                .thenReturn(Optional.of(image));
+
+        ImageDetailResponse response = imageService.getImage(1L);
+
+        assertThat(response).isNotNull();
     }
 }

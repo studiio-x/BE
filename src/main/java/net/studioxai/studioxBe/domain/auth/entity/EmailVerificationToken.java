@@ -45,5 +45,4 @@ public class EmailVerificationToken {
          this.expiration = expiration;
     }
 
-
 }
