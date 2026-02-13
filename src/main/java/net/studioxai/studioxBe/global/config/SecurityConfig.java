@@ -82,7 +82,6 @@ public class SecurityConfig {
                 .securityMatcher(SwaggerPatterns)
                 .cors(c -> c.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
                 .httpBasic(withDefaults());
 
         http.sessionManagement(session ->
