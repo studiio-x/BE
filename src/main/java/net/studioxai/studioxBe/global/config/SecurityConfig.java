@@ -91,10 +91,8 @@ public class SecurityConfig {
 
         if (environmentUtil.isProdProfile()) {
             http
-                    .authorizeHttpRequests(auth -> auth
-                            .requestMatchers(SwaggerPatterns).authenticated()
-                    )
-                    .httpBasic(basic -> {});
+                    .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+                    .httpBasic(withDefaults());
         } else {
             http
                     .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
