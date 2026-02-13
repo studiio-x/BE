@@ -19,28 +19,28 @@ public class Image extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cutout_image_id", nullable = false)
-    private CutoutImage cutoutImage;
+    @JoinColumn(name = "project_id", nullable = false)
+    private Project project;
 
-    @Column(name = "image_url", nullable = false)
-    private String imageUrl;
+    @Column(name = "image_object_key", nullable = false)
+    private String imageObjectKey;
 
     public static Image create(
-            CutoutImage cutoutImage,
-            String imageUrl
+            Project project,
+            String imageObjectKey
     ) {
         return Image.builder()
-                .cutoutImage(cutoutImage)
-                .imageUrl(imageUrl)
+                .project(project)
+                .imageObjectKey(imageObjectKey)
                 .build();
     }
 
     @Builder(access = AccessLevel.PRIVATE)
     private Image(
-            CutoutImage cutoutImage,
-            String imageUrl
+            Project project,
+            String imageObjectKey
     ) {
-        this.cutoutImage = cutoutImage;
-        this.imageUrl = imageUrl;
+        this.project = project;
+        this.imageObjectKey = imageObjectKey;
     }
 }

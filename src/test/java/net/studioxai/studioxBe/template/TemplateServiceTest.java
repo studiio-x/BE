@@ -48,7 +48,7 @@ class TemplateServiceTest {
 
         Template template = mock(Template.class);
         given(template.getId()).willReturn(1L);
-        given(template.getImageUrl()).willReturn("image-url");
+        given(template.getImageObjectKey()).willReturn("image-url");
 
         Page<Template> page = new PageImpl<>(
                 List.of(template),
@@ -125,8 +125,10 @@ class TemplateServiceTest {
         assertThat(result.get(0).keyword()).isEqualTo(keyword);
         assertThat(result.get(0).templates())
                 .hasSize(1)
-                .extracting("templateId", "imageUrl")
+                .extracting(t -> t.templateId(),
+                        t -> t.imageObjectKey())
                 .containsExactly(tuple(1L, "https://dummy.com/img1.jpg"));
+
     }
 
 
@@ -174,7 +176,7 @@ class TemplateServiceTest {
 
         TemplateByKeywordResponse response = result.get(0);
         assertThat(response.templateId()).isEqualTo(1L);
-        assertThat(response.imageUrl()).isEqualTo("https://dummy.com/search.jpg");
+        assertThat(response.imageObjectKey()).isEqualTo("https://dummy.com/search.jpg");
         assertThat(response.keywordType()).isEqualTo(keywordType);
         assertThat(response.getKeywordTitle()).isEqualTo("일반 디스플레이");
     }

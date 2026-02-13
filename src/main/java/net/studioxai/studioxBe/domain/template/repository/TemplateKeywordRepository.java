@@ -17,7 +17,7 @@ public interface TemplateKeywordRepository extends JpaRepository<TemplateKeyword
     select new net.studioxai.studioxBe.domain.template.dto.response.TemplateByKeywordResponse(
         t.id,
         tk.keyword,
-        t.imageUrl,
+        t.imageObjectKey,
         t.category
     )
     from TemplateKeyword tk
@@ -31,7 +31,7 @@ public interface TemplateKeywordRepository extends JpaRepository<TemplateKeyword
         select new net.studioxai.studioxBe.domain.template.dto.response.TemplateByKeywordResponse(
             t.id,
             tk.keyword,
-            t.imageUrl,
+            t.imageObjectKey,
             t.category
         )
         from TemplateKeyword tk
