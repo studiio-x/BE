@@ -58,9 +58,20 @@ public class Project extends BaseEntity {
         this.cutoutImageObjectKey = cutoutImageObjectKey;
     }
 
+    public void updateRepresentativeImageObjectKey(String imageObjectKey) {this.representativeImageObjectKey = imageObjectKey;}
+
     public void updateTemplate(Template template) {
         this.template = template;
     }
+
+    public void updateTitle(String title) {
+        this.title = title;
+    }
+
+    public void moveTo(Folder folder) {
+        this.folder = folder;
+    }
+
 
     @Builder(access = AccessLevel.PRIVATE)
     private Project(

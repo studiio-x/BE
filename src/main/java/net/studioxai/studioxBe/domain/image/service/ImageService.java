@@ -93,6 +93,7 @@ public class ImageService {
         s3ImageUploader.upload(cutoutImageObjectKey, cutoutBytes);
 
         project.updateCutoutImageObjectKey(cutoutImageObjectKey);
+        project.updateRepresentativeImageObjectKey(cutoutImageObjectKey);
 
         return CutoutImageGenerateResponse.of(project.getId(), cutoutImageObjectKey);
     }
