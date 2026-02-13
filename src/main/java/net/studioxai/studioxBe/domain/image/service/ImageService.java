@@ -47,9 +47,9 @@ import java.util.*;
 public class ImageService {
 
     private final ImageRepository imageRepository;
-    private final ProjectRepository projectRepository;
     private final TemplateRepository templateRepository;
     private final FolderRepository folderRepository;
+    private final ProjectRepository projectRepository;
 
     private final S3UrlHandler s3UrlHandler;
     private final S3ImageLoader s3ImageLoader;
@@ -58,6 +58,8 @@ public class ImageService {
     private final GeminiImageClient geminiImageClient;
 
     private final FolderManagerService folderManagerService;
+    private final ProjectService projectService;
+
 
     public PresignResponse issuePresign() {
         S3Url s3Url = s3UrlHandler.handle("images/raw");
@@ -100,8 +102,7 @@ public class ImageService {
 
         //TODO: 결제 검증 로직 추가
 
-        Project project = projectRepository.findById(request.projectId())
-                .orElseThrow(() -> new ProjectExceptionHandler(ProjectErrorCode.PROJECT_NOT_FOUND));
+        Project project = projectService.getProjectById(request.projectId());
 
         folderManagerService.isUserWritable(userId, project.getFolder().getId());
 
