@@ -125,8 +125,10 @@ class TemplateServiceTest {
         assertThat(result.get(0).keyword()).isEqualTo(keyword);
         assertThat(result.get(0).templates())
                 .hasSize(1)
-                .extracting("templateId", "imageUrl")
+                .extracting(t -> t.templateId(),
+                        t -> t.imageObjectKey())
                 .containsExactly(tuple(1L, "https://dummy.com/img1.jpg"));
+
     }
 
 

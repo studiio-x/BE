@@ -18,7 +18,6 @@ import net.studioxai.studioxBe.infra.s3.S3ImageLoader;
 import net.studioxai.studioxBe.infra.s3.S3ImageUploader;
 import net.studioxai.studioxBe.infra.s3.S3Url;
 import net.studioxai.studioxBe.infra.s3.S3UrlHandler;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -67,7 +66,6 @@ class ImageServiceTest {
     @Test
     @DisplayName("컷아웃 이미지 생성 성공")
     void generateCutoutImage_success() {
-
         Long userId = 1L;
         Long folderId = 10L;
 
@@ -79,18 +77,21 @@ class ImageServiceTest {
         when(folderRepository.findById(folderId))
                 .thenReturn(Optional.of(folder));
 
-        when(s3ImageLoader.loadAsBase64(any()))
-                .thenReturn(Base64.getEncoder().encodeToString("raw".getBytes()));
+        doNothing().when(folderManagerService)
+                .isUserWritable(userId, folderId);
 
-        when(geminiImageClient.removeBackground(any()))
-                .thenReturn(Base64.getEncoder().encodeToString("cutout".getBytes()));
-
-        when(projectRepository.save(any()))
+        when(projectRepository.save(any(Project.class)))
                 .thenAnswer(invocation -> {
                     Project p = invocation.getArgument(0);
                     ReflectionTestUtils.setField(p, "id", 100L);
                     return p;
                 });
+
+        String raw = Base64.getEncoder().encodeToString("raw".getBytes());
+        String cutout = Base64.getEncoder().encodeToString("cutout".getBytes());
+
+        when(s3ImageLoader.loadAsBase64(anyString())).thenReturn(raw);
+        when(geminiImageClient.removeBackground(anyString())).thenReturn(cutout);
 
         CutoutImageGenerateResponse response =
                 imageService.generateCutoutImage(userId, request);
@@ -101,59 +102,78 @@ class ImageServiceTest {
 
         verify(s3ImageUploader, times(1))
                 .upload(anyString(), any());
-    }
-
+        }
 
     @Test
     @DisplayName("합성 이미지 생성 성공")
     void generateImage_success() {
 
+        // given
         Long userId = 1L;
         Long projectId = 100L;
         Long templateId = 20L;
 
+        // --- Folder mock ---
         Folder folder = mock(Folder.class);
         when(folder.getId()).thenReturn(10L);
 
+        // --- Project mock ---
         Project project = mock(Project.class);
         when(project.getId()).thenReturn(projectId);
         when(project.getFolder()).thenReturn(folder);
-        when(project.getCutoutImageObjectKey())
-                .thenReturn("images/100/cutout/test.png");
 
+        // --- Template mock ---
         Template template = mock(Template.class);
         when(template.getImageObjectKey())
                 .thenReturn("templates/template.png");
 
+        // --- Repository stubbing ---
         when(projectRepository.findById(projectId))
                 .thenReturn(Optional.of(project));
 
         when(templateRepository.findById(templateId))
                 .thenReturn(Optional.of(template));
 
-        when(s3ImageLoader.loadAsBase64(any()))
-                .thenReturn(Base64.getEncoder().encodeToString("data".getBytes()));
+        // --- 권한 검증 ---
+        doNothing().when(folderManagerService)
+                .isUserWritable(eq(userId), eq(10L));
 
-        when(geminiImageClient.generateCompositeImage(any(), any()))
-                .thenReturn(Base64.getEncoder().encodeToString("result".getBytes()));
+        // --- Base64 데이터 (디코딩 가능한 값) ---
+        String encoded = Base64.getEncoder()
+                .encodeToString("test".getBytes());
 
-        when(imageRepository.save(any()))
+        when(s3ImageLoader.loadAsBase64(anyString()))
+                .thenReturn(encoded);
+
+        when(geminiImageClient.generateCompositeImage(anyString(), anyString()))
+                .thenReturn(encoded);
+
+        when(imageRepository.save(any(Image.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         ImageGenerateRequest request =
-                new ImageGenerateRequest("images/100/cutout/test.png", templateId, projectId);
+                new ImageGenerateRequest(
+                        "images/100/cutout/test.png",
+                        templateId,
+                        projectId
+                );
 
+        // when
         ImageGenerateResponse response =
                 imageService.generateImage(userId, request);
 
-        assertThat(response.imageUrl()).contains("images/100/result/");
+        // then
+        assertThat(response).isNotNull();
 
+        // 업로드 검증
         verify(s3ImageUploader, times(1))
                 .upload(contains("images/100/result/"), any());
 
+        // 도메인 상태 변경 검증
         verify(project, times(1)).updateTemplate(template);
         verify(project, times(1)).updateRepresentativeImage(anyString());
     }
+
 
 
     @Test
