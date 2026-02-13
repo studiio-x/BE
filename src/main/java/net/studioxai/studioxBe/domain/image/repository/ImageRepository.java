@@ -2,6 +2,7 @@ package net.studioxai.studioxBe.domain.image.repository;
 
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.image.entity.Image;
+import net.studioxai.studioxBe.domain.image.entity.Project;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,6 +22,8 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
             "project.folder"
     })
     Optional<Image> findDetailById(Long id);
+
+    void deleteByProject(Project project);
 
 
 }
