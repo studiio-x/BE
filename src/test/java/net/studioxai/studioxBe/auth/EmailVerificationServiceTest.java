@@ -204,7 +204,7 @@ public class EmailVerificationServiceTest {
 
         // then
         assertThat(response.email()).isEqualTo(email);
-        assertThat(response.isAvailable()).isTrue();
+        assertThat(response.isVerified()).isTrue();
 
         then(verifiedEmailRepository).should().findById(email);
     }
@@ -224,7 +224,7 @@ public class EmailVerificationServiceTest {
 
         // then
         assertThat(response.email()).isEqualTo(email);
-        assertThat(response.isAvailable()).isFalse();
+        assertThat(response.isVerified()).isFalse();
 
         then(verifiedEmailRepository).should().findById(email);
     }
