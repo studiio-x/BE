@@ -80,9 +80,25 @@ public class SecurityConfig {
     public SecurityFilterChain swaggerFilterChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher(SwaggerPatterns)
+                .cors(c -> c.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
                 .httpBasic(withDefaults());
+
+        http.sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        );
+
+        if (environmentUtil.isProdProfile()) {
+            http
+                    .authorizeHttpRequests(auth -> auth
+                            .requestMatchers(SwaggerPatterns).authenticated()
+                    )
+                    .httpBasic(basic -> {});
+        } else {
+            http
+                    .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+        }
 
         return http.build();
     }
@@ -91,6 +107,7 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
         http
+                .securityMatcher("/api/**")
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -104,7 +121,6 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
         );
 
-        // JWT 필터 추가
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
