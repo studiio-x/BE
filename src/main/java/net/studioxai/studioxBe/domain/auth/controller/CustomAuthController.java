@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.auth.dto.request.EmailVerificationRequest;
 import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
+import net.studioxai.studioxBe.domain.auth.dto.request.SignUpRequest;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
 import net.studioxai.studioxBe.domain.auth.service.AuthService;
@@ -45,9 +46,9 @@ public class CustomAuthController {
 
     @PostMapping("/v1/auth/signup")
     public ResponseEntity<LoginResponse> signup(
-            @RequestBody @Valid LoginRequest loginRequest
+            @RequestBody @Valid SignUpRequest signUpRequest
     ) {
-        LoginResponse response = authService.signUp(loginRequest);
+        LoginResponse response = authService.signUp(signUpRequest);
 
         ResponseCookie refreshCookie = cookieUtil.getRefreshTokenCookie(response.refreshToken());
         ResponseCookie accessTokenCookie = cookieUtil.getAccessTokenCookie(response.accessToken());

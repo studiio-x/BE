@@ -3,6 +3,7 @@ package net.studioxai.studioxBe.domain.auth.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
+import net.studioxai.studioxBe.domain.auth.dto.request.SignUpRequest;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
@@ -49,18 +50,17 @@ public class AuthService {
     }
 
     @Transactional
-    public LoginResponse signUp(LoginRequest loginRequest) {
-        emailVerificationService.checkEmailVerification(loginRequest.email());
+    public LoginResponse signUp(SignUpRequest signUpRequest) {
+        emailVerificationService.checkEmailVerification(signUpRequest.email());
 
-        // TODO: default profile url 삽입
-        String encodedPassword = passwordEncoder.encode(loginRequest.password());
+        String encodedPassword = passwordEncoder.encode(signUpRequest.password());
 
         User user = User.create(
                 RegisterPath.CUSTOM,
-                loginRequest.email(),
+                signUpRequest.email(),
                 encodedPassword,
                 DEFAULT_PROFILE_IMAGE_URL,
-                extractUsernameFromEmail(loginRequest.email()),
+                extractUsernameFromEmail(signUpRequest.email()),
                 true,
                 LocalDateTime.now()
         );
