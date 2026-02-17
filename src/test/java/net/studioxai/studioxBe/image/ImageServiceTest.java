@@ -11,6 +11,7 @@ import net.studioxai.studioxBe.domain.image.entity.Project;
 import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
 import net.studioxai.studioxBe.domain.image.repository.ProjectRepository;
 import net.studioxai.studioxBe.domain.image.service.ImageService;
+import net.studioxai.studioxBe.domain.image.service.ProjectService;
 import net.studioxai.studioxBe.domain.template.entity.Template;
 import net.studioxai.studioxBe.domain.template.repository.TemplateRepository;
 import net.studioxai.studioxBe.infra.ai.gemini.GeminiImageClient;
@@ -45,6 +46,7 @@ class ImageServiceTest {
     @Mock private GeminiImageClient geminiImageClient;
 
     @Mock private FolderManagerService folderManagerService;
+    @Mock private ProjectService projectService;
 
     @InjectMocks
     private ImageService imageService;
@@ -128,8 +130,8 @@ class ImageServiceTest {
                 .thenReturn("templates/template.png");
 
         // --- Repository stubbing ---
-        when(projectRepository.findById(projectId))
-                .thenReturn(Optional.of(project));
+        when(projectService.getProjectById(projectId))
+                .thenReturn(project);
 
         when(templateRepository.findById(templateId))
                 .thenReturn(Optional.of(template));
@@ -171,7 +173,7 @@ class ImageServiceTest {
 
         // 도메인 상태 변경 검증
         verify(project, times(1)).updateTemplate(template);
-        verify(project, times(1)).updateRepresentativeImage(anyString());
+        verify(project, times(1)).updatethumbnailObjectKey(anyString());
     }
 
 
