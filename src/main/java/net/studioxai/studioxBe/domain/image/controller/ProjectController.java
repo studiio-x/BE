@@ -1,7 +1,6 @@
 package net.studioxai.studioxBe.domain.image.controller;
 
 import lombok.RequiredArgsConstructor;
-import net.studioxai.studioxBe.domain.image.dto.request.ProjectMoveRequest;
 import net.studioxai.studioxBe.domain.image.dto.request.ProjectTitleUpdateRequest;
 import net.studioxai.studioxBe.domain.image.dto.response.ProjectMoveResponse;
 import net.studioxai.studioxBe.domain.image.dto.response.ProjectTitleUpdateResponse;
@@ -23,7 +22,7 @@ public class ProjectController {
     public ProjectsResponse projectsByFolderId(
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @PathVariable Long folderId,
-            @RequestParam(required = true, defaultValue = "desc") Sort.Direction sort,
+            @RequestParam(required = false, defaultValue = "desc") Sort.Direction sort,
             @RequestParam(required = true) int pageNum,
             @RequestParam(required = true) int limit
     ) {

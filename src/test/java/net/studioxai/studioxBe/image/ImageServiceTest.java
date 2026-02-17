@@ -173,7 +173,7 @@ class ImageServiceTest {
 
         // 도메인 상태 변경 검증
         verify(project, times(1)).updateTemplate(template);
-        verify(project, times(1)).updateRepresentativeImage(anyString());
+        verify(project, times(1)).updatethumbnailObjectKey(anyString());
     }
 
 

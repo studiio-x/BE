@@ -14,4 +14,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     Page<Project> findByFolder(Folder folder, Pageable pageable);
 
+    @EntityGraph(attributePaths = "folder")
+    Optional<Project> findWithFolderById(Long projectId);
+
+
 }

@@ -1,6 +1,0 @@
-package net.studioxai.studioxBe.domain.image.dto.request;
-
-public record ProjectMoveRequest(
-        Long targetFolderId
-) {}
-

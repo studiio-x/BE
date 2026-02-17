@@ -34,8 +34,8 @@ public class Project extends BaseEntity {
     @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "representative_image_object_key")
-    private String representativeImageObjectKey;
+    @Column(name = "thumbnail_object_key")
+    private String thumbnailObjectKey;
 
     public static Project create(
             String cutoutImageObjectKey,
@@ -46,19 +46,15 @@ public class Project extends BaseEntity {
                 .cutoutImageObjectKey(cutoutImageObjectKey)
                 .template(template)
                 .folder(folder)
-                .representativeImageObjectKey(null)
+                .thumbnailObjectKey(null)
                 .build();
-    }
-
-    public void updateRepresentativeImage(String imageObjectKey) {
-        this.representativeImageObjectKey = imageObjectKey;
     }
 
     public void updateCutoutImageObjectKey(String cutoutImageObjectKey) {
         this.cutoutImageObjectKey = cutoutImageObjectKey;
     }
 
-    public void updateRepresentativeImageObjectKey(String imageObjectKey) {this.representativeImageObjectKey = imageObjectKey;}
+    public void updatethumbnailObjectKey(String imageObjectKey) {this.thumbnailObjectKey = imageObjectKey;}
 
     public void updateTemplate(Template template) {
         this.template = template;
@@ -78,13 +74,13 @@ public class Project extends BaseEntity {
             String cutoutImageObjectKey,
             Template template,
             Folder folder,
-            String representativeImageObjectKey
+            String thumbnailObjectKey
     ) {
         this.cutoutImageObjectKey = cutoutImageObjectKey;
         this.template = template;
         this.folder = folder;
         this.title = "제목을 입력하세요.";
-        this.representativeImageObjectKey = representativeImageObjectKey;
+        this.thumbnailObjectKey = thumbnailObjectKey;
     }
 }
 

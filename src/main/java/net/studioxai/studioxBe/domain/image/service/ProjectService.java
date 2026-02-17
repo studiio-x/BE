@@ -42,6 +42,11 @@ public class ProjectService {
                 .orElseThrow(() -> new ProjectExceptionHandler(ProjectErrorCode.PROJECT_NOT_FOUND));
     }
 
+    public Project getProjectWithFolderById(Long projectId) {
+        return projectRepository.findWithFolderById(projectId)
+                .orElseThrow(() -> new ProjectExceptionHandler(ProjectErrorCode.PROJECT_NOT_FOUND));
+    }
+
     public ProjectsResponse getProjectsByFolderId(Long userId, Long folderId, Sort.Direction sort, int pageNum, int limit) {
 
         Folder folder = folderRepository.findById(folderId)
@@ -58,7 +63,7 @@ public class ProjectService {
                         .map(p -> ProjectsDto.create(
                                 p.getId(),
                                 p.getTitle(),
-                                p.getRepresentativeImageObjectKey()
+                                p.getThumbnailObjectKey()
                         ))
                         .toList();
 
@@ -75,10 +80,9 @@ public class ProjectService {
     @Transactional
     public ProjectTitleUpdateResponse updateProjectTitle(Long userId, Long projectId, String title) {
 
-        Project project = getProjectById(projectId);
+        Project project = getProjectWithFolderById(projectId);
 
-        Folder folder = project.getFolder();
-        folderManagerService.isUserWritable(userId, folder.getId());
+        folderManagerService.isUserWritable(userId, project.getFolder().getId());
 
         project.updateTitle(title);
 
@@ -88,16 +92,14 @@ public class ProjectService {
     @Transactional
     public ProjectMoveResponse moveProject(Long userId, Long projectId, Long destinationFolderId) {
 
-        Project project = getProjectById(projectId);
+        Project project = getProjectWithFolderById(projectId);
 
-        Folder currentFolder = project.getFolder();
-        Folder targetFolder = folderRepository.findById(destinationFolderId)
+        folderManagerService.isUserWritable(userId, project.getFolder().getId());
+        Folder destinationFolder = folderRepository.findById(destinationFolderId)
                 .orElseThrow(() -> new FolderExceptionHandler(FolderErrorCode.FOLDER_NOT_FOUND));
+        folderManagerService.isUserWritable(userId, destinationFolder.getId());
 
-        folderManagerService.isUserWritable(userId, currentFolder.getId());
-        folderManagerService.isUserWritable(userId, targetFolder.getId());
-
-        project.moveTo(targetFolder);
+        project.moveTo(destinationFolder);
 
         return ProjectMoveResponse.of(project);
     }
@@ -106,11 +108,9 @@ public class ProjectService {
     @Transactional
     public void deleteProject(Long userId, Long projectId) {
 
-        Project project = getProjectById(projectId);
+        Project project = getProjectWithFolderById(projectId);
 
-        Folder folder = project.getFolder();
-
-        folderManagerService.isUserWritable(userId, folder.getId());
+        folderManagerService.isUserWritable(userId, project.getFolder().getId());
 
         imageRepository.deleteByProject(project);
         projectRepository.delete(project);

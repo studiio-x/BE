@@ -5,13 +5,13 @@ import net.studioxai.studioxBe.global.annotation.ImageUrl;
 public record ProjectsDto(
         Long projectId,
         String title,
-        @ImageUrl String representativeImageObjectKey
+        @ImageUrl String thumbnailObjectKey
 ) {
-    public static ProjectsDto create(Long projectId, String title, String representativeImageObjectKey) {
+    public static ProjectsDto create(Long projectId, String title, String thumbnailObjectKey) {
         return new ProjectsDto(
                 projectId,
                 title,
-                representativeImageObjectKey
+                thumbnailObjectKey
         );
     }
 }

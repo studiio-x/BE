@@ -27,6 +27,7 @@ class ProjectServiceTest {
     @Mock private FolderRepository folderRepository;
     @Mock private ImageRepository imageRepository;
     @Mock private FolderManagerService folderManagerService;
+
     @InjectMocks
     private ProjectService projectService;
 
@@ -42,7 +43,7 @@ class ProjectServiceTest {
         Project project = mock(Project.class);
         when(project.getFolder()).thenReturn(folder);
 
-        when(projectRepository.findById(projectId))
+        when(projectRepository.findWithFolderById(projectId))
                 .thenReturn(Optional.of(project));
 
         // when
@@ -65,7 +66,7 @@ class ProjectServiceTest {
         Long userId = 1L;
         Long projectId = 10L;
 
-        when(projectRepository.findById(projectId))
+        when(projectRepository.findWithFolderById(projectId))
                 .thenReturn(Optional.empty());
 
         assertThrows(ProjectExceptionHandler.class, () ->
@@ -85,7 +86,7 @@ class ProjectServiceTest {
         Project project = mock(Project.class);
         when(project.getFolder()).thenReturn(folder);
 
-        when(projectRepository.findById(projectId))
+        when(projectRepository.findWithFolderById(projectId))
                 .thenReturn(Optional.of(project));
 
         doThrow(new RuntimeException("권한 없음"))
