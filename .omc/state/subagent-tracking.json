@@ -1,0 +1,17 @@
+{
+  "agents": [
+    {
+      "agent_id": "a9c2271fb97e7dc03",
+      "agent_type": "oh-my-claudecode:planner",
+      "started_at": "2026-02-26T10:52:11.186Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-02-26T10:55:02.241Z",
+      "duration_ms": 171055
+    }
+  ],
+  "total_spawned": 1,
+  "total_completed": 1,
+  "total_failed": 0,
+  "last_updated": "2026-02-27T07:16:50.881Z"
+}

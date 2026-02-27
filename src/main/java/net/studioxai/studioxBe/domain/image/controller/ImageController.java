@@ -18,10 +18,9 @@ public class ImageController {
 
     private final ImageService imageService;
 
-    @GetMapping("/v1/image/raw/presign")
+    @GetMapping("/v1/s3/presign/raw")
     public ResponseEntity<PresignResponse> issuePresign() {
-
-        return ResponseEntity.ok(imageService.issuePresign());
+        return ResponseEntity.ok(imageService.issueRawPresign());
     }
 
     @PostMapping("/v1/image/cutout")

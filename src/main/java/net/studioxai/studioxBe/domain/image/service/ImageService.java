@@ -15,8 +15,6 @@ import net.studioxai.studioxBe.domain.image.entity.Image;
 import net.studioxai.studioxBe.domain.image.entity.Project;
 import net.studioxai.studioxBe.domain.image.exception.ImageErrorCode;
 import net.studioxai.studioxBe.domain.image.exception.ImageExceptionHandler;
-import net.studioxai.studioxBe.domain.image.exception.ProjectErrorCode;
-import net.studioxai.studioxBe.domain.image.exception.ProjectExceptionHandler;
 import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
 import net.studioxai.studioxBe.domain.image.repository.ProjectRepository;
 import net.studioxai.studioxBe.domain.template.entity.Template;
@@ -26,15 +24,10 @@ import net.studioxai.studioxBe.infra.s3.S3ImageLoader;
 import net.studioxai.studioxBe.infra.s3.S3ImageUploader;
 import net.studioxai.studioxBe.infra.s3.S3Url;
 import net.studioxai.studioxBe.infra.s3.S3UrlHandler;
-import org.springframework.beans.factory.annotation.Value;
+import net.studioxai.studioxBe.domain.image.dto.response.PresignResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
-import java.io.InputStream;
-import java.net.URL;
 import java.util.Base64;
 
 
@@ -51,17 +44,16 @@ public class ImageService {
     private final FolderRepository folderRepository;
     private final ProjectRepository projectRepository;
 
-    private final S3UrlHandler s3UrlHandler;
     private final S3ImageLoader s3ImageLoader;
     private final S3ImageUploader s3ImageUploader;
+    private final S3UrlHandler s3UrlHandler;
 
     private final GeminiImageClient geminiImageClient;
 
     private final FolderManagerService folderManagerService;
     private final ProjectService projectService;
 
-
-    public PresignResponse issuePresign() {
+    public PresignResponse issueRawPresign() {
         S3Url s3Url = s3UrlHandler.handle("images/raw");
 
         return PresignResponse.of(
