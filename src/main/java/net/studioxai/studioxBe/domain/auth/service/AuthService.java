@@ -85,7 +85,7 @@ public class AuthService {
 
     @Transactional
     protected void provisioningFolder(User user) {
-        String folderName = user.getUsername() + "의 프로젝트";
+        String folderName = user.getUsername();
         Folder folder = folderService.createRootFolder(folderName, user);
     }
 
