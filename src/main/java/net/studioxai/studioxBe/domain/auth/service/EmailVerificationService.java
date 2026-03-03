@@ -5,11 +5,14 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.auth.dto.request.EmailVerificationRequest;
+import net.studioxai.studioxBe.domain.auth.dto.request.PasswordResetCodeRequest;
 import net.studioxai.studioxBe.domain.auth.entity.EmailVerificationToken;
+import net.studioxai.studioxBe.domain.auth.entity.PasswordResetCode;
 import net.studioxai.studioxBe.domain.auth.entity.VerifiedEmail;
 import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
 import net.studioxai.studioxBe.domain.auth.exception.AuthExceptionHandler;
 import net.studioxai.studioxBe.domain.auth.repository.EmailVerificationTokenRepository;
+import net.studioxai.studioxBe.domain.auth.repository.PasswordResetCodeRepository;
 import net.studioxai.studioxBe.domain.user.repository.UserRepository;
 import net.studioxai.studioxBe.domain.auth.repository.VerifiedEmailRepository;
 import net.studioxai.studioxBe.global.jwt.JwtProperties;
@@ -21,16 +24,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.security.SecureRandom;
+
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
 public class EmailVerificationService {
+    private final AuthService authService;
+    private final PasswordResetCodeRepository passwordResetCodeRepository;
     @Value("${server.server-url}")
     private String serverUrl;
 
     @Value("${spring.mail.username}")
     private String senderEmail;
+
+    private static final long PASSWORD_CODE_TOKEN_TTL = 300L;
 
     private final EmailVerificationTokenRepository emailVerificationTokenRepository;
     private final VerifiedEmailRepository verifiedEmailRepository;
@@ -40,6 +49,25 @@ public class EmailVerificationService {
     private final JwtProperties jwtProperties;
 
     private final JavaMailSender mailSender;
+
+    private static final SecureRandom secureRandom = new SecureRandom();
+
+    public void sendEmailForPassword(PasswordResetCodeRequest PasswordResetCodeRequest) {
+        authService.getUserByEmailOrThrow(PasswordResetCodeRequest.email());
+
+        int number = secureRandom.nextInt(1_000_000);
+        String code = String.format("%06d", number);
+
+        PasswordResetCode passwordResetCode = PasswordResetCode.create(
+                PasswordResetCodeRequest.email(),
+                code,
+                PASSWORD_CODE_TOKEN_TTL
+        );
+
+        passwordResetCodeRepository.save(passwordResetCode);
+
+        sendPasswordEmail(PasswordResetCodeRequest.email(), code);
+    }
 
     public void checkEmailVerification(String email) {
         verifiedEmailRepository.findById(email).orElseThrow(
@@ -79,6 +107,20 @@ public class EmailVerificationService {
 
         emailVerificationTokenRepository.save(emailVerificationToken);
         return token;
+    }
+
+    private void sendPasswordEmail(String email, String code) {
+        String subject = "[STUDIO-X] 비밀번호 변경 인증 코드";
+        String body = """
+        안녕하세요, STUDIO-X입니다.
+        
+        비밀번호 변경을 위한 6자리 인증코드는 아래와 같습니다.
+        인증 코드: %s
+        
+        본인이 요청한 인증이 아니라면, 이 메일은 무시하셔도 됩니다.
+        해당 링크는 일정 시간이 지나면 자동으로 만료됩니다.
+        """.formatted(code);
+        sendMessage(email, subject, body);
     }
 
     private void sendEmail(String currentUrl, EmailVerificationRequest emailVerificationRequest, String token) {

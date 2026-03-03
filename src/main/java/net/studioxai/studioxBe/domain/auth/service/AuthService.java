@@ -88,7 +88,7 @@ public class AuthService {
         Folder folder = folderService.createRootFolder(folderName, user);
     }
 
-    private User getUserByEmailOrThrow(String email) {
+    public User getUserByEmailOrThrow(String email) {
         return userRepository.findByEmail(email).orElseThrow(
                 () -> new AuthExceptionHandler(AuthErrorCode.WRONG_ID_OR_PASSWORD)
         );

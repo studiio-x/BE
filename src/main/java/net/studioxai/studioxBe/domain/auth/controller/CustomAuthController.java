@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.auth.dto.request.EmailVerificationRequest;
 import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
+import net.studioxai.studioxBe.domain.auth.dto.request.PasswordResetCodeRequest;
 import net.studioxai.studioxBe.domain.auth.dto.request.SignUpRequest;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
@@ -26,6 +27,13 @@ public class CustomAuthController {
     private final AuthService authService;
     private final EmailVerificationService emailVerificationService;
     private final CookieUtil cookieUtil;
+
+    @PostMapping("/v1/auth/password/email/verification")
+    public void passwordEmailSend(
+            @RequestBody @Valid PasswordResetCodeRequest passwordResetCodeRequest
+    ) {
+        emailVerificationService.sendEmailForPassword(passwordResetCodeRequest);
+    }
 
     @PostMapping("/v1/auth/login")
     public ResponseEntity<LoginResponse> login(
