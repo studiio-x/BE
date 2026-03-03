@@ -79,6 +79,10 @@ public class FolderManager extends BaseEntity {
         if (permission == Permission.OWNER) {
             throw new FolderManagerExceptionHandler(FolderManagerErrorCode.OWNER_PERMISSION_ASSIGNMENT_FORBIDDEN);
         }
+
+        if (this.permission == Permission.OWNER) {
+            throw new FolderManagerExceptionHandler(FolderManagerErrorCode.OWNER_PERMISSION_CHANGE_FORBIDDEN);
+        }
         this.permission = permission;
     }
 }
