@@ -16,6 +16,7 @@ import net.studioxai.studioxBe.domain.auth.exception.AuthExceptionHandler;
 import net.studioxai.studioxBe.domain.auth.repository.EmailVerificationTokenRepository;
 import net.studioxai.studioxBe.domain.auth.repository.PasswordResetCodeRepository;
 import net.studioxai.studioxBe.domain.auth.repository.VerifiedEmailCodeRepository;
+import net.studioxai.studioxBe.domain.auth.util.ResetCodeGenerator;
 import net.studioxai.studioxBe.domain.user.repository.UserRepository;
 import net.studioxai.studioxBe.domain.auth.repository.VerifiedEmailRepository;
 import net.studioxai.studioxBe.global.jwt.JwtProperties;
@@ -53,15 +54,14 @@ public class EmailVerificationService {
 
     private final JavaMailSender mailSender;
 
-    private static final SecureRandom secureRandom = new SecureRandom();
+    private final ResetCodeGenerator resetCodeGenerator;
 
     public void sendEmailForPassword(PasswordResetCodeRequest PasswordResetCodeRequest) {
         if(!userRepository.existsByEmail((PasswordResetCodeRequest.email()))) {
             throw new AuthExceptionHandler(AuthErrorCode.EMAIL_NOT_FOUND);
         }
 
-        int number = secureRandom.nextInt(1_000_000);
-        String code = String.format("%06d", number);
+        String code = resetCodeGenerator.generate();
 
         PasswordResetCode passwordResetCode = PasswordResetCode.create(
                 PasswordResetCodeRequest.email(),
