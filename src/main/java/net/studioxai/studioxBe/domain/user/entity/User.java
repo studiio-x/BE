@@ -86,10 +86,6 @@ public class User extends BaseEntity {
         this.username = username;
     }
 
-    public void updatePassword(String encodedPassword) {
-        this.password = encodedPassword;
-    }
-
     public static User createGoogleUser(String googleSub, String email, String username, String encodedPassword, String profileImage) {
         return User.builder()
                 .registerPath(RegisterPath.GOOGLE)

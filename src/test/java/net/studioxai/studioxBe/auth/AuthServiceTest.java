@@ -1,7 +1,6 @@
 package net.studioxai.studioxBe.auth;
 
 import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
-import net.studioxai.studioxBe.domain.auth.dto.request.SignUpRequest;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
 import net.studioxai.studioxBe.domain.folder.service.FolderService;
@@ -193,12 +192,12 @@ public class AuthServiceTest {
         // given
         String email = "newuser@example.com";
         String rawPassword = "plain";
-        String encodedPassword = "Encoded12341234";
+        String encodedPassword = "encoded";
         Long newUserId = 10L;
         String accessToken = "new-access";
         String refreshToken = "new-refresh";
 
-        SignUpRequest request = new SignUpRequest(email, rawPassword);
+        LoginRequest request = new LoginRequest(email, rawPassword);
 
         willDoNothing().given(emailVerificationService).checkEmailVerification(email);
 
