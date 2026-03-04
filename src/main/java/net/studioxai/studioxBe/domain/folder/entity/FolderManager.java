@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import net.studioxai.studioxBe.domain.folder.entity.enums.LinkMode;
 import net.studioxai.studioxBe.domain.folder.entity.enums.Permission;
 import net.studioxai.studioxBe.domain.folder.entity.enums.SourceType;
+import net.studioxai.studioxBe.domain.folder.exception.FolderManagerErrorCode;
+import net.studioxai.studioxBe.domain.folder.exception.FolderManagerExceptionHandler;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.global.entity.BaseEntity;
 
@@ -74,6 +76,13 @@ public class FolderManager extends BaseEntity {
 
 
     public void updateDirectPermission(Permission permission) {
+        if (permission == Permission.OWNER) {
+            throw new FolderManagerExceptionHandler(FolderManagerErrorCode.OWNER_PERMISSION_ASSIGNMENT_FORBIDDEN);
+        }
+
+        if (this.permission == Permission.OWNER) {
+            throw new FolderManagerExceptionHandler(FolderManagerErrorCode.OWNER_PERMISSION_CHANGE_FORBIDDEN);
+        }
         this.permission = permission;
     }
 }

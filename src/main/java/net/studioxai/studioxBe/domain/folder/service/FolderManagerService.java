@@ -51,6 +51,10 @@ public class FolderManagerService {
 
         PermissionDto myPermission = PermissionDto.create(me.permission());
 
+        folderManagers = folderManagers.stream()
+                .filter(m -> m.permission() != Permission.OWNER)
+                .toList();
+
         return FolderManagersResponse.create(myPermission, folderManagers);
     }
 
