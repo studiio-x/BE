@@ -1,14 +1,23 @@
 package net.studioxai.studioxBe.auth;
 
 import jakarta.mail.MessagingException;
+import jakarta.mail.Session;
 import jakarta.mail.internet.MimeMessage;
 import net.studioxai.studioxBe.domain.auth.dto.request.EmailVerificationRequest;
+import net.studioxai.studioxBe.domain.auth.dto.request.PasswordCodeVerificationRequest;
+import net.studioxai.studioxBe.domain.auth.dto.request.PasswordResetCodeRequest;
 import net.studioxai.studioxBe.domain.auth.dto.response.EmailValidationResponse;
 import net.studioxai.studioxBe.domain.auth.entity.EmailVerificationToken;
+import net.studioxai.studioxBe.domain.auth.entity.PasswordResetCode;
 import net.studioxai.studioxBe.domain.auth.entity.VerifiedEmail;
+import net.studioxai.studioxBe.domain.auth.entity.VerifiedEmailCode;
 import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
 import net.studioxai.studioxBe.domain.auth.exception.AuthExceptionHandler;
 import net.studioxai.studioxBe.domain.auth.repository.EmailVerificationTokenRepository;
+import net.studioxai.studioxBe.domain.auth.repository.PasswordResetCodeRepository;
+import net.studioxai.studioxBe.domain.auth.repository.VerifiedEmailCodeRepository;
+import net.studioxai.studioxBe.domain.auth.service.AuthService;
+import net.studioxai.studioxBe.domain.auth.util.ResetCodeGenerator;
 import net.studioxai.studioxBe.domain.user.repository.UserRepository;
 import net.studioxai.studioxBe.domain.auth.repository.VerifiedEmailRepository;
 import net.studioxai.studioxBe.domain.auth.service.EmailVerificationService;
@@ -25,8 +34,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.security.SecureRandom;
 import java.util.Optional;
+import java.util.Properties;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
@@ -55,11 +67,140 @@ public class EmailVerificationServiceTest {
     @InjectMocks
     private EmailVerificationService emailVerificationService;
 
+    @Mock
+    private PasswordResetCodeRepository passwordResetCodeRepository;
+
+    @Mock
+    private VerifiedEmailCodeRepository verifiedEmailCodeRepository;
+
+    @Mock
+    private ResetCodeGenerator resetCodeGenerator;
+
     @BeforeEach
     void init() {
         // @Value 값 설정
         ReflectionTestUtils.setField(emailVerificationService, "serverUrl", "http://localhost:8080");
         ReflectionTestUtils.setField(emailVerificationService, "senderEmail", "noreply@studiox.com");
+    }
+
+    @Test
+    @DisplayName("sendEmailForPassword: 이메일이 없으면 EMAIL_NOT_FOUND 예외")
+    void sendEmailForPassword_emailNotFound_throw() {
+        // given
+        String email = "noone@test.com";
+        PasswordResetCodeRequest req = new PasswordResetCodeRequest(email);
+
+        Mockito.when(userRepository.existsByEmail(email)).thenReturn(false);
+
+        // when
+        AuthExceptionHandler ex = assertThrows(AuthExceptionHandler.class,
+                () -> emailVerificationService.sendEmailForPassword(req));
+
+        // then
+        assertEquals(AuthErrorCode.EMAIL_NOT_FOUND, ex.getErrorCode());
+        Mockito.verify(passwordResetCodeRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    @DisplayName("sendEmailForPassword: 정상 - 코드 저장 + 메일 발송(6자리 0패딩)")
+    void sendEmailForPassword_success_saveAndSendMail() {
+        // given
+        String email = "user@test.com";
+        PasswordResetCodeRequest req = new PasswordResetCodeRequest(email);
+
+        Mockito.when(userRepository.existsByEmail(email)).thenReturn(true);
+
+        Mockito.when(resetCodeGenerator.generate()).thenReturn("000042");
+
+        Mockito.when(passwordResetCodeRepository.save(ArgumentMatchers.any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Session session = Session.getInstance(new Properties());
+        MimeMessage mimeMessage = new MimeMessage(session);
+        Mockito.when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
+
+        ArgumentCaptor<PasswordResetCode> captor = ArgumentCaptor.forClass(PasswordResetCode.class);
+
+        // when
+        emailVerificationService.sendEmailForPassword(req);
+
+        // then
+        Mockito.verify(passwordResetCodeRepository).save(captor.capture());
+        PasswordResetCode saved = captor.getValue();
+
+        assertEquals(email, saved.getEmail());
+        assertEquals("000042", saved.getCode());
+    }
+
+    @Test
+    @DisplayName("verifyPasswordResetCode: 저장된 코드가 없으면 VERIFICATION_NOT_FOUND 예외")
+    void verifyPasswordResetCode_notFound_throw() {
+        // given
+        String email = "user@test.com";
+        PasswordCodeVerificationRequest req = new PasswordCodeVerificationRequest(email, "123456");
+
+        Mockito.when(passwordResetCodeRepository.findById(email)).thenReturn(Optional.empty());
+
+        // when
+        AuthExceptionHandler ex = assertThrows(AuthExceptionHandler.class,
+                () -> emailVerificationService.verifyPasswordResetCode(req));
+
+        // then
+        assertEquals(AuthErrorCode.VERIFICATION_NOT_FOUND, ex.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("verifyPasswordResetCode: 정상 - 코드 검증 후 VerifiedEmailCode 저장")
+    void verifyPasswordResetCode_success_saveVerified() {
+        // given
+        String email = "user@test.com";
+        String code = "123456";
+        PasswordCodeVerificationRequest req = new PasswordCodeVerificationRequest(email, code);
+
+        PasswordResetCode codeEntity = Mockito.mock(PasswordResetCode.class);
+        Mockito.when(codeEntity.getEmail()).thenReturn(email);
+
+        Mockito.when(passwordResetCodeRepository.findById(email)).thenReturn(Optional.of(codeEntity));
+        Mockito.when(verifiedEmailCodeRepository.save(Mockito.any())).thenAnswer(inv -> inv.getArgument(0));
+
+        // when
+        assertDoesNotThrow(() -> emailVerificationService.verifyPasswordResetCode(req));
+
+        // then
+        Mockito.verify(codeEntity).validateCode(code);
+
+        ArgumentCaptor<VerifiedEmailCode> captor = ArgumentCaptor.forClass(VerifiedEmailCode.class);
+        Mockito.verify(verifiedEmailCodeRepository).save(captor.capture());
+
+        VerifiedEmailCode saved = captor.getValue();
+        assertEquals(email, saved.getEmail());
+    }
+
+    @Test
+    @DisplayName("checkEmailCodeVerification: 인증 기록이 없으면 CODE_NOT_VERIFIED 예외")
+    void checkEmailCodeVerification_notVerified_throw() {
+        // given
+        String email = "user@test.com";
+        Mockito.when(verifiedEmailCodeRepository.findById(email)).thenReturn(Optional.empty());
+
+        // when
+        AuthExceptionHandler ex = assertThrows(AuthExceptionHandler.class,
+                () -> emailVerificationService.checkEmailCodeVerification(email));
+
+        // then
+        assertEquals(AuthErrorCode.CODE_NOT_VERIFIED, ex.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("checkEmailCodeVerification: 인증 기록이 있으면 통과")
+    void checkEmailCodeVerification_verified_ok() {
+        // given
+        String email = "user@test.com";
+        VerifiedEmailCode verified = Mockito.mock(VerifiedEmailCode.class);
+
+        Mockito.when(verifiedEmailCodeRepository.findById(email)).thenReturn(Optional.of(verified));
+
+        // when & then
+        assertDoesNotThrow(() -> emailVerificationService.checkEmailCodeVerification(email));
     }
 
     @Test
