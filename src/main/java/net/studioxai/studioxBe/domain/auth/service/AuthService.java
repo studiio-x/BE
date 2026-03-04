@@ -8,6 +8,7 @@ import net.studioxai.studioxBe.domain.auth.dto.request.SignUpRequest;
 import net.studioxai.studioxBe.domain.auth.dto.response.EmailValidationResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
+import net.studioxai.studioxBe.domain.auth.entity.VerifiedEmailCode;
 import net.studioxai.studioxBe.domain.auth.repository.VerifiedEmailCodeRepository;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.folder.service.FolderService;
@@ -44,11 +45,13 @@ public class AuthService {
 
     @Transactional
     public void resetPassword(PasswordResetRequest passwordResetRequest) {
-        emailVerificationService.checkEmailCodeVerification(passwordResetRequest.email());
+        VerifiedEmailCode verifiedEmailCode = emailVerificationService.checkEmailCodeVerification(passwordResetRequest.email());
 
         User user = getUserByEmailOrThrow(passwordResetRequest.email());
         String encodedPassword = passwordEncoder.encode(passwordResetRequest.password());
         user.updatePassword(encodedPassword);
+
+        verifiedEmailCodeRepository.delete(verifiedEmailCode);
     }
 
     @Transactional

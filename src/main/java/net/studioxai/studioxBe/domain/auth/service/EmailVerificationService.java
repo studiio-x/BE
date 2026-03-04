@@ -84,8 +84,8 @@ public class EmailVerificationService {
         verifiedEmailCodeRepository.save(VerifiedEmailCode.create(codeEntity.getEmail()));
     }
 
-    public void checkEmailCodeVerification(String email) {
-        verifiedEmailCodeRepository.findById(email).orElseThrow(
+    public VerifiedEmailCode checkEmailCodeVerification(String email) {
+        return verifiedEmailCodeRepository.findById(email).orElseThrow(
                 () -> new AuthExceptionHandler(AuthErrorCode.CODE_NOT_VERIFIED)
         );
     }
