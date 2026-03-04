@@ -231,7 +231,7 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             set -e
-            for i in {1..10}; do
+            for i in {1..20}; do
               echo "[$i] health check..."
               if curl -f http://localhost:${{ env.STOPPED_PORT }}/actuator/health > /dev/null 2>&1; then
                 echo "health check success"
