@@ -57,6 +57,7 @@ public class EmailVerificationService {
 
     private final ResetCodeGenerator resetCodeGenerator;
 
+    @Transactional
     public void sendEmailForPassword(PasswordResetCodeRequest PasswordResetCodeRequest) {
         if(!userRepository.existsByEmail((PasswordResetCodeRequest.email()))) {
             throw new AuthExceptionHandler(AuthErrorCode.EMAIL_NOT_FOUND);
@@ -75,9 +76,13 @@ public class EmailVerificationService {
         sendPasswordEmail(PasswordResetCodeRequest.email(), code);
     }
 
+    @Transactional
     public void verifyPasswordResetCode(PasswordCodeVerificationRequest passwordCodeVerificationRequest) {
         PasswordResetCode codeEntity = passwordResetCodeRepository.findById(passwordCodeVerificationRequest.email())
                 .orElseThrow(() -> new AuthExceptionHandler(AuthErrorCode.VERIFICATION_NOT_FOUND));
+
+        codeEntity.checkAttempCount();
+        passwordResetCodeRepository.save(codeEntity);
 
         codeEntity.validateCode(passwordCodeVerificationRequest.code());
 

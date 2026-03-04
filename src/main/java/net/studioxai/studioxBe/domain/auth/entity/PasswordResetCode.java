@@ -22,14 +22,18 @@ public class PasswordResetCode {
     @TimeToLive
     private Long expiration;
 
+    public static final int MAX_ATTEMP_COUNT = 5;
+
     public void validateCode(String code) {
         if (!this.code.equals(code)) {
-            if (this.attempCount < 5) {
-                throw new AuthExceptionHandler(AuthErrorCode.CODE_LOCKED);
-            }
-
-            this.attempCount++;
             throw new AuthExceptionHandler(AuthErrorCode.INVALID_RESET_CODE);
+        }
+    }
+
+    public void checkAttempCount() {
+        this.attempCount++;
+        if (this.attempCount > MAX_ATTEMP_COUNT) {
+            throw new AuthExceptionHandler(AuthErrorCode.CODE_LOCKED);
         }
     }
 
