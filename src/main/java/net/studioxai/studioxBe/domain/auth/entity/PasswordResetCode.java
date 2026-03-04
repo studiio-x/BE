@@ -9,7 +9,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.TimeToLive;
 
-@RedisHash(value = "emailVerificationToken")
+@RedisHash(value = "passwordResetCode")
 @Getter
 public class PasswordResetCode {
     @Id
