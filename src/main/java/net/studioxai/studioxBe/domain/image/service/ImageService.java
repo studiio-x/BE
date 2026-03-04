@@ -85,7 +85,7 @@ public class ImageService {
         s3ImageUploader.upload(cutoutImageObjectKey, cutoutBytes);
 
         project.updateCutoutImageObjectKey(cutoutImageObjectKey);
-        project.updatethumbnailObjectKey(cutoutImageObjectKey);
+        project.updateThumbnailObjectKey(cutoutImageObjectKey);
 
         return CutoutImageGenerateResponse.of(project.getId(), cutoutImageObjectKey);
     }
@@ -112,7 +112,7 @@ public class ImageService {
         s3ImageUploader.upload(imageObjectKey, imageBytes);
 
         project.updateTemplate(template);
-        project.updatethumbnailObjectKey(imageObjectKey);
+        project.updateThumbnailObjectKey(imageObjectKey);
 
         Image image = Image.create(project, imageObjectKey);
         imageRepository.save(image);

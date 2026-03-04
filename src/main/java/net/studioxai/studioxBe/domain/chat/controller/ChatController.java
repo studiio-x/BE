@@ -6,8 +6,9 @@ import net.studioxai.studioxBe.domain.chat.dto.request.ChatSendRequest;
 import net.studioxai.studioxBe.domain.chat.dto.request.ConceptSelectRequest;
 import net.studioxai.studioxBe.domain.chat.dto.response.ChatHistoryResponse;
 import net.studioxai.studioxBe.domain.chat.dto.response.ChatMessageResponse;
-import net.studioxai.studioxBe.domain.chat.dto.response.ChatSendPresignResponse;
-import net.studioxai.studioxBe.domain.chat.dto.response.ConceptImagesResponse;
+import net.studioxai.studioxBe.domain.chat.dto.response.ChatSendResponse;
+import net.studioxai.studioxBe.domain.chat.entity.enums.ChatMode;
+import net.studioxai.studioxBe.infra.s3.S3Url;
 import net.studioxai.studioxBe.domain.chat.service.ChatService;
 import net.studioxai.studioxBe.global.jwt.JwtUserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,13 +30,14 @@ public class ChatController {
         return chatService.getChatHistory(principal.userId(), projectId, page);
     }
 
-    @PostMapping("/v1/chat/{projectId}/message")
-    public ConceptImagesResponse sendMessage(
+    @PostMapping("/v1/chat/{projectId}/message/{mode}")
+    public ChatSendResponse sendMessage(
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @PathVariable Long projectId,
+            @PathVariable ChatMode mode,
             @RequestBody @Valid ChatSendRequest request
     ) {
-        return chatService.sendMessage(principal.userId(), projectId, request);
+        return chatService.sendMessage(principal.userId(), projectId, mode, request);
     }
 
     @PostMapping("/v1/chat/{projectId}/concept/select")
@@ -48,7 +50,7 @@ public class ChatController {
     }
 
     @GetMapping("/v1/chat/{projectId}/reference/presign")
-    public ChatSendPresignResponse issueReferencePresign(
+    public S3Url issueReferencePresign(
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @PathVariable Long projectId
     ) {
@@ -56,7 +58,7 @@ public class ChatController {
     }
 
     @GetMapping("/v1/chat/{projectId}/mask/presign")
-    public ChatSendPresignResponse issueMaskPresign(
+    public S3Url issueMaskPresign(
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @PathVariable Long projectId
     ) {

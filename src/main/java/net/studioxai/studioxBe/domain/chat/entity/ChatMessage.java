@@ -82,6 +82,17 @@ public class ChatMessage extends BaseEntity {
                 .build();
     }
 
+    public static ChatMessage createRefineImage(
+            ChatRoom chatRoom, String textResponse, String refineImageKey) {
+        return ChatMessage.builder()
+                .chatRoom(chatRoom)
+                .role(MessageRole.ASSISTANT)
+                .messageType(MessageType.REFINE_IMAGE)
+                .content(textResponse)
+                .imageKeys(refineImageKey)
+                .build();
+    }
+
     @Builder(access = AccessLevel.PRIVATE)
     private ChatMessage(
             ChatRoom chatRoom,

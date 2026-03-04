@@ -4,5 +4,6 @@ public enum MessageType {
     TEXT,
     IMAGE_ATTACHMENT,
     CONCEPT_IMAGES,
-    FINAL_IMAGE
+    FINAL_IMAGE,
+    REFINE_IMAGE
 }

@@ -54,7 +54,7 @@ public class Project extends BaseEntity {
         this.cutoutImageObjectKey = cutoutImageObjectKey;
     }
 
-    public void updatethumbnailObjectKey(String imageObjectKey) {this.thumbnailObjectKey = imageObjectKey;}
+    public void updateThumbnailObjectKey(String imageObjectKey) {this.thumbnailObjectKey = imageObjectKey;}
 
     public void updateTemplate(Template template) {
         this.template = template;

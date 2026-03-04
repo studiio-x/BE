@@ -4,8 +4,8 @@ import net.studioxai.studioxBe.global.annotation.ImageUrl;
 
 public record PresignResponse(
         String uploadUrl,
-        String ObjectKey,
-        @ImageUrl String ImageUrl
+        String objectKey,
+        @ImageUrl String imageUrl
 ) {
 
     public static PresignResponse of(String uploadUrl, String objectKey) {

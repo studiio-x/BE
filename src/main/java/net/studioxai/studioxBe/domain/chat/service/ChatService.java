@@ -4,9 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.chat.dto.request.ChatSendRequest;
 import net.studioxai.studioxBe.domain.chat.dto.request.ConceptSelectRequest;
-import net.studioxai.studioxBe.domain.chat.dto.response.*;
+import net.studioxai.studioxBe.domain.chat.dto.response.ChatHistoryResponse;
+import net.studioxai.studioxBe.domain.chat.dto.response.ChatMessageResponse;
+import net.studioxai.studioxBe.domain.chat.dto.response.ChatSendResponse;
 import net.studioxai.studioxBe.domain.chat.entity.ChatMessage;
 import net.studioxai.studioxBe.domain.chat.entity.ChatRoom;
+import net.studioxai.studioxBe.domain.chat.entity.enums.ChatMode;
 import net.studioxai.studioxBe.domain.chat.entity.enums.ChatStatus;
 import net.studioxai.studioxBe.domain.chat.exception.ChatErrorCode;
 import net.studioxai.studioxBe.domain.chat.exception.ChatExceptionHandler;
@@ -80,7 +83,7 @@ public class ChatService {
     }
 
     @Transactional
-    public ConceptImagesResponse sendMessage(Long userId, Long projectId, ChatSendRequest request) {
+    public ChatSendResponse sendMessage(Long userId, Long projectId, ChatMode mode, ChatSendRequest request) {
         Project project = getProjectAndVerifyAccess(userId, projectId);
 
         ChatRoom chatRoom = chatRoomRepository.findByProjectId(projectId)
@@ -90,81 +93,57 @@ public class ChatService {
             throw new ChatExceptionHandler(ChatErrorCode.CONCEPT_SELECTION_PENDING);
         }
 
-        // 1. Save user message
-        ChatMessage userMessage;
-        List<String> attachedKeys = new ArrayList<>();
-        if (request.referenceImageObjectKey() != null && !request.referenceImageObjectKey().isBlank()) {
-            attachedKeys.add(request.referenceImageObjectKey());
-        }
-        if (request.maskImageObjectKey() != null && !request.maskImageObjectKey().isBlank()) {
-            attachedKeys.add(request.maskImageObjectKey());
-        }
-        if (!attachedKeys.isEmpty()) {
-            userMessage = ChatMessage.createUserImageAttachment(
-                    chatRoom, request.content(), String.join(",", attachedKeys));
-        } else {
-            userMessage = ChatMessage.createUserText(chatRoom, request.content());
-        }
-        chatMessageRepository.save(userMessage);
+        validateImageObjectKeys(projectId, request);
 
-        // 2. Build context for AI
-        List<ChatMessage> contextMessages = chatMessageRepository.findByChatRoomOrderByCreatedAtDesc(
-                chatRoom, PageRequest.of(0, CONTEXT_WINDOW_SIZE));
-        contextMessages = new ArrayList<>(contextMessages);
-        Collections.reverse(contextMessages);
+        ChatMessage userMessage = saveUserMessage(chatRoom, request);
+        List<ChatMessage> contextMessages = buildAiContext(chatRoom);
+        String currentImageBase64 = loadCurrentImageBase64(project, request);
+        String referenceBase64 = loadOptionalImageBase64(request.referenceImageObjectKey());
+        String maskBase64 = loadOptionalImageBase64(request.maskImageObjectKey());
 
-        // 3. Load current image (user-specified or latest)
-        Image currentImage;
-        if (request.imageId() != null) {
-            currentImage = imageRepository.findById(request.imageId())
-                    .orElseThrow(() -> new ChatExceptionHandler(ChatErrorCode.IMAGE_NOT_FOUND));
-            if (!currentImage.getProject().getId().equals(project.getId())) {
-                throw new ChatExceptionHandler(ChatErrorCode.IMAGE_NOT_IN_PROJECT);
-            }
-        } else {
-            currentImage = imageRepository.findTopByProjectOrderByCreatedAtDesc(project)
-                    .orElseThrow(() -> new ChatExceptionHandler(ChatErrorCode.IMAGE_NOT_FOUND));
+        if (mode == ChatMode.REFINE) {
+            return handleRefineMode(project, chatRoom, request.content(),
+                    currentImageBase64, referenceBase64, maskBase64);
         }
-        String currentImageBase64 = s3ImageLoader.loadAsBase64(currentImage.getImageObjectKey());
+        return handleConceptMode(project, chatRoom, request.content(), contextMessages,
+                currentImageBase64, referenceBase64, maskBase64);
+    }
 
-        // 4. Load reference image if provided
-        String referenceBase64 = null;
-        if (request.referenceImageObjectKey() != null && !request.referenceImageObjectKey().isBlank()) {
-            referenceBase64 = s3ImageLoader.loadAsBase64(request.referenceImageObjectKey());
-        }
-
-        // 5. Load mask image if provided
-        String maskBase64 = null;
-        if (request.maskImageObjectKey() != null && !request.maskImageObjectKey().isBlank()) {
-            maskBase64 = s3ImageLoader.loadAsBase64(request.maskImageObjectKey());
-        }
-
-        // 6. Generate 4 concept images via Gemini (parallel)
-        List<String> conceptBase64List = geminiChatClient.generateConceptImages(
-                request.content(), contextMessages, currentImageBase64, referenceBase64, maskBase64);
-
-        // 7. Upload 4 concept images to S3
-        List<String> conceptKeys = new ArrayList<>();
-        for (String conceptBase64 : conceptBase64List) {
-            String key = "images/" + project.getId() + "/chat/concept/" + UUID.randomUUID() + ".png";
-            byte[] bytes = Base64.getDecoder().decode(conceptBase64);
-            s3ImageUploader.upload(key, bytes);
-            conceptKeys.add(key);
-        }
+    private ChatSendResponse handleConceptMode(Project project, ChatRoom chatRoom, String prompt,
+                                                List<ChatMessage> contextMessages,
+                                                String currentImageBase64,
+                                                String referenceBase64, String maskBase64) {
+        List<String> conceptKeys = generateAndUploadConcepts(
+                project, prompt, contextMessages, currentImageBase64, referenceBase64, maskBase64);
 
         String conceptKeysJoined = String.join(",", conceptKeys);
 
-        // 8. Save AI response message
         ChatMessage aiMessage = ChatMessage.createConceptImages(
                 chatRoom,
                 "요청하신 내용을 기반으로 4개의 컨셉 이미지를 생성했습니다. 마음에 드는 컨셉을 선택해주세요.",
                 conceptKeysJoined);
         chatMessageRepository.save(aiMessage);
 
-        // 9. Update chat room state
-        chatRoom.startConceptSelection(conceptKeysJoined, request.content());
+        chatRoom.startConceptSelection(conceptKeysJoined, prompt);
 
-        return ConceptImagesResponse.of(aiMessage.getId(), aiMessage.getContent(), conceptKeys);
+        return ChatSendResponse.concept(aiMessage.getId(), aiMessage.getContent(), conceptKeys);
+    }
+
+    private ChatSendResponse handleRefineMode(Project project, ChatRoom chatRoom, String prompt,
+                                               String currentImageBase64,
+                                               String referenceBase64, String maskBase64) {
+        String refineImageKey = generateAndUploadRefineImage(
+                project, prompt, currentImageBase64, referenceBase64, maskBase64);
+
+        saveImageAndUpdateProject(project, refineImageKey);
+
+        ChatMessage aiMessage = ChatMessage.createRefineImage(
+                chatRoom,
+                "요청하신 내용을 반영하여 이미지를 수정했습니다.",
+                refineImageKey);
+        chatMessageRepository.save(aiMessage);
+
+        return ChatSendResponse.refine(aiMessage.getId(), aiMessage.getContent(), refineImageKey);
     }
 
     @Transactional
@@ -178,53 +157,144 @@ public class ChatService {
             throw new ChatExceptionHandler(ChatErrorCode.NO_PENDING_CONCEPT);
         }
 
-        // 1. Get the selected concept image
-        String[] conceptKeys = chatRoom.getPendingConceptKeys().split(",");
-        if (request.selectedIndex() >= conceptKeys.length) {
-            throw new ChatExceptionHandler(ChatErrorCode.INVALID_CONCEPT_INDEX);
-        }
-        String selectedConceptKey = conceptKeys[request.selectedIndex()];
-        String selectedConceptBase64 = s3ImageLoader.loadAsBase64(selectedConceptKey);
+        String selectedConceptBase64 = loadSelectedConceptBase64(chatRoom, request.selectedIndex());
+        String finalImageKey = generateAndUploadFinalImage(project, chatRoom.getPendingPrompt(), selectedConceptBase64);
+        saveImageAndUpdateProject(project, finalImageKey);
 
-        // 2. Generate final image via Gemini
-        String finalBase64 = geminiChatClient.generateFinalImage(
-                chatRoom.getPendingPrompt(), selectedConceptBase64);
-
-        // 4. Upload final image to S3
-        String finalImageKey = "images/" + project.getId() + "/chat/final/" + UUID.randomUUID() + ".png";
-        byte[] finalBytes = Base64.getDecoder().decode(finalBase64);
-        s3ImageUploader.upload(finalImageKey, finalBytes);
-
-        // 5. Save as Image entity (appears in History tab)
-        Image image = Image.create(project, finalImageKey);
-        imageRepository.save(image);
-
-        // 6. Update project thumbnail
-        project.updatethumbnailObjectKey(finalImageKey);
-
-        // 7. Save AI response message
         ChatMessage aiMessage = ChatMessage.createFinalImage(
                 chatRoom,
                 "선택하신 컨셉을 기반으로 최종 이미지를 생성했습니다.",
                 finalImageKey);
         chatMessageRepository.save(aiMessage);
 
-        // 8. Reset chat room state
         chatRoom.completeConceptSelection();
 
         return ChatMessageResponse.from(aiMessage);
     }
 
-    public ChatSendPresignResponse issueReferencePresign(Long userId, Long projectId) {
+    public S3Url issueReferencePresign(Long userId, Long projectId) {
         getProjectAndVerifyAccess(userId, projectId);
-        S3Url s3Url = s3UrlHandler.handle("images/" + projectId + "/chat/reference");
-        return ChatSendPresignResponse.of(s3Url.getUploadUrl(), s3Url.getObjectKey());
+        return s3UrlHandler.handle("images/" + projectId + "/chat/reference");
     }
 
-    public ChatSendPresignResponse issueMaskPresign(Long userId, Long projectId) {
+    public S3Url issueMaskPresign(Long userId, Long projectId) {
         getProjectAndVerifyAccess(userId, projectId);
-        S3Url s3Url = s3UrlHandler.handle("images/" + projectId + "/chat/mask");
-        return ChatSendPresignResponse.of(s3Url.getUploadUrl(), s3Url.getObjectKey());
+        return s3UrlHandler.handle("images/" + projectId + "/chat/mask");
+    }
+
+    private String loadSelectedConceptBase64(ChatRoom chatRoom, int selectedIndex) {
+        String pendingKeys = chatRoom.getPendingConceptKeys();
+        if (pendingKeys == null || pendingKeys.isBlank()) {
+            throw new ChatExceptionHandler(ChatErrorCode.NO_PENDING_CONCEPT);
+        }
+        String[] conceptKeys = pendingKeys.split(",");
+        if (selectedIndex >= conceptKeys.length) {
+            throw new ChatExceptionHandler(ChatErrorCode.INVALID_CONCEPT_INDEX);
+        }
+        return s3ImageLoader.loadAsBase64(conceptKeys[selectedIndex]);
+    }
+
+    private String generateAndUploadRefineImage(Project project, String prompt,
+                                                  String currentImageBase64,
+                                                  String referenceBase64, String maskBase64) {
+        String refineBase64 = geminiChatClient.generateRefineImage(
+                prompt, currentImageBase64, referenceBase64, maskBase64);
+        String refineImageKey = "images/" + project.getId() + "/chat/refine/" + UUID.randomUUID() + ".png";
+        byte[] refineBytes = Base64.getDecoder().decode(refineBase64);
+        s3ImageUploader.upload(refineImageKey, refineBytes);
+        return refineImageKey;
+    }
+
+    private String generateAndUploadFinalImage(Project project, String prompt, String selectedConceptBase64) {
+        String finalBase64 = geminiChatClient.generateFinalImage(prompt, selectedConceptBase64);
+        String finalImageKey = "images/" + project.getId() + "/chat/final/" + UUID.randomUUID() + ".png";
+        byte[] finalBytes = Base64.getDecoder().decode(finalBase64);
+        s3ImageUploader.upload(finalImageKey, finalBytes);
+        return finalImageKey;
+    }
+
+    private void saveImageAndUpdateProject(Project project, String finalImageKey) {
+        Image image = Image.create(project, finalImageKey);
+        imageRepository.save(image);
+        project.updateThumbnailObjectKey(finalImageKey);
+    }
+
+    private void validateImageObjectKeys(Long projectId, ChatSendRequest request) {
+        String allowedPrefix = "images/" + projectId + "/";
+        if (request.referenceImageObjectKey() != null && !request.referenceImageObjectKey().isBlank()
+                && !request.referenceImageObjectKey().startsWith(allowedPrefix)) {
+            throw new ChatExceptionHandler(ChatErrorCode.INVALID_IMAGE_OBJECT_KEY);
+        }
+        if (request.maskImageObjectKey() != null && !request.maskImageObjectKey().isBlank()
+                && !request.maskImageObjectKey().startsWith(allowedPrefix)) {
+            throw new ChatExceptionHandler(ChatErrorCode.INVALID_IMAGE_OBJECT_KEY);
+        }
+    }
+
+    private ChatMessage saveUserMessage(ChatRoom chatRoom, ChatSendRequest request) {
+        List<String> attachedKeys = new ArrayList<>();
+        if (request.referenceImageObjectKey() != null && !request.referenceImageObjectKey().isBlank()) {
+            attachedKeys.add(request.referenceImageObjectKey());
+        }
+        if (request.maskImageObjectKey() != null && !request.maskImageObjectKey().isBlank()) {
+            attachedKeys.add(request.maskImageObjectKey());
+        }
+
+        ChatMessage userMessage;
+        if (!attachedKeys.isEmpty()) {
+            userMessage = ChatMessage.createUserImageAttachment(
+                    chatRoom, request.content(), String.join(",", attachedKeys));
+        } else {
+            userMessage = ChatMessage.createUserText(chatRoom, request.content());
+        }
+        return chatMessageRepository.save(userMessage);
+    }
+
+    private List<ChatMessage> buildAiContext(ChatRoom chatRoom) {
+        List<ChatMessage> contextMessages = chatMessageRepository.findByChatRoomOrderByCreatedAtDesc(
+                chatRoom, PageRequest.of(0, CONTEXT_WINDOW_SIZE));
+        contextMessages = new ArrayList<>(contextMessages);
+        Collections.reverse(contextMessages);
+        return contextMessages;
+    }
+
+    private String loadCurrentImageBase64(Project project, ChatSendRequest request) {
+        Image currentImage;
+        if (request.imageId() != null) {
+            currentImage = imageRepository.findById(request.imageId())
+                    .orElseThrow(() -> new ChatExceptionHandler(ChatErrorCode.IMAGE_NOT_FOUND));
+            if (!currentImage.getProject().getId().equals(project.getId())) {
+                throw new ChatExceptionHandler(ChatErrorCode.IMAGE_NOT_IN_PROJECT);
+            }
+        } else {
+            currentImage = imageRepository.findTopByProjectOrderByCreatedAtDesc(project)
+                    .orElseThrow(() -> new ChatExceptionHandler(ChatErrorCode.IMAGE_NOT_FOUND));
+        }
+        return s3ImageLoader.loadAsBase64(currentImage.getImageObjectKey());
+    }
+
+    private String loadOptionalImageBase64(String objectKey) {
+        if (objectKey != null && !objectKey.isBlank()) {
+            return s3ImageLoader.loadAsBase64(objectKey);
+        }
+        return null;
+    }
+
+    private List<String> generateAndUploadConcepts(Project project, String prompt,
+                                                    List<ChatMessage> contextMessages,
+                                                    String currentImageBase64,
+                                                    String referenceBase64, String maskBase64) {
+        List<String> conceptBase64List = geminiChatClient.generateConceptImages(
+                prompt, contextMessages, currentImageBase64, referenceBase64, maskBase64);
+
+        List<String> conceptKeys = new ArrayList<>();
+        for (String conceptBase64 : conceptBase64List) {
+            String key = "images/" + project.getId() + "/chat/concept/" + UUID.randomUUID() + ".png";
+            byte[] bytes = Base64.getDecoder().decode(conceptBase64);
+            s3ImageUploader.upload(key, bytes);
+            conceptKeys.add(key);
+        }
+        return conceptKeys;
     }
 
     private Project getProjectAndVerifyAccess(Long userId, Long projectId) {

@@ -12,6 +12,7 @@ public enum ChatErrorCode implements BaseErrorCode {
 
     INVALID_CONCEPT_INDEX(HttpStatus.BAD_REQUEST, "CHAT_400_1", "유효하지 않은 컨셉 인덱스입니다. 0~3 사이의 값을 입력해주세요."),
     IMAGE_NOT_IN_PROJECT(HttpStatus.BAD_REQUEST, "CHAT_400_2", "해당 이미지는 이 프로젝트에 속하지 않습니다."),
+    INVALID_IMAGE_OBJECT_KEY(HttpStatus.FORBIDDEN, "CHAT_403_1", "해당 프로젝트에 속하지 않는 이미지 키입니다."),
 
     CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT_404_1", "채팅방을 찾을 수 없습니다."),
     IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT_404_2", "해당 이미지를 찾을 수 없습니다."),
