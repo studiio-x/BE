@@ -4,10 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.studioxai.studioxBe.domain.auth.dto.request.EmailVerificationRequest;
-import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
-import net.studioxai.studioxBe.domain.auth.dto.request.PasswordResetCodeRequest;
-import net.studioxai.studioxBe.domain.auth.dto.request.SignUpRequest;
+import net.studioxai.studioxBe.domain.auth.dto.request.*;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
 import net.studioxai.studioxBe.domain.auth.service.AuthService;
@@ -33,6 +30,20 @@ public class CustomAuthController {
             @RequestBody @Valid PasswordResetCodeRequest passwordResetCodeRequest
     ) {
         emailVerificationService.sendEmailForPassword(passwordResetCodeRequest);
+    }
+
+    @PostMapping("/v1/auth/password/code/verification")
+    public void passwordCodeVerify(
+            @RequestBody @Valid PasswordCodeVerificationRequest passwordCodeVerificationRequest
+    ) {
+        emailVerificationService.verifyPasswordResetCode(passwordCodeVerificationRequest);
+    }
+
+    @PutMapping("/v1/auth/password")
+    public void passwordReset(
+            @RequestBody @Valid PasswordResetRequest passwordResetRequest
+    ) {
+        authService.resetPassword(passwordResetRequest);
     }
 
     @PostMapping("/v1/auth/login")

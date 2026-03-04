@@ -5,14 +5,17 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.auth.dto.request.EmailVerificationRequest;
+import net.studioxai.studioxBe.domain.auth.dto.request.PasswordCodeVerificationRequest;
 import net.studioxai.studioxBe.domain.auth.dto.request.PasswordResetCodeRequest;
 import net.studioxai.studioxBe.domain.auth.entity.EmailVerificationToken;
 import net.studioxai.studioxBe.domain.auth.entity.PasswordResetCode;
 import net.studioxai.studioxBe.domain.auth.entity.VerifiedEmail;
+import net.studioxai.studioxBe.domain.auth.entity.VerifiedEmailCode;
 import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
 import net.studioxai.studioxBe.domain.auth.exception.AuthExceptionHandler;
 import net.studioxai.studioxBe.domain.auth.repository.EmailVerificationTokenRepository;
 import net.studioxai.studioxBe.domain.auth.repository.PasswordResetCodeRepository;
+import net.studioxai.studioxBe.domain.auth.repository.VerifiedEmailCodeRepository;
 import net.studioxai.studioxBe.domain.user.repository.UserRepository;
 import net.studioxai.studioxBe.domain.auth.repository.VerifiedEmailRepository;
 import net.studioxai.studioxBe.global.jwt.JwtProperties;
@@ -31,8 +34,8 @@ import java.security.SecureRandom;
 @RequiredArgsConstructor
 @Slf4j
 public class EmailVerificationService {
-    private final AuthService authService;
     private final PasswordResetCodeRepository passwordResetCodeRepository;
+    private final VerifiedEmailCodeRepository verifiedEmailCodeRepository;
     @Value("${server.server-url}")
     private String serverUrl;
 
@@ -53,7 +56,9 @@ public class EmailVerificationService {
     private static final SecureRandom secureRandom = new SecureRandom();
 
     public void sendEmailForPassword(PasswordResetCodeRequest PasswordResetCodeRequest) {
-        authService.getUserByEmailOrThrow(PasswordResetCodeRequest.email());
+        if(!userRepository.existsByEmail((PasswordResetCodeRequest.email()))) {
+            throw new AuthExceptionHandler(AuthErrorCode.EMAIL_NOT_FOUND);
+        }
 
         int number = secureRandom.nextInt(1_000_000);
         String code = String.format("%06d", number);
@@ -67,6 +72,21 @@ public class EmailVerificationService {
         passwordResetCodeRepository.save(passwordResetCode);
 
         sendPasswordEmail(PasswordResetCodeRequest.email(), code);
+    }
+
+    public void verifyPasswordResetCode(PasswordCodeVerificationRequest passwordCodeVerificationRequest) {
+        PasswordResetCode codeEntity = passwordResetCodeRepository.findById(passwordCodeVerificationRequest.email())
+                .orElseThrow(() -> new AuthExceptionHandler(AuthErrorCode.VERIFICATION_NOT_FOUND));
+
+        codeEntity.validateCode(passwordCodeVerificationRequest.code());
+
+        verifiedEmailCodeRepository.save(VerifiedEmailCode.create(codeEntity.getEmail()));
+    }
+
+    public void checkEmailCodeVerification(String email) {
+        verifiedEmailCodeRepository.findById(email).orElseThrow(
+                () -> new AuthExceptionHandler(AuthErrorCode.CODE_NOT_VERIFIED)
+        );
     }
 
     public void checkEmailVerification(String email) {

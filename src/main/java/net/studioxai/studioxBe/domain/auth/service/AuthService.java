@@ -3,9 +3,11 @@ package net.studioxai.studioxBe.domain.auth.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
+import net.studioxai.studioxBe.domain.auth.dto.request.PasswordResetRequest;
 import net.studioxai.studioxBe.domain.auth.dto.request.SignUpRequest;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
+import net.studioxai.studioxBe.domain.auth.repository.VerifiedEmailCodeRepository;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.folder.service.FolderService;
 import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
@@ -37,6 +39,16 @@ public class AuthService {
     private final EmailVerificationService emailVerificationService;
 
     public static final String DEFAULT_PROFILE_IMAGE_URL = "profile-example.com";
+    private final VerifiedEmailCodeRepository verifiedEmailCodeRepository;
+
+    @Transactional
+    public void resetPassword(PasswordResetRequest passwordResetRequest) {
+        emailVerificationService.checkEmailCodeVerification(passwordResetRequest.email());
+
+        User user = getUserByEmailOrThrow(passwordResetRequest.email());
+        String encodedPassword = passwordEncoder.encode(passwordResetRequest.password());
+        user.updatePassword(encodedPassword);
+    }
 
     @Transactional
     public LoginResponse login(LoginRequest loginRequest) {
