@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1772092447347,
+  "lastScanned": 1772535534681,
   "projectRoot": "/Users/seoah/IdeaProjects/BE",
   "techStack": {
     "languages": [
@@ -47,7 +47,7 @@
       "path": "build",
       "purpose": "Build output",
       "fileCount": 1,
-      "lastAccessed": 1772092447340,
+      "lastAccessed": 1772535534670,
       "keyFiles": [
         "resolvedMainClassName"
       ]
@@ -56,28 +56,28 @@
       "path": "config",
       "purpose": "Configuration files",
       "fileCount": 0,
-      "lastAccessed": 1772092447340,
+      "lastAccessed": 1772535534671,
       "keyFiles": []
     },
     "gradle": {
       "path": "gradle",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1772092447340,
+      "lastAccessed": 1772535534671,
       "keyFiles": []
     },
     "src": {
       "path": "src",
       "purpose": "Source code",
       "fileCount": 0,
-      "lastAccessed": 1772092447341,
+      "lastAccessed": 1772535534672,
       "keyFiles": []
     },
     "config/scripts": {
       "path": "config/scripts",
       "purpose": "Build/utility scripts",
       "fileCount": 1,
-      "lastAccessed": 1772092447341,
+      "lastAccessed": 1772535534674,
       "keyFiles": [
         "deploy.sh"
       ]
@@ -86,249 +86,33 @@
       "path": "src/test",
       "purpose": "Test files",
       "fileCount": 0,
-      "lastAccessed": 1772092447342,
+      "lastAccessed": 1772535534675,
       "keyFiles": []
     }
   },
   "hotPaths": [
     {
-      "path": "",
-      "accessCount": 5,
-      "lastAccessed": 1772102213585,
-      "type": "directory"
-    },
-    {
-      "path": "src/test/java/net/studioxai/studioxBe/chat/ChatServiceTest.java",
-      "accessCount": 4,
-      "lastAccessed": 1772177044618,
-      "type": "file"
-    },
-    {
-      "path": "src/test/java/net/studioxai/studioxBe/image/ProjectServiceTest.java",
-      "accessCount": 3,
-      "lastAccessed": 1772177413203,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/service/ChatService.java",
-      "accessCount": 2,
-      "lastAccessed": 1772176904030,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/entity/ChatRoom.java",
-      "accessCount": 2,
-      "lastAccessed": 1772176910713,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/entity/ChatMessage.java",
-      "accessCount": 2,
-      "lastAccessed": 1772176911206,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/dto/request/ChatSendRequest.java",
-      "accessCount": 2,
-      "lastAccessed": 1772176911742,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/dto/request/ConceptSelectRequest.java",
-      "accessCount": 2,
-      "lastAccessed": 1772176912462,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/dto/response/ChatHistoryResponse.java",
-      "accessCount": 2,
-      "lastAccessed": 1772176912875,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/dto/response/ConceptImagesResponse.java",
-      "accessCount": 2,
-      "lastAccessed": 1772176913492,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/dto/response/ChatMessageResponse.java",
-      "accessCount": 2,
-      "lastAccessed": 1772176914091,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/exception/ChatErrorCode.java",
-      "accessCount": 2,
-      "lastAccessed": 1772176921110,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/dto/response/ChatSendPresignResponse.java",
-      "accessCount": 2,
-      "lastAccessed": 1772176922008,
-      "type": "file"
-    },
-    {
-      "path": ".claude/settings.local.json",
+      "path": "src/main/java/net/studioxai/studioxBe/domain/template/entity/Template.java",
       "accessCount": 1,
-      "lastAccessed": 1772102702074,
+      "lastAccessed": 1772535901163,
       "type": "file"
     },
     {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/entity/enums/ChatStatus.java",
+      "path": "src/main/java/net/studioxai/studioxBe/global/entity/enums/Category.java",
       "accessCount": 1,
-      "lastAccessed": 1772103143634,
+      "lastAccessed": 1772535909875,
       "type": "file"
     },
     {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/entity/enums/MessageRole.java",
+      "path": "src/main/java/net/studioxai/studioxBe/domain/template/entity/TemplateKeyword.java",
       "accessCount": 1,
-      "lastAccessed": 1772103144298,
+      "lastAccessed": 1772536118692,
       "type": "file"
     },
     {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/entity/enums/MessageType.java",
+      "path": "src/main/java/net/studioxai/studioxBe/domain/template/entity/TemplateKeywordType.java",
       "accessCount": 1,
-      "lastAccessed": 1772103144826,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/global/response/ApiResponse.java",
-      "accessCount": 1,
-      "lastAccessed": 1772103149854,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/global/dto/ErrorReason.java",
-      "accessCount": 1,
-      "lastAccessed": 1772103150489,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/global/jwt/JwtUserPrincipal.java",
-      "accessCount": 1,
-      "lastAccessed": 1772103151325,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/global/error/GlobalExceptionHandler.java",
-      "accessCount": 1,
-      "lastAccessed": 1772103156091,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java",
-      "accessCount": 1,
-      "lastAccessed": 1772103157640,
-      "type": "directory"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/global/annotation/ImageUrl.java",
-      "accessCount": 1,
-      "lastAccessed": 1772103157993,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/auth/controller/CustomAuthController.java",
-      "accessCount": 1,
-      "lastAccessed": 1772103162659,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/global/error/ErrorResponse.java",
-      "accessCount": 1,
-      "lastAccessed": 1772103163391,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/auth/dto/request/LoginRequest.java",
-      "accessCount": 1,
-      "lastAccessed": 1772103167909,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/global/util/CookieUtil.java",
-      "accessCount": 1,
-      "lastAccessed": 1772103168524,
-      "type": "file"
-    },
-    {
-      "path": "docker-compose.yml",
-      "accessCount": 1,
-      "lastAccessed": 1772103481222,
-      "type": "file"
-    },
-    {
-      "path": "src/main/resources/application-local.yml",
-      "accessCount": 1,
-      "lastAccessed": 1772103484812,
-      "type": "file"
-    },
-    {
-      "path": "src/main/resources/application.yml",
-      "accessCount": 1,
-      "lastAccessed": 1772103485183,
-      "type": "file"
-    },
-    {
-      "path": ".env",
-      "accessCount": 1,
-      "lastAccessed": 1772103663691,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/image/controller/ProjectController.java",
-      "accessCount": 1,
-      "lastAccessed": 1772103769690,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/folder/controller/FolderController.java",
-      "accessCount": 1,
-      "lastAccessed": 1772103781393,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/image/controller/ImageController.java",
-      "accessCount": 1,
-      "lastAccessed": 1772103799206,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/image/dto/request/CutoutImageGenerateRequest.java",
-      "accessCount": 1,
-      "lastAccessed": 1772103808119,
-      "type": "file"
-    },
-    {
-      "path": "src/test/java/net/studioxai/studioxBe/image/ImageServiceTest.java",
-      "accessCount": 1,
-      "lastAccessed": 1772176910087,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/repository/ChatMessageRepository.java",
-      "accessCount": 1,
-      "lastAccessed": 1772176922680,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/infra/s3/S3Url.java",
-      "accessCount": 1,
-      "lastAccessed": 1772176923290,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/exception/ChatExceptionHandler.java",
-      "accessCount": 1,
-      "lastAccessed": 1772176923916,
-      "type": "file"
-    },
-    {
-      "path": "src/main/java/net/studioxai/studioxBe/domain/image/service/ProjectService.java",
-      "accessCount": 1,
-      "lastAccessed": 1772177393790,
+      "lastAccessed": 1772536126080,
       "type": "file"
     }
   ],
