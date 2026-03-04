@@ -29,6 +29,7 @@ public enum AuthErrorCode implements BaseErrorCode {
     //403
     EMAIL_NOT_VERIFIED(HttpStatus.FORBIDDEN, "USER_403_1", "이메일 인증이 필요합니다."),
     CODE_NOT_VERIFIED(HttpStatus.FORBIDDEN, "USER_403_2", "인증코드 검증이 필요합니다."),
+    CODE_LOCKED(HttpStatus.FORBIDDEN, "USER_403_2", "인증코드를 5회 이상 잘못 입력하였습니다."),
 
     //404
     VERIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404_2", "검증을 요청한 내역이 없습니다."),
