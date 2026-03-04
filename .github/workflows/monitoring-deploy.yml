@@ -4,6 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
+      - '.github/workflows/monitoring-deploy.yml'
       - 'docker-compose-monitoring.yml'
       - 'config/loki/**'
       - 'config/prometheus/**'
@@ -49,7 +50,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./config/loki/Dockerfile
+          file: ./config/loki/Dockerfile.loki
           platforms: linux/amd64
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/loki:latest
@@ -59,20 +60,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./config/prometheus/Dockerfile
+          file: ./config/prometheus/Dockerfile.prometheus
           platforms: linux/amd64
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/prometheus:latest
-
-      - name: Build & Push Grafana
-        if: steps.changes.outputs.grafana == 'true'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./config/grafana/Dockerfile
-          platforms: linux/amd64
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/grafana:latest
 
       # 4) EC2 배포 (변경된 것만 pull + recreate)
       - name: Deploy to EC2
@@ -83,7 +74,7 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             set -e
-            cd /home/ubuntu/studiox
+            cd /home/ubuntu
 
             # compose 최신화
             sudo curl -o docker-compose-monitoring.yml \

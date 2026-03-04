@@ -6,6 +6,7 @@ import jakarta.mail.internet.MimeMessage;
 import net.studioxai.studioxBe.domain.auth.dto.request.EmailVerificationRequest;
 import net.studioxai.studioxBe.domain.auth.dto.request.PasswordCodeVerificationRequest;
 import net.studioxai.studioxBe.domain.auth.dto.request.PasswordResetCodeRequest;
+import net.studioxai.studioxBe.domain.auth.dto.response.EmailValidationResponse;
 import net.studioxai.studioxBe.domain.auth.entity.EmailVerificationToken;
 import net.studioxai.studioxBe.domain.auth.entity.PasswordResetCode;
 import net.studioxai.studioxBe.domain.auth.entity.VerifiedEmail;
@@ -38,6 +39,10 @@ import java.util.Optional;
 import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
 public class EmailVerificationServiceTest {
@@ -222,7 +227,7 @@ public class EmailVerificationServiceTest {
                 () -> emailVerificationService.checkEmailVerification(email)
         );
 
-        Assertions.assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.EMAIL_NOT_VERIFIED);
+        assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.EMAIL_NOT_VERIFIED);
     }
 
     @Test
@@ -238,7 +243,7 @@ public class EmailVerificationServiceTest {
                 () -> emailVerificationService.sendEmail(req, "/email/verify")
         );
 
-        Assertions.assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.USER_ALREADY_REGISTERS);
+        assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.USER_ALREADY_REGISTERS);
     }
 
     @Test
@@ -263,9 +268,9 @@ public class EmailVerificationServiceTest {
         Mockito.verify(tokenRepository).save(tokenCaptor.capture());
         EmailVerificationToken savedToken = tokenCaptor.getValue();
 
-        Assertions.assertThat(savedToken.getEmail()).isEqualTo(req.email());
-        Assertions.assertThat(savedToken.getToken()).isEqualTo("mail-token");
-        Assertions.assertThat(savedToken.getCallbackUrl()).isEqualTo(req.callbackUrl());
+        assertThat(savedToken.getEmail()).isEqualTo(req.email());
+        assertThat(savedToken.getToken()).isEqualTo("mail-token");
+        assertThat(savedToken.getCallbackUrl()).isEqualTo(req.callbackUrl());
 
         Mockito.verify(mailSender).send(mimeMessage);
     }
@@ -285,7 +290,7 @@ public class EmailVerificationServiceTest {
 
         String result = emailVerificationService.verifyEmail(email, token);
 
-        Assertions.assertThat(result).isEqualTo(callbackUrl);
+        assertThat(result).isEqualTo(callbackUrl);
         Mockito.verify(verifiedEmailRepository).save(ArgumentMatchers.any(VerifiedEmail.class));
     }
 
@@ -301,7 +306,7 @@ public class EmailVerificationServiceTest {
                 () -> emailVerificationService.verifyEmail(email, "any-token")
         );
 
-        Assertions.assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.VERIFICATION_NOT_FOUND);
+        assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.VERIFICATION_NOT_FOUND);
     }
 
     @Test
@@ -321,6 +326,47 @@ public class EmailVerificationServiceTest {
                 () -> emailVerificationService.verifyEmail(email, wrongToken)
         );
 
-        Assertions.assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.INVALID_EMAIL_TOKEN);
+        assertThat(ex.getErrorCode()).isEqualTo(AuthErrorCode.INVALID_EMAIL_TOKEN);
+    }
+
+    @Test
+    @DisplayName("이메일이 검증된 이메일 테이블에 존재하면 isAvailable = true")
+    void getEmailValidation_whenEmailExists_thenAvailableTrue() {
+        // given
+        String email = "test@example.com";
+        VerifiedEmail verifiedEmail = VerifiedEmail.create(email);
+
+        given(verifiedEmailRepository.findById(email))
+                .willReturn(Optional.of(verifiedEmail));
+
+        // when
+        EmailValidationResponse response =
+                emailVerificationService.getEmailValidation(email);
+
+        // then
+        assertThat(response.email()).isEqualTo(email);
+        assertThat(response.isVerified()).isTrue();
+
+        then(verifiedEmailRepository).should().findById(email);
+    }
+
+    @Test
+    @DisplayName("이메일이 검증된 이메일 테이블에 없으면 isAvailable = false")
+    void getEmailValidation_whenEmailNotExists_thenAvailableFalse() {
+        // given
+        String email = "not-exist@example.com";
+
+        given(verifiedEmailRepository.findById(email))
+                .willReturn(Optional.empty());
+
+        // when
+        EmailValidationResponse response =
+                emailVerificationService.getEmailValidation(email);
+
+        // then
+        assertThat(response.email()).isEqualTo(email);
+        assertThat(response.isVerified()).isFalse();
+
+        then(verifiedEmailRepository).should().findById(email);
     }
 }

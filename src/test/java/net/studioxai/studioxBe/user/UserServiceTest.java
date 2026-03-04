@@ -160,7 +160,7 @@ public class UserServiceTest {
     void getProfileImageUrl_success() {
         S3Url url = S3Url.to("https://example-s3.com/presigned", "presigned");
 
-        org.mockito.Mockito.when(s3UrlHandler.handle("/profile")).thenReturn(url);
+        org.mockito.Mockito.when(s3UrlHandler.handle("profile")).thenReturn(url);
 
         S3Url result = userService.getProfileImageUrl();
 

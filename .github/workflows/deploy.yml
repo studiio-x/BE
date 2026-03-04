@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - '.github/workflows/deploy.yml'
       - 'src/**'
       - 'config/nginx/**'
       - 'config/alloy/**'
@@ -49,7 +50,7 @@ jobs:
           filters: |
             nginx:
               - 'config/nginx/**'
-            alloy
+            alloy:
               - 'config/alloy/**'
             compose:
               - 'docker-compose.yml'
@@ -124,7 +125,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./config/alloy/Dockerfile
+          file: ./config/alloy/Dockerfile.alloy
           platforms: linux/amd64
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/alloy
@@ -161,7 +162,7 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           script: |
             set -e
-            cd /home/ubuntu/studiox
+            cd /home/ubuntu
 
             sudo touch .env
             echo "${{ secrets.ENV }}" | sudo tee .env > /dev/null

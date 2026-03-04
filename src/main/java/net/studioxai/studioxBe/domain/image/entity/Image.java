@@ -1,10 +1,10 @@
 package net.studioxai.studioxBe.domain.image.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import net.studioxai.studioxBe.domain.folder.entity.Folder;
-import net.studioxai.studioxBe.domain.template.entity.Template;
 import net.studioxai.studioxBe.global.entity.BaseEntity;
 
 @Entity
@@ -12,23 +12,35 @@ import net.studioxai.studioxBe.global.entity.BaseEntity;
 @NoArgsConstructor
 @Table(name = "images")
 public class Image extends BaseEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "image_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "folder_id", nullable = false)
-    private Folder folder;
+    @JoinColumn(name = "project_id", nullable = false)
+    private Project project;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "template_id", nullable = false)
-    private Template template;
+    @Column(name = "image_object_key", nullable = false)
+    private String imageObjectKey;
 
-    @Column(name = "raw_image_url")
-    private String rawImageUrl;
+    public static Image create(
+            Project project,
+            String imageObjectKey
+    ) {
+        return Image.builder()
+                .project(project)
+                .imageObjectKey(imageObjectKey)
+                .build();
+    }
 
-    @Column(name = "image_url")
-    private String imageUrl;
-
+    @Builder(access = AccessLevel.PRIVATE)
+    private Image(
+            Project project,
+            String imageObjectKey
+    ) {
+        this.project = project;
+        this.imageObjectKey = imageObjectKey;
+    }
 }

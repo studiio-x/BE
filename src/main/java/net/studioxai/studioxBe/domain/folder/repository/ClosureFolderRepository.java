@@ -6,6 +6,7 @@ import net.studioxai.studioxBe.domain.folder.dto.projection.RootFolderProjection
 import net.studioxai.studioxBe.domain.folder.entity.ClosureFolder;
 import net.studioxai.studioxBe.domain.folder.entity.enums.Permission;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -38,7 +39,7 @@ public interface ClosureFolderRepository extends JpaRepository<ClosureFolder, Lo
         u.profile_image  AS profileUrl,
         u.username       AS username,
         u.email          AS email,
-        fm_final.permission AS permission -- fm -> fm_final로 수정
+        fm_final.permission AS permission
     FROM (
         SELECT
             fm.user_id,
@@ -116,5 +117,45 @@ public interface ClosureFolderRepository extends JpaRepository<ClosureFolder, Lo
     """, nativeQuery = true)
     List<RootFolderProjection> findMyFolders(@Param("userId") Long userId);
 
+    @Query("""
+        select cf.descendantFolder.id
+        from ClosureFolder cf
+        where cf.ancestorFolder.id = :ancestorId
+          and cf.depth >= 0
+        order by cf.depth desc
+    """)
+    List<Long> findDescendantFolderIds(@Param("ancestorId") Long ancestorId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from ClosureFolder cf where cf.ancestorFolder.id in :ancestorIds")
+    int deleteByAncestorIds(@Param("ancestorIds") List<Long> ancestorIds);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("delete from ClosureFolder cf where cf.descendantFolder.id in :descendantIds")
+    int deleteByDescendantIds(@Param("descendantIds") List<Long> descendantIds);
+
+    @Query(value = """
+    SELECT EXISTS (
+        SELECT 1
+        FROM closure_folders down
+        JOIN folders fd
+          ON fd.folder_id = down.descendant_folder_id
+        JOIN closure_folders cf
+          ON cf.descendant_folder_id = down.descendant_folder_id
+        JOIN folder_managers fm
+          ON fm.folder_id = cf.ancestor_folder_id
+         AND fm.user_id = :userId
+         AND fm.permission IN ('READ','WRITE','OWNER')
+        JOIN closure_folders cr
+          ON cr.ancestor_folder_id = fd.acl_root_folder_id
+         AND cr.descendant_folder_id = cf.ancestor_folder_id
+        WHERE down.ancestor_folder_id = :folderId
+          AND down.depth > 0
+        LIMIT 1
+    )
+    """, nativeQuery = true)
+    Long existsReadableDescendant(@Param("folderId") Long folderId,
+                                     @Param("aclRootFolderId") Long aclRootFolderId,
+                                     @Param("userId") Long userId);
 
 }

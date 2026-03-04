@@ -2,9 +2,12 @@ package net.studioxai.studioxBe.domain.auth.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.auth.dto.request.*;
+import net.studioxai.studioxBe.domain.auth.dto.response.EmailValidationResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
 import net.studioxai.studioxBe.domain.auth.service.AuthService;
@@ -14,12 +17,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
 @Slf4j
+@Validated
 public class CustomAuthController {
     private final AuthService authService;
     private final EmailVerificationService emailVerificationService;
@@ -99,6 +104,13 @@ public class CustomAuthController {
                 .status(HttpStatus.SEE_OTHER)
                 .header("Location", callbackUrl)
                 .build();
+    }
+
+    @GetMapping("/v1/auth/email/validation")
+    public EmailValidationResponse emailValidation(
+            @RequestParam @Email @NotBlank String email
+    ) {
+        return emailVerificationService.getEmailValidation(email);
     }
 
     @PostMapping("/v1/auth/token")

@@ -130,7 +130,7 @@ class FolderManagerServiceTest {
                 .thenReturn(Optional.empty());
 
         // when + then
-        assertThatThrownBy(() -> sut().updatePermission(actorUserId, targetUserId, folderId))
+        assertThatThrownBy(() -> sut().updatePermission(actorUserId, targetUserId, folderId, Permission.READ))
                 .isInstanceOf(FolderManagerExceptionHandler.class);
 
         verify(folderManagerRepository, never()).findByFolderIdAndUserId(anyLong(), anyLong());
@@ -156,7 +156,7 @@ class FolderManagerServiceTest {
                 .thenReturn(Optional.of(folderEntity));  // real folder load
 
         when(closureFolderRepository.findPermission(folderId, aclRootId, actorUserId))
-                .thenReturn(Optional.of(Permission.WRITE));
+                .thenReturn(Optional.of(Permission.FULL_ACCESS));
         when(closureFolderRepository.findPermission(folderId, aclRootId, targetUserId))
                 .thenReturn(Optional.of(Permission.READ));
 
@@ -165,11 +165,12 @@ class FolderManagerServiceTest {
                 .thenReturn(Optional.of(existing));
 
         // when
-        sut().updatePermission(actorUserId, targetUserId, folderId);
+
+        sut().updatePermission(actorUserId, targetUserId, folderId, Permission.WRITE);
 
         // then
         verify(folderManagerRepository).findByFolderIdAndUserId(folderId, targetUserId);
-        verify(existing).updateDirectPermission();
+        verify(existing).updateDirectPermission(Permission.WRITE);
         verify(folderManagerRepository, never()).save(any());
         verify(userService, never()).getUserByIdOrThrow(anyLong());
     }
@@ -187,7 +188,6 @@ class FolderManagerServiceTest {
         when(folderForPerm.getAclRootFolderId()).thenReturn(aclRootId);
 
         Folder folderEntity = mock(Folder.class);
-        when(folderEntity.getLinkMode()).thenReturn(LinkMode.LINK);
 
         when(folderRepository.findById(folderId))
                 .thenReturn(Optional.of(folderForPerm))  // actor perm
@@ -196,14 +196,10 @@ class FolderManagerServiceTest {
 
         when(closureFolderRepository.findPermission(folderId, aclRootId, actorUserId))
                 .thenReturn(Optional.of(Permission.WRITE));
-        when(closureFolderRepository.findPermission(folderId, aclRootId, targetUserId))
-                .thenReturn(Optional.of(Permission.READ));
 
-        when(folderManagerRepository.findByFolderIdAndUserId(folderId, targetUserId))
-                .thenReturn(Optional.empty());
 
         // when + then
-        assertThatThrownBy(() -> sut().updatePermission(actorUserId, targetUserId, folderId))
+        assertThatThrownBy(() -> sut().updatePermission(actorUserId, targetUserId, folderId, Permission.READ))
                 .isInstanceOf(FolderManagerExceptionHandler.class);
 
         verify(folderManagerRepository, never()).save(any());
@@ -230,7 +226,7 @@ class FolderManagerServiceTest {
                 .thenReturn(Optional.of(folderEntity));  // real folder load
 
         when(closureFolderRepository.findPermission(folderId, aclRootId, actorUserId))
-                .thenReturn(Optional.of(Permission.WRITE));
+                .thenReturn(Optional.of(Permission.FULL_ACCESS));
         when(closureFolderRepository.findPermission(folderId, aclRootId, targetUserId))
                 .thenReturn(Optional.of(Permission.READ));
 
@@ -249,12 +245,12 @@ class FolderManagerServiceTest {
             when(folderManagerRepository.save(saved)).thenReturn(saved);
 
             // when
-            sut().updatePermission(actorUserId, targetUserId, folderId);
+            sut().updatePermission(actorUserId, targetUserId, folderId, Permission.WRITE);
 
             // then
             mocked.verify(() -> FolderManager.create(targetUser, folderEntity, Permission.READ));
             verify(folderManagerRepository).save(saved);
-            verify(saved).updateDirectPermission();
+            verify(saved).updateDirectPermission(Permission.WRITE);
         }
     }
 
@@ -318,7 +314,6 @@ class FolderManagerServiceTest {
 
         when(closureFolderRepository.findPermission(folderId, aclRootId, userId))
                 .thenReturn(Optional.of(Permission.WRITE));
-        when(closureFolderRepository.countManagers(folderId, aclRootId)).thenReturn(5L);
 
         FolderManagerAddRequest req = mock(FolderManagerAddRequest.class);
 
@@ -346,17 +341,10 @@ class FolderManagerServiceTest {
 
         when(closureFolderRepository.findPermission(folderId, aclRootId, userId))
                 .thenReturn(Optional.of(Permission.WRITE));
-        when(closureFolderRepository.countManagers(folderId, aclRootId)).thenReturn(4L);
 
         FolderManagerAddRequest req = mock(FolderManagerAddRequest.class);
-        when(req.email()).thenReturn("test@test.com");
 
         User invited = mock(User.class);
-        when(invited.getId()).thenReturn(2L);
-        when(userService.getUserByEmailOrThrow("test@test.com")).thenReturn(invited);
-
-        when(closureFolderRepository.findPermission(folderId, aclRootId, 2L))
-                .thenReturn(Optional.of(Permission.READ));
 
         // when + then
         assertThatThrownBy(() -> sut().inviteManager(userId, folderId, req))
@@ -381,7 +369,7 @@ class FolderManagerServiceTest {
                 .thenReturn(Optional.of(folder));
 
         when(closureFolderRepository.findPermission(folderId, aclRootId, userId))
-                .thenReturn(Optional.of(Permission.WRITE));
+                .thenReturn(Optional.of(Permission.FULL_ACCESS));
         when(closureFolderRepository.countManagers(folderId, aclRootId)).thenReturn(4L);
 
         FolderManagerAddRequest req = mock(FolderManagerAddRequest.class);
@@ -528,7 +516,7 @@ class FolderManagerServiceTest {
 
     @Test
     @DisplayName("isUserAdmin: readable(WRITE/OWNER) 이면 통과")
-    void isUserAdmin_success() {
+    void isUserReadable_success() {
         // given
         Long userId = 1L;
         Long folderId = 10L;
@@ -542,7 +530,7 @@ class FolderManagerServiceTest {
                 .thenReturn(Optional.of(Permission.WRITE));
 
         // when
-        sut().isUserAdmin(userId, folderId);
+        sut().isUserReadable(userId, folderId);
 
         // then
         verify(closureFolderRepository).findPermission(folderId, aclRootId, userId);
@@ -561,5 +549,110 @@ class FolderManagerServiceTest {
         when(p.getPermission()).thenReturn(permission);
 
         return p;
+    }
+
+    @Test
+    @DisplayName("canVisited: 현재 폴더에서 읽기 가능하면 통과")
+    void canVisited_whenCanReadHere_thenPass() {
+        // given
+        Long userId = 1L;
+        Long folderId = 10L;
+        Long aclRootId = 100L;
+
+        when(closureFolderRepository.findPermission(folderId, aclRootId, userId))
+                .thenReturn(Optional.of(Permission.READ));
+        when(closureFolderRepository.existsReadableDescendant(folderId, aclRootId, userId))
+                .thenReturn(0L);
+
+        // when + then (no exception)
+        assertThatCode(() -> sut().canVisit(userId, folderId, aclRootId))
+                .doesNotThrowAnyException();
+
+        verify(closureFolderRepository).findPermission(folderId, aclRootId, userId);
+        verify(closureFolderRepository).existsReadableDescendant(folderId, aclRootId, userId);
+    }
+
+    @Test
+    @DisplayName("canVisited: 현재 폴더에서 읽기 불가 + 하위 readable descendant 없으면 예외")
+    void canVisit_whenCannotReadAndNoReadableDescendant_thenThrow() {
+        // given
+        Long userId = 1L;
+        Long folderId = 10L;
+        Long aclRootId = 100L;
+
+        when(closureFolderRepository.findPermission(folderId, aclRootId, userId))
+                .thenReturn(Optional.empty()); // canReadHere = false
+        when(closureFolderRepository.existsReadableDescendant(folderId, aclRootId, userId))
+                .thenReturn(0L);
+
+        // when + then
+        assertThatThrownBy(() -> sut().canVisit(userId, folderId, aclRootId))
+                .isInstanceOf(FolderManagerExceptionHandler.class);
+
+        verify(closureFolderRepository).findPermission(folderId, aclRootId, userId);
+        verify(closureFolderRepository).existsReadableDescendant(folderId, aclRootId, userId);
+    }
+
+    @Test
+    @DisplayName("canVisited: 현재 폴더에서 읽기 불가여도 하위 readable descendant 있으면 통과")
+    void canVisit_whenCannotReadButHasReadableDescendant_thenPass() {
+        // given
+        Long userId = 1L;
+        Long folderId = 10L;
+        Long aclRootId = 100L;
+
+        when(closureFolderRepository.findPermission(folderId, aclRootId, userId))
+                .thenReturn(Optional.empty()); // canReadHere = false
+        when(closureFolderRepository.existsReadableDescendant(folderId, aclRootId, userId))
+                .thenReturn(1L); // canTraverse > 0
+
+        // when + then
+        assertThatCode(() -> sut().canVisit(userId, folderId, aclRootId))
+                .doesNotThrowAnyException();
+
+        verify(closureFolderRepository).findPermission(folderId, aclRootId, userId);
+        verify(closureFolderRepository).existsReadableDescendant(folderId, aclRootId, userId);
+    }
+
+    @Test
+    @DisplayName("isUserReadable: 권한 레코드 없으면 예외")
+    void isUserReadable_whenPermissionMissing_thenThrow() {
+        // given
+        Long userId = 1L;
+        Long folderId = 10L;
+        Long aclRootId = 100L;
+
+        Folder folder = mock(Folder.class);
+        when(folder.getAclRootFolderId()).thenReturn(aclRootId);
+        when(folderRepository.findById(folderId)).thenReturn(Optional.of(folder));
+
+        when(closureFolderRepository.findPermission(folderId, aclRootId, userId))
+                .thenReturn(Optional.empty());
+
+        // when + then
+        assertThatThrownBy(() -> sut().isUserReadable(userId, folderId))
+                .isInstanceOf(FolderManagerExceptionHandler.class);
+    }
+
+    @Test
+    @DisplayName("isUserReadable: READ 권한이면 통과")
+    void isUserReadable_whenRead_thenPass() {
+        // given
+        Long userId = 1L;
+        Long folderId = 10L;
+        Long aclRootId = 100L;
+
+        Folder folder = mock(Folder.class);
+        when(folder.getAclRootFolderId()).thenReturn(aclRootId);
+        when(folderRepository.findById(folderId)).thenReturn(Optional.of(folder));
+
+        when(closureFolderRepository.findPermission(folderId, aclRootId, userId))
+                .thenReturn(Optional.of(Permission.READ));
+
+        // when + then
+        assertThatCode(() -> sut().isUserReadable(userId, folderId))
+                .doesNotThrowAnyException();
+
+        verify(closureFolderRepository).findPermission(folderId, aclRootId, userId);
     }
 }

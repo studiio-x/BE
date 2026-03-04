@@ -67,7 +67,7 @@ public class UserService {
     }
 
     public S3Url getProfileImageUrl() {
-        return s3UrlHandler.handle("/profile");
+        return s3UrlHandler.handle("profile");
     }
 
 }

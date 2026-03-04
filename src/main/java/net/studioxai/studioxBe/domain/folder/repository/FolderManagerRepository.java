@@ -5,6 +5,7 @@ import net.studioxai.studioxBe.domain.folder.dto.RootFolderDto;
 import net.studioxai.studioxBe.domain.folder.entity.FolderManager;
 import net.studioxai.studioxBe.domain.folder.entity.enums.Permission;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -72,5 +73,11 @@ public interface FolderManagerRepository extends JpaRepository<FolderManager, Lo
     """)
     Optional<Permission> findPermission(@Param("userId") Long userId, @Param("aclRootId") Long aclRootId);
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+        delete from FolderManager fm
+        where fm.folder.id in :folderIds
+    """)
+    int deleteAllByFolderIds(@Param("folderIds") List<Long> folderIds);
 
 }
