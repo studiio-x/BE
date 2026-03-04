@@ -20,6 +20,7 @@ public enum AuthErrorCode implements BaseErrorCode {
     GOOGLE_TOKEN_REQUEST_FAILED(HttpStatus.BAD_REQUEST, "OAUTH_400_4", "유효하지 않은 토큰입니다."),
     GOOGLE_USER_INFO_REQUEST_FAILED(HttpStatus.BAD_REQUEST, "OAUTH_400_5", "구글 로그인에서 사용자의 정보를 가져오지 못했습니다."),
     INVALID_REDIRECT_URL(HttpStatus.BAD_REQUEST, "USER_400_6", "유효하지 않은 redirect url입니다."),
+    INVALID_RESET_CODE(HttpStatus.BAD_REQUEST, "USER_400_7", "유효하지 않은 인증코드입니다."),
 
     //401
     WRONG_ID_OR_PASSWORD(HttpStatus.UNAUTHORIZED, "USER_401_1", "아이디 또는 비밀번호가 일치하지 않습니다."),
@@ -27,10 +28,11 @@ public enum AuthErrorCode implements BaseErrorCode {
 
     //403
     EMAIL_NOT_VERIFIED(HttpStatus.FORBIDDEN, "USER_403_1", "이메일 인증이 필요합니다."),
+    CODE_NOT_VERIFIED(HttpStatus.FORBIDDEN, "USER_403_2", "인증코드 검증이 필요합니다."),
 
     //404
     VERIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404_2", "검증을 요청한 내역이 없습니다."),
-    EMAIL_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404_3", "이메일이 검증되지 않았습니다."),
+    EMAIL_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404_3", "이메일이 존재하지 않습니다."),
 
     //409
     EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT, "USER_409_1", "이미 존재하는 이메일입니다."),
