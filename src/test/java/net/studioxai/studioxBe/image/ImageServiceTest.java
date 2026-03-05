@@ -11,13 +11,12 @@ import net.studioxai.studioxBe.domain.image.entity.Project;
 import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
 import net.studioxai.studioxBe.domain.image.repository.ProjectRepository;
 import net.studioxai.studioxBe.domain.image.service.ImageService;
+import net.studioxai.studioxBe.domain.image.service.ProjectService;
 import net.studioxai.studioxBe.domain.template.entity.Template;
 import net.studioxai.studioxBe.domain.template.repository.TemplateRepository;
 import net.studioxai.studioxBe.infra.ai.gemini.GeminiImageClient;
 import net.studioxai.studioxBe.infra.s3.S3ImageLoader;
 import net.studioxai.studioxBe.infra.s3.S3ImageUploader;
-import net.studioxai.studioxBe.infra.s3.S3Url;
-import net.studioxai.studioxBe.infra.s3.S3UrlHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,29 +38,15 @@ class ImageServiceTest {
     @Mock private TemplateRepository templateRepository;
     @Mock private FolderRepository folderRepository;
 
-    @Mock private S3UrlHandler s3UrlHandler;
     @Mock private S3ImageLoader s3ImageLoader;
     @Mock private S3ImageUploader s3ImageUploader;
     @Mock private GeminiImageClient geminiImageClient;
 
     @Mock private FolderManagerService folderManagerService;
+    @Mock private ProjectService projectService;
 
     @InjectMocks
     private ImageService imageService;
-
-    @Test
-    @DisplayName("Presign URL 발급 성공")
-    void issuePresign_success() {
-
-        S3Url s3Url = S3Url.to("uploadUrl", "images/raw/test.png");
-
-        when(s3UrlHandler.handle("images/raw")).thenReturn(s3Url);
-
-        PresignResponse response = imageService.issuePresign();
-
-        assertThat(response.uploadUrl()).isEqualTo("uploadUrl");
-        assertThat(response.rawImageObjectKey()).isEqualTo("images/raw/test.png");
-    }
 
     @Test
     @DisplayName("컷아웃 이미지 생성 성공")
@@ -128,8 +113,8 @@ class ImageServiceTest {
                 .thenReturn("templates/template.png");
 
         // --- Repository stubbing ---
-        when(projectRepository.findById(projectId))
-                .thenReturn(Optional.of(project));
+        when(projectService.getProjectById(projectId))
+                .thenReturn(project);
 
         when(templateRepository.findById(templateId))
                 .thenReturn(Optional.of(template));
@@ -171,7 +156,7 @@ class ImageServiceTest {
 
         // 도메인 상태 변경 검증
         verify(project, times(1)).updateTemplate(template);
-        verify(project, times(1)).updateRepresentativeImage(anyString());
+        verify(project, times(1)).updateThumbnailObjectKey(anyString());
     }
 
 

@@ -3,9 +3,13 @@ package net.studioxai.studioxBe.domain.auth.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
+import net.studioxai.studioxBe.domain.auth.dto.request.PasswordResetRequest;
+import net.studioxai.studioxBe.domain.auth.dto.request.SignUpRequest;
 import net.studioxai.studioxBe.domain.auth.dto.response.EmailValidationResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
+import net.studioxai.studioxBe.domain.auth.entity.VerifiedEmailCode;
+import net.studioxai.studioxBe.domain.auth.repository.VerifiedEmailCodeRepository;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.folder.service.FolderService;
 import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
@@ -37,6 +41,18 @@ public class AuthService {
     private final EmailVerificationService emailVerificationService;
 
     public static final String DEFAULT_PROFILE_IMAGE_URL = "profile-example.com";
+    private final VerifiedEmailCodeRepository verifiedEmailCodeRepository;
+
+    @Transactional
+    public void resetPassword(PasswordResetRequest passwordResetRequest) {
+        VerifiedEmailCode verifiedEmailCode = emailVerificationService.checkEmailCodeVerification(passwordResetRequest.email());
+
+        User user = getUserByEmailOrThrow(passwordResetRequest.email());
+        String encodedPassword = passwordEncoder.encode(passwordResetRequest.password());
+        user.updatePassword(encodedPassword);
+
+        verifiedEmailCodeRepository.delete(verifiedEmailCode);
+    }
 
     @Transactional
     public LoginResponse login(LoginRequest loginRequest) {
@@ -50,18 +66,17 @@ public class AuthService {
     }
 
     @Transactional
-    public LoginResponse signUp(LoginRequest loginRequest) {
-        emailVerificationService.checkEmailVerification(loginRequest.email());
+    public LoginResponse signUp(SignUpRequest signUpRequest) {
+        emailVerificationService.checkEmailVerification(signUpRequest.email());
 
-        // TODO: default profile url 삽입
-        String encodedPassword = passwordEncoder.encode(loginRequest.password());
+        String encodedPassword = passwordEncoder.encode(signUpRequest.password());
 
         User user = User.create(
                 RegisterPath.CUSTOM,
-                loginRequest.email(),
+                signUpRequest.email(),
                 encodedPassword,
                 DEFAULT_PROFILE_IMAGE_URL,
-                extractUsernameFromEmail(loginRequest.email()),
+                extractUsernameFromEmail(signUpRequest.email()),
                 true,
                 LocalDateTime.now()
         );
@@ -85,11 +100,11 @@ public class AuthService {
 
     @Transactional
     protected void provisioningFolder(User user) {
-        String folderName = user.getUsername() + "의 프로젝트";
+        String folderName = user.getUsername();
         Folder folder = folderService.createRootFolder(folderName, user);
     }
 
-    private User getUserByEmailOrThrow(String email) {
+    public User getUserByEmailOrThrow(String email) {
         return userRepository.findByEmail(email).orElseThrow(
                 () -> new AuthExceptionHandler(AuthErrorCode.WRONG_ID_OR_PASSWORD)
         );

@@ -87,7 +87,7 @@ class FolderManagerServiceTest {
     }
 
     @Test
-    @DisplayName("getManagers(userId, folderId): 내 권한 포함해서 응답 생성")
+    @DisplayName("getManagers(userId, folderId): OWNER 권한 제외 해서 응답 생성")
     void getManagersResponse_success() {
         // given
         Long userId = 1L;
@@ -108,8 +108,7 @@ class FolderManagerServiceTest {
         // then
         assertThat(res).isNotNull();
         assertThat(res.myPermission()).isEqualTo(PermissionDto.create(Permission.OWNER));
-        assertThat(res.managers()).hasSize(2);
-        assertThat(res.managers()).extracting(FolderManagerDto::userId).containsExactlyInAnyOrder(userId, 2L);
+        assertThat(res.managers()).hasSize(1);
     }
 
     @Test
