@@ -25,5 +25,6 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
 
     void deleteByProject(Project project);
 
+    Optional<Image> findTopByProjectOrderByCreatedAtDesc(Project project);
 
 }

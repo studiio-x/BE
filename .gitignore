@@ -45,3 +45,7 @@ out/
 /src/main/resources/application-prod.yml
 
 CLAUDE.md
+
+### MCP ###
+.mcp.json
+.omc

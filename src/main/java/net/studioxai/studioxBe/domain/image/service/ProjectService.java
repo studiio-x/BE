@@ -14,6 +14,8 @@ import net.studioxai.studioxBe.domain.image.dto.response.ProjectsResponse;
 import net.studioxai.studioxBe.domain.image.entity.Project;
 import net.studioxai.studioxBe.domain.image.exception.ProjectErrorCode;
 import net.studioxai.studioxBe.domain.image.exception.ProjectExceptionHandler;
+import net.studioxai.studioxBe.domain.chat.repository.ChatMessageRepository;
+import net.studioxai.studioxBe.domain.chat.repository.ChatRoomRepository;
 import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
 import net.studioxai.studioxBe.domain.image.repository.ProjectRepository;
 import net.studioxai.studioxBe.global.dto.PageInfo;
@@ -34,6 +36,8 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final FolderRepository folderRepository;
     private final ImageRepository imageRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final ChatMessageRepository chatMessageRepository;
 
     private final FolderManagerService folderManagerService;
 
@@ -112,6 +116,10 @@ public class ProjectService {
 
         folderManagerService.isUserWritable(userId, project.getFolder().getId());
 
+        chatRoomRepository.findByProjectId(projectId).ifPresent(chatRoom -> {
+            chatMessageRepository.deleteByChatRoom(chatRoom);
+            chatRoomRepository.delete(chatRoom);
+        });
         imageRepository.deleteByProject(project);
         projectRepository.delete(project);
     }

@@ -1,0 +1,282 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1772535534681,
+  "projectRoot": "/Users/seoah/IdeaProjects/BE",
+  "techStack": {
+    "languages": [
+      {
+        "name": "Java/Kotlin",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "build.gradle"
+        ]
+      }
+    ],
+    "frameworks": [],
+    "packageManager": "gradle",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "src"
+    ],
+    "gitBranches": {
+      "defaultBranch": "develop",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "build": {
+      "path": "build",
+      "purpose": "Build output",
+      "fileCount": 1,
+      "lastAccessed": 1772535534670,
+      "keyFiles": [
+        "resolvedMainClassName"
+      ]
+    },
+    "config": {
+      "path": "config",
+      "purpose": "Configuration files",
+      "fileCount": 0,
+      "lastAccessed": 1772535534671,
+      "keyFiles": []
+    },
+    "gradle": {
+      "path": "gradle",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1772535534671,
+      "keyFiles": []
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 0,
+      "lastAccessed": 1772535534672,
+      "keyFiles": []
+    },
+    "config/scripts": {
+      "path": "config/scripts",
+      "purpose": "Build/utility scripts",
+      "fileCount": 1,
+      "lastAccessed": 1772535534674,
+      "keyFiles": [
+        "deploy.sh"
+      ]
+    },
+    "src/test": {
+      "path": "src/test",
+      "purpose": "Test files",
+      "fileCount": 0,
+      "lastAccessed": 1772535534675,
+      "keyFiles": []
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/service/ChatService.java",
+      "accessCount": 17,
+      "lastAccessed": 1772611326707,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/infra/ai/gemini/GeminiChatClient.java",
+      "accessCount": 16,
+      "lastAccessed": 1772611260621,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/controller/ChatController.java",
+      "accessCount": 9,
+      "lastAccessed": 1772611350243,
+      "type": "file"
+    },
+    {
+      "path": "src/test/java/net/studioxai/studioxBe/chat/ChatServiceTest.java",
+      "accessCount": 9,
+      "lastAccessed": 1772611427199,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/dto/request/ChatSendRequest.java",
+      "accessCount": 5,
+      "lastAccessed": 1772611289070,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/exception/ChatErrorCode.java",
+      "accessCount": 4,
+      "lastAccessed": 1772610991032,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/entity/enums/MessageType.java",
+      "accessCount": 4,
+      "lastAccessed": 1772611221614,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/entity/ChatMessage.java",
+      "accessCount": 4,
+      "lastAccessed": 1772611231907,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/dto/response/ConceptImagesResponse.java",
+      "accessCount": 3,
+      "lastAccessed": 1772611195688,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/dto/response/ChatMessageResponse.java",
+      "accessCount": 3,
+      "lastAccessed": 1772611196545,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/entity/enums/ChatStatus.java",
+      "accessCount": 3,
+      "lastAccessed": 1772611197939,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/entity/ChatRoom.java",
+      "accessCount": 3,
+      "lastAccessed": 1772611198126,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/global/config/AiPropertiesConfig.java",
+      "accessCount": 2,
+      "lastAccessed": 1772609898518,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/dto/response/ChatHistoryResponse.java",
+      "accessCount": 2,
+      "lastAccessed": 1772610990167,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/dto/request/ConceptSelectRequest.java",
+      "accessCount": 2,
+      "lastAccessed": 1772610996770,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/exception/ChatExceptionHandler.java",
+      "accessCount": 2,
+      "lastAccessed": 1772610997182,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/entity/enums/MessageRole.java",
+      "accessCount": 2,
+      "lastAccessed": 1772610998633,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/template/entity/Template.java",
+      "accessCount": 1,
+      "lastAccessed": 1772535901163,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/global/entity/enums/Category.java",
+      "accessCount": 1,
+      "lastAccessed": 1772535909875,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/template/entity/TemplateKeyword.java",
+      "accessCount": 1,
+      "lastAccessed": 1772536118692,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/template/entity/TemplateKeywordType.java",
+      "accessCount": 1,
+      "lastAccessed": 1772536126080,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/infra/s3/S3Url.java",
+      "accessCount": 1,
+      "lastAccessed": 1772609229372,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/dto/response/ChatSendPresignResponse.java",
+      "accessCount": 1,
+      "lastAccessed": 1772609233540,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/infra/ai/dto/response/GeminiGenerateResponse.java",
+      "accessCount": 1,
+      "lastAccessed": 1772610760207,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/repository/ChatRoomRepository.java",
+      "accessCount": 1,
+      "lastAccessed": 1772610877649,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/repository/ChatMessageRepository.java",
+      "accessCount": 1,
+      "lastAccessed": 1772610877882,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/service/ChatMessageCleanupService.java",
+      "accessCount": 1,
+      "lastAccessed": 1772610881431,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/global/error/BaseErrorCode.java",
+      "accessCount": 1,
+      "lastAccessed": 1772610998168,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/image/entity/Image.java",
+      "accessCount": 1,
+      "lastAccessed": 1772611002981,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/entity/enums/ChatMode.java",
+      "accessCount": 1,
+      "lastAccessed": 1772611212110,
+      "type": "file"
+    },
+    {
+      "path": "src/main/java/net/studioxai/studioxBe/domain/chat/dto/response/ChatSendResponse.java",
+      "accessCount": 1,
+      "lastAccessed": 1772611215312,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

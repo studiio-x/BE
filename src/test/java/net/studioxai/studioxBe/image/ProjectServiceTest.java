@@ -5,6 +5,9 @@ import net.studioxai.studioxBe.domain.folder.repository.FolderRepository;
 import net.studioxai.studioxBe.domain.folder.service.FolderManagerService;
 import net.studioxai.studioxBe.domain.image.entity.Project;
 import net.studioxai.studioxBe.domain.image.exception.ProjectExceptionHandler;
+import net.studioxai.studioxBe.domain.chat.entity.ChatRoom;
+import net.studioxai.studioxBe.domain.chat.repository.ChatMessageRepository;
+import net.studioxai.studioxBe.domain.chat.repository.ChatRoomRepository;
 import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
 import net.studioxai.studioxBe.domain.image.repository.ProjectRepository;
 import net.studioxai.studioxBe.domain.image.service.ProjectService;
@@ -26,6 +29,8 @@ class ProjectServiceTest {
     @Mock private ProjectRepository projectRepository;
     @Mock private FolderRepository folderRepository;
     @Mock private ImageRepository imageRepository;
+    @Mock private ChatRoomRepository chatRoomRepository;
+    @Mock private ChatMessageRepository chatMessageRepository;
     @Mock private FolderManagerService folderManagerService;
 
     @InjectMocks
