@@ -22,8 +22,11 @@ public enum GlobalErrorCode implements BaseErrorCode {
     NO_TOKEN(UNAUTHORIZED, "AUTH_401_1", "토큰이 존재하지 않습니다"),
     INVALID_TOKEN(UNAUTHORIZED, "AUTH_401_2", "유효하지 않은 토큰입니다"),
     EXPIRED_TOKEN(UNAUTHORIZED, "AUTH_401_3", "만료된 토큰입니다"),
-    ACCESS_DENIED(FORBIDDEN, "AUTH_403_1", "접근 권한이 없습니다")
-    ;;
+    ACCESS_DENIED(FORBIDDEN, "AUTH_403_1", "접근 권한이 없습니다"),
+
+    // 분산 락 관련
+    DUPLICATE_REQUEST(CONFLICT, "GLOBAL_409_1", "이미 처리 중인 요청입니다. 잠시 후 다시 시도해주세요.")
+    ;
 
     private HttpStatus status;
     private String code;

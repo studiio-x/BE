@@ -11,6 +11,7 @@ import net.studioxai.studioxBe.infra.ai.exception.AiErrorCode;
 import net.studioxai.studioxBe.infra.ai.exception.AiExceptionHandler;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Base64;
@@ -93,11 +94,15 @@ public class GeminiImageClient {
         HttpEntity<GeminiGenerateRequest> request =
                 new HttpEntity<>(requestBody, headers);
 
-        ResponseEntity<String> response =
-                restTemplate.postForEntity(url, request, String.class);
-
-        if (!response.getStatusCode().is2xxSuccessful()) {
-            throw new AiExceptionHandler(AiErrorCode.AI_INVALID_RESPONSE);
+        ResponseEntity<String> response;
+        try {
+            response = restTemplate.postForEntity(url, request, String.class);
+        } catch (HttpStatusCodeException e) {
+            log.error("Gemini API 호출 실패 - status: {}, body: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new AiExceptionHandler(AiErrorCode.AI_CALL_FAILED);
+        } catch (Exception e) {
+            log.error("Gemini API 호출 중 예외 발생: {}", e.getMessage(), e);
+            throw new AiExceptionHandler(AiErrorCode.AI_CALL_FAILED);
         }
 
         String base64 = extractImageBase64(response.getBody());
