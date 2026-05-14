@@ -19,6 +19,7 @@ import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
 import net.studioxai.studioxBe.domain.image.repository.ProjectRepository;
 import net.studioxai.studioxBe.domain.template.entity.Template;
 import net.studioxai.studioxBe.domain.template.repository.TemplateRepository;
+import net.studioxai.studioxBe.global.lock.DistributedLock;
 import net.studioxai.studioxBe.infra.ai.gemini.GeminiImageClient;
 import net.studioxai.studioxBe.infra.s3.S3ImageLoader;
 import net.studioxai.studioxBe.infra.s3.S3ImageUploader;
@@ -62,6 +63,7 @@ public class ImageService {
         );
     }
 
+    @DistributedLock(key = "'ai:image:user:' + #userId")
     @Transactional
     public CutoutImageGenerateResponse generateCutoutImage(Long userId, CutoutImageGenerateRequest request) {
 
@@ -90,6 +92,7 @@ public class ImageService {
         return CutoutImageGenerateResponse.of(project.getId(), cutoutImageObjectKey);
     }
 
+    @DistributedLock(key = "'ai:image:user:' + #userId")
     @Transactional
     public ImageGenerateResponse generateImage(Long userId, ImageGenerateRequest request) {
 
