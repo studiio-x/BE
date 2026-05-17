@@ -11,7 +11,8 @@ public record GeminiGenerateResponse(
     public record Content(List<Part> parts) {}
 
     public record Part(
-            InlineData inline_data
+            InlineData inline_data,
+            String text
     ) {}
 
     public record InlineData(
