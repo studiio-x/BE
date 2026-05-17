@@ -5,13 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.auth.dto.request.LoginRequest;
 import net.studioxai.studioxBe.domain.auth.dto.request.PasswordResetRequest;
 import net.studioxai.studioxBe.domain.auth.dto.request.SignUpRequest;
-import net.studioxai.studioxBe.domain.auth.dto.response.EmailValidationResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
 import net.studioxai.studioxBe.domain.auth.entity.VerifiedEmailCode;
 import net.studioxai.studioxBe.domain.auth.repository.VerifiedEmailCodeRepository;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
 import net.studioxai.studioxBe.domain.folder.service.FolderService;
+import net.studioxai.studioxBe.domain.payment.entity.UserPlan;
+import net.studioxai.studioxBe.domain.payment.repository.UserPlanRepository;
 import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
@@ -42,6 +43,7 @@ public class AuthService {
 
     public static final String DEFAULT_PROFILE_IMAGE_URL = "profile-example.com";
     private final VerifiedEmailCodeRepository verifiedEmailCodeRepository;
+    private final UserPlanRepository userPlanRepository;
 
     @Transactional
     public void resetPassword(PasswordResetRequest passwordResetRequest) {
@@ -83,6 +85,7 @@ public class AuthService {
 
         userRepository.saveAndFlush(user);
         provisioningFolder(user);
+        provisionPlan(user);
 
         return buildLoginResponse(user);
     }
@@ -102,6 +105,11 @@ public class AuthService {
     protected void provisioningFolder(User user) {
         String folderName = user.getUsername();
         Folder folder = folderService.createRootFolder(folderName, user);
+    }
+    @Transactional
+    protected void provisionPlan(User user) {
+        UserPlan userPlan = UserPlan.createFree(user);
+        userPlanRepository.save(userPlan);
     }
 
     public User getUserByEmailOrThrow(String email) {

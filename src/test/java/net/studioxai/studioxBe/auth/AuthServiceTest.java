@@ -5,6 +5,9 @@ import net.studioxai.studioxBe.domain.auth.dto.request.SignUpRequest;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
 import net.studioxai.studioxBe.domain.folder.service.FolderService;
+import net.studioxai.studioxBe.domain.payment.entity.UserPlan;
+import net.studioxai.studioxBe.domain.payment.entity.enums.Plan;
+import net.studioxai.studioxBe.domain.payment.repository.UserPlanRepository;
 import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.domain.auth.exception.AuthErrorCode;
@@ -37,6 +40,9 @@ public class AuthServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private UserPlanRepository userPlanRepository;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     @Mock
@@ -53,6 +59,9 @@ public class AuthServiceTest {
 
     @Captor
     private ArgumentCaptor<User> userCaptor;
+
+    @Captor
+    private ArgumentCaptor<UserPlan> userPlanCaptor;
 
     @Mock
     private FolderService folderService;
@@ -195,6 +204,7 @@ public class AuthServiceTest {
         String rawPassword = "plain";
         String encodedPassword = "Encoded12341234";
         Long newUserId = 10L;
+        Long newUserPlanId = 10L;
         String accessToken = "new-access";
         String refreshToken = "new-refresh";
 
@@ -208,6 +218,13 @@ public class AuthServiceTest {
                 .willAnswer(invocation -> {
                     User saved = invocation.getArgument(0);
                     ReflectionTestUtils.setField(saved, "id", newUserId);
+                    return saved;
+                });
+
+        BDDMockito.given(userPlanRepository.save(any(UserPlan.class)))
+                .willAnswer(invocation -> {
+                    UserPlan saved = invocation.getArgument(0);
+                    ReflectionTestUtils.setField(saved, "id", newUserPlanId);
                     return saved;
                 });
 
@@ -239,6 +256,13 @@ public class AuthServiceTest {
         Mockito.verify(jwtProvider).createAccessToken(newUserId);
         Mockito.verify(jwtProvider).createRefreshToken(newUserId);
         Mockito.verify(tokenService).saveRefreshToken(refreshToken, newUserId);
+
+        Mockito.verify(userPlanRepository).save(userPlanCaptor.capture());
+
+        UserPlan savedUserPlan = userPlanCaptor.getValue();
+
+        Assertions.assertThat(savedUserPlan.getId()).isEqualTo(newUserPlanId);
+        Assertions.assertThat(savedUserPlan.getUser()).isEqualTo(savedUser);
     }
 
     @Test
