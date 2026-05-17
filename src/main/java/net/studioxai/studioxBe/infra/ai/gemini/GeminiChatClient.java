@@ -116,13 +116,6 @@ public class GeminiChatClient {
                         e.getMessage(),
                         e);
 
-                if (e.getCause() != null) {
-                    log.error("[Gemini] Concept generation root cause. causeType={}, causeMessage={}",
-                            e.getCause().getClass().getName(),
-                            e.getCause().getMessage(),
-                            e.getCause());
-                }
-
                 throw new AiExceptionHandler(AiErrorCode.AI_CALL_FAILED);
             }
         }
@@ -220,9 +213,9 @@ public class GeminiChatClient {
                     response.getBody() != null);
 
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-                log.error("[Gemini] Invalid response. status={}, body={}",
+                log.error("[Gemini] Invalid response. status={}, hasBody={}",
                         response.getStatusCode(),
-                        response.getBody());
+                        response.getBody() != null);
                 throw new AiExceptionHandler(AiErrorCode.AI_INVALID_RESPONSE);
             }
 
@@ -256,7 +249,7 @@ public class GeminiChatClient {
 
     private String extractImageBase64(GeminiGenerateResponse response) {
         if (response.candidates() == null || response.candidates().isEmpty()) {
-            log.error("[Gemini] No candidates. response={}", response);
+            log.error("[Gemini] No candidates in response.");
             throw new AiExceptionHandler(AiErrorCode.AI_INVALID_RESPONSE);
         }
 
@@ -274,17 +267,17 @@ public class GeminiChatClient {
             throw new AiExceptionHandler(AiErrorCode.AI_INVALID_RESPONSE);
         }
 
-        log.error("[Gemini] parts count={}", parts.size());
+        log.info("[Gemini] parts count={}", parts.size());
 
         for (int i = 0; i < parts.size(); i++) {
             GeminiGenerateResponse.Part part = parts.get(i);
 
-            log.error("[Gemini] part[{}] text={}", i, part.text());
-            log.error("[Gemini] part[{}] hasInlineData={}", i, part.inline_data() != null);
+            log.info("[Gemini] part[{}] text={}", i, part.text());
+            log.info("[Gemini] part[{}] hasInlineData={}", i, part.inline_data() != null);
 
             if (part.inline_data() != null) {
-                log.error("[Gemini] part[{}] inlineData mimeType={}", i, part.inline_data().mime_type());
-                log.error("[Gemini] part[{}] inlineData data length={}",
+                log.info("[Gemini] part[{}] inlineData mimeType={}", i, part.inline_data().mime_type());
+                log.info("[Gemini] part[{}] inlineData data length={}",
                         i,
                         part.inline_data().data() == null ? null : part.inline_data().data().length());
             }
@@ -296,7 +289,7 @@ public class GeminiChatClient {
                 .filter(data -> data != null && !data.isBlank())
                 .findFirst()
                 .orElseThrow(() -> {
-                    log.error("[Gemini] No image inline_data found. Full response={}", response);
+                    log.error("[Gemini] No image inline_data found in response.");
                     return new AiExceptionHandler(AiErrorCode.AI_INVALID_RESPONSE);
                 });
     }
