@@ -62,12 +62,18 @@ dependencies {
 
 	//s3
 	implementation group: 'software.amazon.awssdk', name: 's3', version: "2.20.68"
+	implementation 'software.amazon.awssdk:url-connection-client:2.20.68'
 
 	// actuator
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
 	// prometheus
 	implementation 'io.micrometer:micrometer-registry-prometheus'
+
+	implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
+
+	// gemini
+	implementation 'com.google.genai:google-genai:1.53.0'
 }
 
 tasks.named('test') {

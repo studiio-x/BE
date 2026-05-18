@@ -11,12 +11,12 @@ public record GeminiGenerateResponse(
     public record Content(List<Part> parts) {}
 
     public record Part(
-            InlineData inline_data,
+            InlineData inlineData,
             String text
     ) {}
 
     public record InlineData(
-            String mime_type,
+            String mimeType,
             String data
     ) {}
 }
