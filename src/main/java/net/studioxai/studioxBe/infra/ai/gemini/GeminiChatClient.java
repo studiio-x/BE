@@ -273,19 +273,19 @@ public class GeminiChatClient {
             GeminiGenerateResponse.Part part = parts.get(i);
 
             log.info("[Gemini] part[{}] text={}", i, part.text());
-            log.info("[Gemini] part[{}] hasInlineData={}", i, part.inline_data() != null);
+            log.info("[Gemini] part[{}] hasInlineData={}", i, part.inlineData() != null);
 
-            if (part.inline_data() != null) {
-                log.info("[Gemini] part[{}] inlineData mimeType={}", i, part.inline_data().mime_type());
+            if (part.inlineData() != null) {
+                log.info("[Gemini] part[{}] inlineData mimeType={}", i, part.inlineData().mimeType());
                 log.info("[Gemini] part[{}] inlineData data length={}",
                         i,
-                        part.inline_data().data() == null ? null : part.inline_data().data().length());
+                        part.inlineData().data() == null ? null : part.inlineData().data().length());
             }
         }
 
         return parts.stream()
-                .filter(part -> part.inline_data() != null)
-                .map(part -> part.inline_data().data())
+                .filter(part -> part.inlineData() != null)
+                .map(part -> part.inlineData().data())
                 .filter(data -> data != null && !data.isBlank())
                 .findFirst()
                 .orElseThrow(() -> {
