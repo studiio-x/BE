@@ -37,8 +37,8 @@ public class TossService {
     @Value("${toss.pay.secure-key}")
     private String tossSecureKey;
 
-    @Value("${toss.pay.client-id}")
-    private String tossClientId;
+    @Value("${toss.pay.client-key}")
+    private String tossClientKey;
 
     private final JsonUtil jsonUtil;
 
