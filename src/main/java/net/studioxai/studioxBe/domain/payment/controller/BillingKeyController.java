@@ -17,7 +17,7 @@ import java.io.IOException;
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class BillingKeyController {
-    BillingKeyService billingKeyService;
+    private final BillingKeyService billingKeyService;
 
     @PostMapping("/v1/payment/billingKey/authKey")
     public void createBillingKeyAuthKey(
