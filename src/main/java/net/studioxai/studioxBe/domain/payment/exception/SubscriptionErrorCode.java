@@ -8,12 +8,8 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @RequiredArgsConstructor
-public enum BillingKeyErrorCode implements BaseErrorCode {
-    // 400 Bad Request
-    INVALID_CUSTOM_KEY(HttpStatus.BAD_REQUEST, "BILLING_KEY_400_1", "커스텀 키가 일치하지 않습니다."),
-
-    // 404 Not Found
-    NOT_FOUND_BILLING_KEY(HttpStatus.NOT_FOUND, "BILLING_KEY_404_1", "빌링키를 찾을 수 없습니다.");
+public enum SubscriptionErrorCode implements BaseErrorCode {
+    NOT_FOUND_SUBSCRIPTION(HttpStatus.NOT_FOUND, "SUBSCRIPTION_404_1", "해당 id의 구독을 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;
@@ -24,4 +20,3 @@ public enum BillingKeyErrorCode implements BaseErrorCode {
         return ErrorReason.of(status.value(), code, reason);
     }
 }
-

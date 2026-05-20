@@ -103,6 +103,10 @@ public class TossService {
         connection.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString((secretKey + ":").getBytes(StandardCharsets.UTF_8)));
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setRequestMethod("POST");
+
+        connection.setConnectTimeout(5_000);
+        connection.setReadTimeout(70_000);
+
         connection.setDoOutput(true);
         return connection;
     }

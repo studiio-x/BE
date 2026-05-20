@@ -6,8 +6,10 @@ import net.studioxai.studioxBe.domain.payment.dto.request.BillingKeyAuthKeyCreat
 import net.studioxai.studioxBe.domain.payment.dto.request.BillingKeyCardCreateRequest;
 import net.studioxai.studioxBe.domain.payment.dto.response.BillingKeyResponse;
 import net.studioxai.studioxBe.domain.payment.entity.BillingKey;
+import net.studioxai.studioxBe.domain.payment.entity.enums.Plan;
 import net.studioxai.studioxBe.domain.payment.exception.BillingKeyExceptionHandler;
 import net.studioxai.studioxBe.domain.payment.repository.BillingKeyRepository;
+import net.studioxai.studioxBe.domain.payment.service.BillingKeyApprovalService;
 import net.studioxai.studioxBe.domain.payment.service.BillingKeyService;
 import net.studioxai.studioxBe.domain.payment.service.TossService;
 import net.studioxai.studioxBe.domain.payment.util.JsonUtil;
@@ -16,10 +18,7 @@ import net.studioxai.studioxBe.domain.user.service.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
@@ -42,6 +41,9 @@ class BillingKeyServiceTest {
     private TossService tossService;
 
     @Mock
+    private BillingKeyApprovalService billingKeyApprovalService;
+
+    @Mock
     private JsonUtil jsonUtil;
 
     @Mock
@@ -50,28 +52,31 @@ class BillingKeyServiceTest {
     @InjectMocks
     private BillingKeyService billingKeyService;
 
-    @Mock
-    private User user;
+    private static final Long USER_ID = 1L;
+    private static final String CUSTOMER_KEY = "customer-key-123";
+    private static final String CLIENT_IP = "127.0.0.1";
 
     @Test
-    @DisplayName("authKey로 빌링키 발급 성공 - 카드 정보 저장")
+    @DisplayName("AuthKey로 빌링키 발급 성공 - 카드 정보 저장 후 결제 승인")
     void createBillingKeyWithAuthKey_success_card() throws IOException {
         // given
-        Long userId = 1L;
-        String customerKey = "customer-key";
-        String billingKeyValue = "billing-key-123";
-
+        User user = Mockito.mock(User.class);
         BillingKeyAuthKeyCreateRequest request = Mockito.mock(BillingKeyAuthKeyCreateRequest.class);
-        BillingKeyResponse response = Mockito.mock(BillingKeyResponse.class);
+
         CardDto card = Mockito.mock(CardDto.class);
+        given(card.issuerCode()).willReturn("61");
+        given(card.acquirerCode()).willReturn("31");
+        given(card.number()).willReturn("12345678****1234");
 
-        given(request.customerKey()).willReturn(customerKey);
+        BillingKeyResponse response = Mockito.mock(BillingKeyResponse.class);
+        given(response.billingKey()).willReturn("billing-key-123");
+        given(response.method()).willReturn("카드");
+        given(response.card()).willReturn(card);
+        given(response.transfers()).willReturn(null);
 
-        given(userService.getUserByIdOrThrow(userId))
-                .willReturn(user);
-
-        given(user.equalsCustomerKey(customerKey))
-                .willReturn(true);
+        given(request.customerKey()).willReturn(CUSTOMER_KEY);
+        given(user.equalsCustomerKey(CUSTOMER_KEY)).willReturn(true);
+        given(userService.getUserByIdOrThrow(USER_ID)).willReturn(user);
 
         given(tossService.getResponse(
                 eq(request),
@@ -79,57 +84,56 @@ class BillingKeyServiceTest {
                 eq("/v1/billing/authorizations/issue")
         )).willReturn(response);
 
-        given(response.billingKey()).willReturn(billingKeyValue);
-        given(response.method()).willReturn("카드");
-        given(response.card()).willReturn(card);
-        given(response.transfers()).willReturn(null);
-
-        given(card.issuerCode()).willReturn("61");
-        given(card.acquirerCode()).willReturn("31");
-        given(card.number()).willReturn("123456******7890");
-
-        ArgumentCaptor<BillingKey> billingKeyCaptor =
-                ArgumentCaptor.forClass(BillingKey.class);
+        Plan plan = Plan.values()[0];
 
         // when
-        billingKeyService.createBillingKeyWithAuthKey(userId, request);
+        billingKeyService.createBillingKeyWithAuthKey(
+                USER_ID,
+                request,
+                plan,
+                CLIENT_IP
+        );
 
         // then
-        verify(billingKeyRepository).save(billingKeyCaptor.capture());
+        ArgumentCaptor<BillingKey> captor = ArgumentCaptor.forClass(BillingKey.class);
+        BDDMockito.then(billingKeyRepository).should().save(captor.capture());
 
-        BillingKey savedBillingKey = billingKeyCaptor.getValue();
+        BillingKey savedBillingKey = captor.getValue();
 
         assertThat(savedBillingKey.getUser()).isEqualTo(user);
-        assertThat(savedBillingKey.getBillingKey()).isEqualTo(billingKeyValue);
+        assertThat(savedBillingKey.getBillingKey()).isEqualTo("billing-key-123");
         assertThat(savedBillingKey.getMethod()).isEqualTo("카드");
-
         assertThat(savedBillingKey.getCardIssueCompany()).isEqualTo("61");
         assertThat(savedBillingKey.getCardAcquirerCompany()).isEqualTo("31");
-        assertThat(savedBillingKey.getCardNumber()).isEqualTo("123456******7890");
-
+        assertThat(savedBillingKey.getCardNumber()).isEqualTo("12345678****1234");
         assertThat(savedBillingKey.getBankName()).isNull();
         assertThat(savedBillingKey.getBankAccountNumber()).isNull();
+
+        BDDMockito.then(billingKeyApprovalService)
+                .should()
+                .approveBilling(user, plan, CLIENT_IP);
     }
 
     @Test
-    @DisplayName("카드 정보로 빌링키 발급 성공 - 계좌이체 정보 저장")
+    @DisplayName("Card 정보로 빌링키 발급 성공 - 계좌이체 정보 저장 후 결제 승인")
     void createBillingKeyWithCard_success_transfer() throws IOException {
         // given
-        Long userId = 1L;
-        String customerKey = "customer-key";
-        String billingKeyValue = "billing-key-456";
-
+        User user = Mockito.mock(User.class);
         BillingKeyCardCreateRequest request = Mockito.mock(BillingKeyCardCreateRequest.class);
-        BillingKeyResponse response = Mockito.mock(BillingKeyResponse.class);
+
         TransferDto transfer = Mockito.mock(TransferDto.class);
+        given(transfer.bankName()).willReturn("국민은행");
+        given(transfer.bankAccountNumber()).willReturn("1234567890");
 
-        given(request.customerKey()).willReturn(customerKey);
+        BillingKeyResponse response = Mockito.mock(BillingKeyResponse.class);
+        given(response.billingKey()).willReturn("billing-key-transfer");
+        given(response.method()).willReturn("계좌이체");
+        given(response.card()).willReturn(null);
+        given(response.transfers()).willReturn(List.of(transfer));
 
-        given(userService.getUserByIdOrThrow(userId))
-                .willReturn(user);
-
-        given(user.equalsCustomerKey(customerKey))
-                .willReturn(true);
+        given(request.customerKey()).willReturn(CUSTOMER_KEY);
+        given(user.equalsCustomerKey(CUSTOMER_KEY)).willReturn(true);
+        given(userService.getUserByIdOrThrow(USER_ID)).willReturn(user);
 
         given(tossService.getResponse(
                 eq(request),
@@ -137,92 +141,89 @@ class BillingKeyServiceTest {
                 eq("/v1/billing/authorizations/card")
         )).willReturn(response);
 
-        given(response.billingKey()).willReturn(billingKeyValue);
-        given(response.method()).willReturn("계좌이체");
-        given(response.card()).willReturn(null);
-        given(response.transfers()).willReturn(List.of(transfer));
-
-        given(transfer.bankName()).willReturn("신한은행");
-        given(transfer.bankAccountNumber()).willReturn("110123456789");
-
-        ArgumentCaptor<BillingKey> billingKeyCaptor =
-                ArgumentCaptor.forClass(BillingKey.class);
+        Plan plan = Plan.values()[0];
 
         // when
-        billingKeyService.createBillingKeyWithCard(userId, request);
+        billingKeyService.createBillingKeyWithCard(
+                USER_ID,
+                request,
+                plan,
+                CLIENT_IP
+        );
 
         // then
-        verify(billingKeyRepository).save(billingKeyCaptor.capture());
+        ArgumentCaptor<BillingKey> captor = ArgumentCaptor.forClass(BillingKey.class);
+        BDDMockito.then(billingKeyRepository).should().save(captor.capture());
 
-        BillingKey savedBillingKey = billingKeyCaptor.getValue();
+        BillingKey savedBillingKey = captor.getValue();
 
         assertThat(savedBillingKey.getUser()).isEqualTo(user);
-        assertThat(savedBillingKey.getBillingKey()).isEqualTo(billingKeyValue);
+        assertThat(savedBillingKey.getBillingKey()).isEqualTo("billing-key-transfer");
         assertThat(savedBillingKey.getMethod()).isEqualTo("계좌이체");
-
-        assertThat(savedBillingKey.getBankName()).isEqualTo("신한은행");
-        assertThat(savedBillingKey.getBankAccountNumber()).isEqualTo("110123456789");
-
+        assertThat(savedBillingKey.getBankName()).isEqualTo("국민은행");
+        assertThat(savedBillingKey.getBankAccountNumber()).isEqualTo("1234567890");
         assertThat(savedBillingKey.getCardIssueCompany()).isNull();
         assertThat(savedBillingKey.getCardAcquirerCompany()).isNull();
         assertThat(savedBillingKey.getCardNumber()).isNull();
+
+        BDDMockito.then(billingKeyApprovalService)
+                .should()
+                .approveBilling(user, plan, CLIENT_IP);
     }
 
     @Test
-    @DisplayName("authKey 빌링키 발급 실패 - customerKey 불일치")
-    void createBillingKeyWithAuthKey_fail_invalidCustomerKey() throws IOException {
+    @DisplayName("AuthKey 빌링키 발급 실패 - customerKey가 일치하지 않으면 예외 발생")
+    void createBillingKeyWithAuthKey_fail_invalidCustomerKey() {
         // given
-        Long userId = 1L;
-        String requestCustomerKey = "wrong-customer-key";
-
+        User user = Mockito.mock(User.class);
         BillingKeyAuthKeyCreateRequest request = Mockito.mock(BillingKeyAuthKeyCreateRequest.class);
 
-        given(request.customerKey()).willReturn(requestCustomerKey);
+        given(request.customerKey()).willReturn("wrong-customer-key");
+        given(user.equalsCustomerKey("wrong-customer-key")).willReturn(false);
+        given(userService.getUserByIdOrThrow(USER_ID)).willReturn(user);
 
-        given(userService.getUserByIdOrThrow(userId))
-                .willReturn(user);
-
-        given(user.equalsCustomerKey(requestCustomerKey))
-                .willReturn(false);
+        Plan plan = Plan.values()[0];
 
         // when & then
         assertThatThrownBy(() ->
-                billingKeyService.createBillingKeyWithAuthKey(userId, request)
+                billingKeyService.createBillingKeyWithAuthKey(
+                        USER_ID,
+                        request,
+                        plan,
+                        CLIENT_IP
+                )
         ).isInstanceOf(BillingKeyExceptionHandler.class);
 
-        verify(tossService, never())
-                .getResponse(any(), any(), anyString());
-
-        verify(billingKeyRepository, never())
-                .save(any(BillingKey.class));
+        BDDMockito.then(tossService).shouldHaveNoInteractions();
+        BDDMockito.then(billingKeyRepository).shouldHaveNoInteractions();
+        BDDMockito.then(billingKeyApprovalService).shouldHaveNoInteractions();
     }
 
     @Test
-    @DisplayName("카드 빌링키 발급 실패 - customerKey 불일치")
-    void createBillingKeyWithCard_fail_invalidCustomerKey() throws IOException {
+    @DisplayName("Card 빌링키 발급 실패 - customerKey가 일치하지 않으면 예외 발생")
+    void createBillingKeyWithCard_fail_invalidCustomerKey() {
         // given
-        Long userId = 1L;
-        String requestCustomerKey = "wrong-customer-key";
-
+        User user = Mockito.mock(User.class);
         BillingKeyCardCreateRequest request = Mockito.mock(BillingKeyCardCreateRequest.class);
 
-        given(request.customerKey()).willReturn(requestCustomerKey);
+        given(request.customerKey()).willReturn("wrong-customer-key");
+        given(user.equalsCustomerKey("wrong-customer-key")).willReturn(false);
+        given(userService.getUserByIdOrThrow(USER_ID)).willReturn(user);
 
-        given(userService.getUserByIdOrThrow(userId))
-                .willReturn(user);
-
-        given(user.equalsCustomerKey(requestCustomerKey))
-                .willReturn(false);
+        Plan plan = Plan.values()[0];
 
         // when & then
         assertThatThrownBy(() ->
-                billingKeyService.createBillingKeyWithCard(userId, request)
+                billingKeyService.createBillingKeyWithCard(
+                        USER_ID,
+                        request,
+                        plan,
+                        CLIENT_IP
+                )
         ).isInstanceOf(BillingKeyExceptionHandler.class);
 
-        verify(tossService, never())
-                .getResponse(any(), any(), anyString());
-
-        verify(billingKeyRepository, never())
-                .save(any(BillingKey.class));
+        BDDMockito.then(tossService).shouldHaveNoInteractions();
+        BDDMockito.then(billingKeyRepository).shouldHaveNoInteractions();
+        BDDMockito.then(billingKeyApprovalService).shouldHaveNoInteractions();
     }
 }

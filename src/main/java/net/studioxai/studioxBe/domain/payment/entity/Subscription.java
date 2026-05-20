@@ -90,4 +90,12 @@ public class Subscription extends BaseEntity {
         this.status = SubscriptionStatus.EXPIRED;
     }
 
+    public static Subscription createSubscription(User user, Plan plan, BillingKey billingKey) {
+        return Subscription.builder()
+                .user(user)
+                .plan(plan)
+                .billingKey(billingKey)
+                .build();
+    }
+
 }

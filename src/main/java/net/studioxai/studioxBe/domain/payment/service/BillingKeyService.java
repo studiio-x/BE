@@ -8,6 +8,7 @@ import net.studioxai.studioxBe.domain.payment.dto.request.BillingKeyAuthKeyCreat
 import net.studioxai.studioxBe.domain.payment.dto.request.BillingKeyCardCreateRequest;
 import net.studioxai.studioxBe.domain.payment.dto.response.BillingKeyResponse;
 import net.studioxai.studioxBe.domain.payment.entity.BillingKey;
+import net.studioxai.studioxBe.domain.payment.entity.enums.Plan;
 import net.studioxai.studioxBe.domain.payment.exception.BillingKeyErrorCode;
 import net.studioxai.studioxBe.domain.payment.exception.BillingKeyExceptionHandler;
 import net.studioxai.studioxBe.domain.payment.repository.BillingKeyRepository;
@@ -29,6 +30,7 @@ import java.io.IOException;
 public class BillingKeyService {
     private final UserService userService;
     private final TossService tossService;
+    private final BillingKeyApprovalService billingKeyApprovalService;
 
     private final JsonUtil jsonUtil;
 
@@ -37,7 +39,9 @@ public class BillingKeyService {
     @Transactional
     public void createBillingKeyWithAuthKey(
             Long userId,
-            BillingKeyAuthKeyCreateRequest billingKeyAuthKeyCreateRequest
+            BillingKeyAuthKeyCreateRequest billingKeyAuthKeyCreateRequest,
+            Plan plan,
+            String clientIp
     ) throws IOException {
         User user = userService.getUserByIdOrThrow(userId);
 
@@ -49,12 +53,16 @@ public class BillingKeyService {
 
         BillingKey billingKey = toEntity(user, response);
         saveBillingKey(billingKey);
+
+        billingKeyApprovalService.approveBilling(user, plan, clientIp);
     }
 
     @Transactional
     public void createBillingKeyWithCard(
             Long userId,
-            BillingKeyCardCreateRequest billingKeyCardCreateRequest
+            BillingKeyCardCreateRequest billingKeyCardCreateRequest,
+            Plan plan,
+            String clientIp
     ) throws IOException {
         User user = userService.getUserByIdOrThrow(userId);
 
@@ -66,6 +74,8 @@ public class BillingKeyService {
 
         BillingKey billingKey = toEntity(user, response);
         saveBillingKey(billingKey);
+
+        billingKeyApprovalService.approveBilling(user, plan, clientIp);
 
     }
 

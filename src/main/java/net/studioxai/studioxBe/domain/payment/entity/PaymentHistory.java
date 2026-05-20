@@ -25,21 +25,20 @@ public class PaymentHistory extends BaseEntity {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subscription_id")
-    private Subscription subscription;
-
-    @Enumerated(EnumType.STRING)
-    private Plan plan;
-
     private String orderId;
 
     private String paymentKey;
 
-    private int amount;
+    private long amount;
+
+    private String method;
 
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
+
+    private String requestedAt;
+
+    private String approvedAt;
 
     private String failureCode;
 
@@ -47,14 +46,19 @@ public class PaymentHistory extends BaseEntity {
 
     private LocalDateTime paidAt;
 
+    public static PaymentHistory createPaymentHistory(User user, String orderId, int amount) {
+        return PaymentHistory.builder()
+                .user(user)
+                .orderId(orderId)
+                .amount(amount)
+                .build();
+    }
+
     @Builder(access = AccessLevel.PRIVATE)
-    private PaymentHistory(User user, Subscription subscription, Plan plan, String orderId, String paymentKey, int amout) {
+    private PaymentHistory(User user, String orderId, int amount) {
         this.user = user;
-        this.subscription = subscription;
-        this.plan = plan;
         this.orderId = orderId;
-        this.amount = amout;
-        this.paymentKey = paymentKey;
+        this.amount = amount;
         this.status = PaymentStatus.READY;
         this.paidAt = LocalDateTime.now();
     }
@@ -67,5 +71,29 @@ public class PaymentHistory extends BaseEntity {
     public void markAsFail() {
         this.status = PaymentStatus.FAILED;
         this.paidAt = LocalDateTime.now();
+    }
+
+    public void updatePaymentResult(
+            String paymentKey,
+            long amount,
+            String method,
+            PaymentStatus status,
+            String requestedAt,
+            String approvedAt,
+            String failureCode,
+            String failureMessage
+    ) {
+        this.paymentKey = paymentKey;
+        this.amount = amount;
+        this.method = method;
+        this.status = status;
+        this.requestedAt = requestedAt;
+        this.approvedAt = approvedAt;
+        this.failureCode = failureCode;
+        this.failureMessage = failureMessage;
+
+        if (status == PaymentStatus.SUCCESS || status == PaymentStatus.FAILED) {
+            this.paidAt = LocalDateTime.now();
+        }
     }
 }
