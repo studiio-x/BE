@@ -20,4 +20,6 @@ public class BillingScheduler {
 
         log.info("[BillingScheduler] daily billing finished");
     }
+
+    // TODO: 결제 실패 건 재시도 작성
 }

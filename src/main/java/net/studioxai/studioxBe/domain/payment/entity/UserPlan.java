@@ -46,10 +46,15 @@ public class UserPlan extends BaseEntity {
     @Builder(access = AccessLevel.PRIVATE)
     private UserPlan(User user, Plan plan) {
         this.user = user;
-        this.credit = plan.getCredit();
+        this.credit = 0;
         this.storage = 0;
         this.reference = 0;
         this.teamSize = plan.getTeamSize();
+    }
+
+    public void montlyInitialize() {
+        this.credit = 0;
+        this.reference = 0;
     }
 
 }

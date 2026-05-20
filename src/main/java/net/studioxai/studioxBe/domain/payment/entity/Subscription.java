@@ -37,6 +37,9 @@ public class Subscription extends BaseEntity {
     @Column(nullable = false)
     private SubscriptionStatus status;
 
+    @Column(columnDefinition="TEXT")
+    private String cancelReason;
+
     private LocalDateTime startedAt;
 
     private LocalDateTime currentPeriodStart;

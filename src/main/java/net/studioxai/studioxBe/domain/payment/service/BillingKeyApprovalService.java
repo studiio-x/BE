@@ -7,16 +7,11 @@ import net.studioxai.studioxBe.domain.payment.dto.response.BillingApprovalRespon
 import net.studioxai.studioxBe.domain.payment.entity.BillingKey;
 import net.studioxai.studioxBe.domain.payment.entity.PaymentHistory;
 import net.studioxai.studioxBe.domain.payment.entity.Subscription;
+import net.studioxai.studioxBe.domain.payment.entity.UserPlan;
 import net.studioxai.studioxBe.domain.payment.entity.enums.PaymentStatus;
 import net.studioxai.studioxBe.domain.payment.entity.enums.Plan;
-import net.studioxai.studioxBe.domain.payment.exception.BillingKeyErrorCode;
-import net.studioxai.studioxBe.domain.payment.exception.BillingKeyExceptionHandler;
-import net.studioxai.studioxBe.domain.payment.exception.SubscriptionErrorCode;
-import net.studioxai.studioxBe.domain.payment.exception.SubscriptionExceptionHandler;
-import net.studioxai.studioxBe.domain.payment.repository.BillingKeyRepository;
-import net.studioxai.studioxBe.domain.payment.repository.ExchangeRateRepository;
-import net.studioxai.studioxBe.domain.payment.repository.PaymentHistoryRepository;
-import net.studioxai.studioxBe.domain.payment.repository.SubscriptionRepository;
+import net.studioxai.studioxBe.domain.payment.exception.*;
+import net.studioxai.studioxBe.domain.payment.repository.*;
 import net.studioxai.studioxBe.domain.user.entity.User;
 import net.studioxai.studioxBe.global.util.IpUtil;
 import org.springframework.stereotype.Service;
@@ -40,6 +35,7 @@ public class BillingKeyApprovalService {
     private final PaymentHistoryRepository paymentHistoryRepository;
     private final BillingKeyRepository billingKeyRepository;
     private final SubscriptionRepository subscriptionRepository;
+    private final UserPlanRepository userPlanRepository;
 
     @Transactional
     public void approveBilling(User user, Plan plan, String clientIp) throws IOException {
@@ -47,6 +43,10 @@ public class BillingKeyApprovalService {
 
         BillingKey billingKey = billingKeyRepository.findByUser(user).orElseThrow(
                 () -> new BillingKeyExceptionHandler(BillingKeyErrorCode.NOT_FOUND_BILLING_KEY)
+        );
+
+        UserPlan userPlan = userPlanRepository.findByUser(user).orElseThrow(
+                () -> new UserPlanExceptionHandler(UserPlanErrorCode.USER_PLAN_NOT_FOUNT)
         );
 
         long amount = exchangeRateService.getKrwRate()
@@ -61,6 +61,8 @@ public class BillingKeyApprovalService {
 
         Subscription subscription = Subscription.createSubscription(user, plan, billingKey);
         subscriptionRepository.save(subscription);
+
+        userPlan.montlyInitialize();
     }
 
     private PaymentHistory savePaymentHistory(User user, Plan plan) {
@@ -105,6 +107,10 @@ public class BillingKeyApprovalService {
         Plan plan = subscription.getPlan();
         BillingKey billingKey = subscription.getBillingKey();
 
+        UserPlan userPlan = userPlanRepository.findByUser(user).orElseThrow(
+                () -> new UserPlanExceptionHandler(UserPlanErrorCode.USER_PLAN_NOT_FOUNT)
+        );
+
         PaymentHistory paymentHistory = savePaymentHistory(user, plan);
 
         long amount = exchangeRateService.getKrwRate()
@@ -120,6 +126,8 @@ public class BillingKeyApprovalService {
         if (paymentHistory.getStatus() == PaymentStatus.SUCCESS) {
             subscription.renew();
         }
+
+        userPlan.montlyInitialize();
     }
 
 
