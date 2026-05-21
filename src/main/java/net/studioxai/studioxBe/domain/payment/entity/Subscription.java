@@ -62,13 +62,12 @@ public class Subscription extends BaseEntity {
     private boolean cancelAtPeriodEnd;
 
     @Builder
-    private Subscription(User user, Plan plan, BillingKey billingKey) {
-        LocalDateTime now = LocalDateTime.now();
+    private Subscription(User user, Plan plan, BillingKey billingKey, SubscriptionStatus status, LocalDateTime now) {
 
         this.user = user;
         this.plan = plan;
         this.billingKey = billingKey;
-        this.status = SubscriptionStatus.ACTIVE;
+        this.status = status;
         this.startedAt = now;
         this.currentPeriodStart = now;
         this.currentPeriodEnd = now.plusMonths(1);
@@ -114,10 +113,33 @@ public class Subscription extends BaseEntity {
     }
 
     public static Subscription createSubscription(User user, Plan plan, BillingKey billingKey) {
+        LocalDateTime now = LocalDateTime.now();
         return Subscription.builder()
                 .user(user)
                 .plan(plan)
+                .status(SubscriptionStatus.ACTIVE)
                 .billingKey(billingKey)
+                .now(now)
+                .build();
+    }
+
+    public static Subscription downGradeSubscription(User user, Plan plan, BillingKey billingKey, Subscription subscription) {
+        return Subscription.builder()
+                .user(user)
+                .plan(plan)
+                .status(SubscriptionStatus.CHANGE_SCHEDULED)
+                .billingKey(billingKey)
+                .now(subscription.startedAt)
+                .build();
+    }
+
+    public static Subscription upgradeSubscription(User user, Plan plan, BillingKey billingKey, Subscription subscription) {
+        return Subscription.builder()
+                .user(user)
+                .plan(plan)
+                .status(SubscriptionStatus.ACTIVE)
+                .billingKey(billingKey)
+                .now(subscription.startedAt)
                 .build();
     }
 

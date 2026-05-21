@@ -14,20 +14,24 @@ import java.util.Optional;
 
 public interface SubscriptionRepository extends JpaRepository<Subscription, Long> {
     @Query("""
-    select s.id
+    select s
     from Subscription s
+    join fetch s.user
+    join fetch s.billingKey
     where s.nextBillingAt < :startOfTomorrow
       and s.id > :lastId
+      and s.status in :statuses
       and (
             s.nextBillingRetryAt is null
             or s.nextBillingRetryAt <= :now
           )
     order by s.id asc
     """)
-    List<Long> findDailyBillingTargetIds(
-            LocalDateTime startOfTomorrow,
-            LocalDateTime now,
-            Long lastId,
+    List<Subscription> findDailyBillingTargets(
+            @Param("startOfTomorrow") LocalDateTime startOfTomorrow,
+            @Param("now") LocalDateTime now,
+            @Param("lastId") Long lastId,
+            @Param("statuses") List<SubscriptionStatus> statuses,
             Pageable pageable
     );
 
@@ -38,7 +42,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
         order by s.createdAt desc
         limit 1
         """)
-    Optional<Subscription> findLatestByUser(@Param("user") User user);
+    Optional<Subscription> findLatestByUser(@Param("user") User user, @Param("statuses") List<SubscriptionStatus> statuses);
 
     @Query("""
     select s

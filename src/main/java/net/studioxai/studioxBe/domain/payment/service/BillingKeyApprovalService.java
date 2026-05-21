@@ -10,6 +10,7 @@ import net.studioxai.studioxBe.domain.payment.entity.Subscription;
 import net.studioxai.studioxBe.domain.payment.entity.UserPlan;
 import net.studioxai.studioxBe.domain.payment.entity.enums.PaymentStatus;
 import net.studioxai.studioxBe.domain.payment.entity.enums.Plan;
+import net.studioxai.studioxBe.domain.payment.entity.enums.SubscriptionStatus;
 import net.studioxai.studioxBe.domain.payment.exception.*;
 import net.studioxai.studioxBe.domain.payment.repository.*;
 import net.studioxai.studioxBe.domain.user.entity.User;
@@ -36,6 +37,37 @@ public class BillingKeyApprovalService {
     private final BillingKeyRepository billingKeyRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final UserPlanRepository userPlanRepository;
+
+    @Transactional
+    public void chargeUpgradePlan(User user, Subscription subscription, Plan newPlan, long amount) throws IOException {
+        PaymentHistory paymentHistory = savePaymentHistory(user, newPlan);
+
+        BillingKey billingKey = billingKeyRepository.findByUser(user).orElseThrow(
+                () -> new BillingKeyExceptionHandler(BillingKeyErrorCode.NOT_FOUND_BILLING_KEY)
+        );
+
+        UserPlan userPlan = userPlanRepository.findByUser(user).orElseThrow(
+                () -> new UserPlanExceptionHandler(UserPlanErrorCode.USER_PLAN_NOT_FOUNT)
+        );
+
+        BillingApprovalRequest request = BillingApprovalRequest.of(user, newPlan, amount, billingKey, paymentHistory, null, 0, 0);
+
+        BillingApprovalResponse response = tossService.getResponse(request, BillingApprovalResponse.class, "/v1/billing/"+billingKey.getBillingKey());
+
+        updatePaymentHistory(paymentHistory, response);
+
+        if (paymentHistory.getStatus() == PaymentStatus.SUCCESS) {
+            subscription.cancelAtPeriodEnd("Change the Plan");
+            Subscription newSubscription = Subscription.upgradeSubscription(user, newPlan, billingKey, subscription);
+            subscriptionRepository.save(newSubscription);
+            userPlan.changePlan(newPlan);
+        }
+        else {
+            LocalDateTime now = LocalDateTime.now();
+            subscription.markBillingFailed(paymentHistory.getFailureMessage(), now);
+        }
+
+    }
 
     @Transactional
     public void approveBilling(User user, Plan plan, String clientIp) throws IOException {
@@ -101,11 +133,8 @@ public class BillingKeyApprovalService {
         );
     }
 
-    public void paySubscription(Long subscriptionId) throws IOException {
-        Subscription subscription = subscriptionRepository.findById(subscriptionId).orElseThrow(
-                () -> new SubscriptionExceptionHandler(SubscriptionErrorCode.SUBSCRIPTION_NOT_FOUND)
-        );
-
+    @Transactional
+    public void paySubscription(Subscription subscription) throws IOException {
         User user = subscription.getUser();
         Plan plan = subscription.getPlan();
         BillingKey billingKey = subscription.getBillingKey();
@@ -127,8 +156,12 @@ public class BillingKeyApprovalService {
         updatePaymentHistory(paymentHistory, response);
 
         if (paymentHistory.getStatus() == PaymentStatus.SUCCESS) {
+            if (subscription.getStatus() == SubscriptionStatus.CHANGE_SCHEDULED) {
+                userPlan.changePlan(plan);
+            }
             subscription.renew();
             userPlan.montlyInitialize();
+
         }
         else {
             LocalDateTime now = LocalDateTime.now();
