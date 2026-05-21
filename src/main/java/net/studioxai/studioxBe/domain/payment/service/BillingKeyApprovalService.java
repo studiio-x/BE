@@ -3,7 +3,7 @@ package net.studioxai.studioxBe.domain.payment.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.studioxai.studioxBe.domain.payment.dto.request.BillingApprovalRequest;
-import net.studioxai.studioxBe.domain.payment.dto.response.BillingApprovalResponse;
+import net.studioxai.studioxBe.domain.payment.dto.response.PaymentApprovalResponse;
 import net.studioxai.studioxBe.domain.payment.entity.BillingKey;
 import net.studioxai.studioxBe.domain.payment.entity.PaymentHistory;
 import net.studioxai.studioxBe.domain.payment.entity.Subscription;
@@ -52,7 +52,7 @@ public class BillingKeyApprovalService {
 
         BillingApprovalRequest request = BillingApprovalRequest.of(user, newPlan, amount, billingKey, paymentHistory, null, 0, 0);
 
-        BillingApprovalResponse response = tossService.getResponse(request, BillingApprovalResponse.class, "/v1/billing/"+billingKey.getBillingKey());
+        PaymentApprovalResponse response = tossService.getResponse(request, PaymentApprovalResponse.class, "/v1/billing/"+billingKey.getBillingKey());
 
         updatePaymentHistory(paymentHistory, response);
 
@@ -87,7 +87,7 @@ public class BillingKeyApprovalService {
 
         BillingApprovalRequest request = BillingApprovalRequest.of(user, plan, amount, billingKey, paymentHistory, clientIp, 0, 0);
 
-        BillingApprovalResponse response = tossService.getResponse(request, BillingApprovalResponse.class, "/v1/billing/"+billingKey.getBillingKey());
+        PaymentApprovalResponse response = tossService.getResponse(request, PaymentApprovalResponse.class, "/v1/billing/"+billingKey.getBillingKey());
 
         updatePaymentHistory(paymentHistory, response);
         if (paymentHistory.getStatus() == PaymentStatus.SUCCESS) {
@@ -107,7 +107,7 @@ public class BillingKeyApprovalService {
         return paymentHistory;
     }
 
-    private void updatePaymentHistory(PaymentHistory paymentHistory, BillingApprovalResponse response) {
+    public void updatePaymentHistory(PaymentHistory paymentHistory, PaymentApprovalResponse response) {
         PaymentStatus paymentStatus =
                 "DONE".equals(response.status())
                         ? PaymentStatus.SUCCESS
@@ -151,7 +151,7 @@ public class BillingKeyApprovalService {
 
         BillingApprovalRequest request = BillingApprovalRequest.of(user, plan, amount, billingKey, paymentHistory, null, 0, 0);
 
-        BillingApprovalResponse response = tossService.getResponse(request, BillingApprovalResponse.class, "/v1/billing/"+billingKey.getBillingKey());
+        PaymentApprovalResponse response = tossService.getResponse(request, PaymentApprovalResponse.class, "/v1/billing/"+billingKey.getBillingKey());
 
         updatePaymentHistory(paymentHistory, response);
 

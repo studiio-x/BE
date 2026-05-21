@@ -5,7 +5,7 @@ import net.studioxai.studioxBe.domain.payment.dto.FailureDto;
 
 import java.math.BigDecimal;
 
-public record BillingApprovalResponse (
+public record PaymentApprovalResponse(
         String version,
         String paymentKey,
         String type,

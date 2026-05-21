@@ -66,4 +66,8 @@ public class UserPlan extends BaseEntity {
         this.plan = plan;
     }
 
+    public void chargeCredit(int credit) {
+        this.credit += credit;
+    }
+
 }
