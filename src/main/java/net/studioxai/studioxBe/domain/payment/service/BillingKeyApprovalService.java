@@ -18,8 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -49,7 +49,7 @@ public class BillingKeyApprovalService {
                 () -> new UserPlanExceptionHandler(UserPlanErrorCode.USER_PLAN_NOT_FOUNT)
         );
 
-        long amount = exchangeRateService.getKrwRate()
+        long amount = plan.getPrice() * exchangeRateService.getKrwRate()
                 .setScale(0, RoundingMode.HALF_UP)
                 .longValue();
 
@@ -58,11 +58,14 @@ public class BillingKeyApprovalService {
         BillingApprovalResponse response = tossService.getResponse(request, BillingApprovalResponse.class, "/v1/billing/"+billingKey.getBillingKey());
 
         updatePaymentHistory(paymentHistory, response);
+        if (paymentHistory.getStatus() == PaymentStatus.SUCCESS) {
+            Subscription subscription = Subscription.createSubscription(user, plan, billingKey);
+            subscriptionRepository.save(subscription);
 
-        Subscription subscription = Subscription.createSubscription(user, plan, billingKey);
-        subscriptionRepository.save(subscription);
+            userPlan.montlyInitialize();
+        }
+        // TODO: 첫 결제 실패 정책 수립 후 작성 예정
 
-        userPlan.montlyInitialize();
     }
 
     private PaymentHistory savePaymentHistory(User user, Plan plan) {
@@ -100,7 +103,7 @@ public class BillingKeyApprovalService {
 
     public void paySubscription(Long subscriptionId) throws IOException {
         Subscription subscription = subscriptionRepository.findById(subscriptionId).orElseThrow(
-                () -> new SubscriptionExceptionHandler(SubscriptionErrorCode.NOT_FOUND_SUBSCRIPTION)
+                () -> new SubscriptionExceptionHandler(SubscriptionErrorCode.SUBSCRIPTION_NOT_FOUND)
         );
 
         User user = subscription.getUser();
@@ -113,7 +116,7 @@ public class BillingKeyApprovalService {
 
         PaymentHistory paymentHistory = savePaymentHistory(user, plan);
 
-        long amount = exchangeRateService.getKrwRate()
+        long amount = plan.getPrice() * exchangeRateService.getKrwRate()
                 .setScale(0, RoundingMode.HALF_UP)
                 .longValue();
 
@@ -125,9 +128,14 @@ public class BillingKeyApprovalService {
 
         if (paymentHistory.getStatus() == PaymentStatus.SUCCESS) {
             subscription.renew();
+            userPlan.montlyInitialize();
+        }
+        else {
+            LocalDateTime now = LocalDateTime.now();
+            subscription.markBillingFailed(paymentHistory.getFailureMessage(), now);
         }
 
-        userPlan.montlyInitialize();
+
     }
 
 

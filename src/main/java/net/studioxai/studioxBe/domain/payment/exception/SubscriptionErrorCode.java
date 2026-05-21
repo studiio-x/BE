@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum SubscriptionErrorCode implements BaseErrorCode {
-    NOT_FOUND_SUBSCRIPTION(HttpStatus.NOT_FOUND, "SUBSCRIPTION_404_1", "해당 id의 구독을 찾을 수 없습니다.");
+    SUBSCRIPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "SUBSCRIPTION_404_1", "해당 id의 구독을 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;

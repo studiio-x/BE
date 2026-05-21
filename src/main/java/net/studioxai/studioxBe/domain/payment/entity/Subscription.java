@@ -50,6 +50,14 @@ public class Subscription extends BaseEntity {
 
     private LocalDateTime canceledAt;
 
+    private LocalDateTime lastBillingAttemptAt;
+
+    private Integer billingRetryCount;
+
+    private LocalDateTime nextBillingRetryAt;
+
+    private String lastBillingFailureReason;
+
     @Column(nullable = false)
     private boolean cancelAtPeriodEnd;
 
@@ -66,6 +74,7 @@ public class Subscription extends BaseEntity {
         this.currentPeriodEnd = now.plusMonths(1);
         this.nextBillingAt = now.plusMonths(1);
         this.cancelAtPeriodEnd = false;
+        this.billingRetryCount = 0;
     }
 
     public void changePlan(Plan plan) {
@@ -78,15 +87,26 @@ public class Subscription extends BaseEntity {
         this.currentPeriodStart = now;
         this.currentPeriodEnd = now.plusMonths(1);
         this.nextBillingAt = now.plusMonths(1);
+        this.billingRetryCount = 0;
+        this.nextBillingRetryAt = null;
+        this.lastBillingFailureReason = null;
+    }
+
+    public void markBillingFailed(String reason, LocalDateTime now) {
+        this.lastBillingAttemptAt = now;
+        this.billingRetryCount += 1;
+        this.nextBillingRetryAt = now.plusMinutes(30);
+        this.lastBillingFailureReason = reason;
     }
 
     public void markPastDue() {
         this.status = SubscriptionStatus.PAST_DUE;
     }
 
-    public void cancelAtPeriodEnd() {
+    public void cancelAtPeriodEnd(String cancelReason) {
         this.cancelAtPeriodEnd = true;
         this.canceledAt = LocalDateTime.now();
+        this.cancelReason = cancelReason;
     }
 
     public void expire() {

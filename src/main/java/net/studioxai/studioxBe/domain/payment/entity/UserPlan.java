@@ -36,6 +36,10 @@ public class UserPlan extends BaseEntity {
     @Column(name = "team_size", nullable = false)
     private int teamSize;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Plan plan;
+
     public static UserPlan createFree(User user) {
         return UserPlan.builder()
                 .user(user)
@@ -50,11 +54,16 @@ public class UserPlan extends BaseEntity {
         this.storage = 0;
         this.reference = 0;
         this.teamSize = plan.getTeamSize();
+        this.plan = plan;
     }
 
     public void montlyInitialize() {
         this.credit = 0;
         this.reference = 0;
+    }
+
+    public void changePlan(Plan plan) {
+        this.plan = plan;
     }
 
 }
