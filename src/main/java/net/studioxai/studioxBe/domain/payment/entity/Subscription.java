@@ -21,7 +21,7 @@ public class Subscription extends BaseEntity {
     @Column(name = "subscription_id")
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
@@ -106,6 +106,7 @@ public class Subscription extends BaseEntity {
         this.cancelAtPeriodEnd = true;
         this.canceledAt = LocalDateTime.now();
         this.cancelReason = cancelReason;
+        this.status = SubscriptionStatus.CANCEL_SCHEDULED;
     }
 
     public void expire() {

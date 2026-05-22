@@ -56,7 +56,11 @@ public class SubscriptionService {
 
         BigDecimal exchangeRate = exchangeRateService.getKrwRate();
 
-        long amount = calculateChangeFee(exchangeRate, subscription, plan, LocalDateTime.now());
+        UserPlan userplan = userPlanRepository.findByUser(user).orElseThrow(
+                () -> new UserPlanExceptionHandler(UserPlanErrorCode.USER_PLAN_NOT_FOUNT)
+        );
+
+        long amount = calculateChangeFee(exchangeRate, userplan, subscription, plan, LocalDateTime.now());
 
         if (amount > 0) {
            billingKeyApprovalService.chargeUpgradePlan(user, subscription, plan, amount);
@@ -153,8 +157,8 @@ public class SubscriptionService {
         }
     }
 
-    private long calculateChangeFee(BigDecimal krwRate, Subscription subscription, Plan plan, LocalDateTime now) {
-        Plan currentPlan = subscription.getPlan();
+    private long calculateChangeFee(BigDecimal krwRate, UserPlan userPlan, Subscription subscription, Plan plan, LocalDateTime now) {
+        Plan currentPlan = userPlan.getPlan();
         BigDecimal currentPrice = BigDecimal.valueOf(currentPlan.getPrice());
         BigDecimal newPrice = BigDecimal.valueOf(plan.getPrice());
 
