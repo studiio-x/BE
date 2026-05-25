@@ -78,6 +78,23 @@ public class SubscriptionService {
 
     }
 
+    public long getSubscriptionPrice(Long userId, Plan plan) {
+        User user = userService.getUserByIdOrThrow(userId);
+
+        BigDecimal exchangeRate = exchangeRateService.getKrwRate();
+
+        UserPlan userplan = userPlanRepository.findByUser(user).orElseThrow(
+                () -> new UserPlanExceptionHandler(UserPlanErrorCode.USER_PLAN_NOT_FOUNT)
+        );
+
+        Subscription subscription = subscriptionRepository.findLatestByUser(user, activeStatuses)
+                .orElseThrow(() -> new SubscriptionExceptionHandler(
+                        SubscriptionErrorCode.SUBSCRIPTION_NOT_FOUND
+                ));
+
+        return calculateChangeFee(exchangeRate, userplan, subscription, plan, LocalDateTime.now());
+    }
+
     @Transactional
     public void cancelSubscription(Long userId, String reason) {
         User user = userService.getUserByIdOrThrow(userId);

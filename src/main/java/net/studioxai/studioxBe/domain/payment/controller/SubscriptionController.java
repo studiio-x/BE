@@ -31,4 +31,12 @@ public class SubscriptionController {
     ) throws IOException {
         subscriptionService.changeSubscription(principal.userId(), plan);
     }
+
+    @GetMapping("/v1/subscription/price")
+    public long getSubscriptionPrice(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @RequestParam Plan plan
+    ) {
+        return subscriptionService.getSubscriptionPrice(principal.userId(), plan);
+    }
 }
