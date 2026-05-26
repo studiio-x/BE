@@ -22,13 +22,15 @@ public class ExtraCredit extends BaseEntity {
     @Column(name = "user_plan_id")
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CreditOption credit;
+
+    private int creditAmount;
 
     private LocalDateTime currentPeriodStart;
 
@@ -39,6 +41,7 @@ public class ExtraCredit extends BaseEntity {
     private ExtraCredit(User user, CreditOption credit, LocalDateTime now) {
         this.user = user;
         this.credit = credit;
+        this.creditAmount = credit.getCreditAmount();
         this.currentPeriodStart = now;
         this.currentPeriodEnd = now.plusDays(60);
     }
