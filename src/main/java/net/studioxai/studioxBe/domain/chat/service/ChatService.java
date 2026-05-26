@@ -25,6 +25,7 @@ import net.studioxai.studioxBe.infra.s3.S3ImageLoader;
 import net.studioxai.studioxBe.infra.s3.S3ImageUploader;
 import net.studioxai.studioxBe.infra.s3.S3Url;
 import net.studioxai.studioxBe.infra.s3.S3UrlHandler;
+import net.studioxai.studioxBe.global.lock.DistributedLock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -82,6 +83,7 @@ public class ChatService {
         return ChatHistoryResponse.of(chatRoom.getId(), chatRoom.getStatus(), messages, hasNext);
     }
 
+    @DistributedLock(key = "'ai:chat:user:' + #userId")
     @Transactional
     public ChatSendResponse sendMessage(Long userId, Long projectId, ChatMode mode, ChatSendRequest request) {
         Project project = getProjectAndVerifyAccess(userId, projectId);
@@ -146,6 +148,7 @@ public class ChatService {
         return ChatSendResponse.refine(aiMessage.getId(), aiMessage.getContent(), refineImageKey);
     }
 
+    @DistributedLock(key = "'ai:chat:user:' + #userId")
     @Transactional
     public ChatMessageResponse selectConcept(Long userId, Long projectId, ConceptSelectRequest request) {
         Project project = getProjectAndVerifyAccess(userId, projectId);

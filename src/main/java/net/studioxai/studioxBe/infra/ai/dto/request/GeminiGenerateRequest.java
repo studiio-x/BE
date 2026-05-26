@@ -1,11 +1,14 @@
 package net.studioxai.studioxBe.infra.ai.dto.request;
 
+import com.google.genai.types.GenerationConfig;
+
 import java.util.List;
 
 
 public record GeminiGenerateRequest(
-        List<Content> contents
-) {
+        List<Content> contents,
+        GenerationConfig generationConfig
+        ) {
 
     public static GeminiGenerateRequest of(
             String prompt,
@@ -16,7 +19,8 @@ public record GeminiGenerateRequest(
                         new Content(
                                 buildParts(prompt, imageParts)
                         )
-                )
+                ),
+                new GenerationConfig(List.of("IMAGE"))
         );
     }
 
@@ -40,6 +44,10 @@ public record GeminiGenerateRequest(
     public record InlineData(
             String mime_type,
             String data
+    ) {}
+
+    public record GenerationConfig(
+            List<String> responseModalities
     ) {}
 }
 

@@ -111,7 +111,11 @@ public class GeminiChatClient {
                 String base64 = future.get(120, TimeUnit.SECONDS);
                 conceptBase64List.add(base64);
             } catch (Exception e) {
-                log.error("Concept generation failed", e);
+                log.error("[Gemini] Concept generation failed. exceptionType={}, message={}",
+                        e.getClass().getName(),
+                        e.getMessage(),
+                        e);
+
                 throw new AiExceptionHandler(AiErrorCode.AI_CALL_FAILED);
             }
         }
@@ -154,6 +158,23 @@ public class GeminiChatClient {
             String referenceBase64,
             String maskBase64
     ) {
+        log.info("[Gemini] Concept variation={} start", variationIndex + 1);
+
+        log.info("[Gemini] currentImageBase64 null={}, length={}, startsWithDataPrefix={}",
+                currentImageBase64 == null,
+                currentImageBase64 == null ? null : currentImageBase64.length(),
+                currentImageBase64 != null && currentImageBase64.startsWith("data:image"));
+
+        log.info("[Gemini] referenceBase64 null={}, length={}, startsWithDataPrefix={}",
+                referenceBase64 == null,
+                referenceBase64 == null ? null : referenceBase64.length(),
+                referenceBase64 != null && referenceBase64.startsWith("data:image"));
+
+        log.info("[Gemini] maskBase64 null={}, length={}, startsWithDataPrefix={}",
+                maskBase64 == null,
+                maskBase64 == null ? null : maskBase64.length(),
+                maskBase64 != null && maskBase64.startsWith("data:image"));
+
         String prompt = String.format(CONCEPT_PROMPT_TEMPLATE, variationIndex + 1, userPrompt);
 
         List<GeminiGenerateRequest.Part> imageParts = new ArrayList<>();
@@ -178,21 +199,45 @@ public class GeminiChatClient {
 
         HttpEntity<GeminiGenerateRequest> request = new HttpEntity<>(requestBody, headers);
 
-        ResponseEntity<GeminiGenerateResponse> response = restTemplate.postForEntity(
-                url, request, GeminiGenerateResponse.class);
+        log.info("[Gemini] Request start. model={}, imageParts={}, promptLength={}",
+                props.model(),
+                imageParts == null ? null : imageParts.size(),
+                prompt == null ? null : prompt.length());
 
-        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
-            throw new AiExceptionHandler(AiErrorCode.AI_INVALID_RESPONSE);
+        try {
+            ResponseEntity<GeminiGenerateResponse> response = restTemplate.postForEntity(
+                    url, request, GeminiGenerateResponse.class);
+
+            log.info("[Gemini] Response status={}, hasBody={}",
+                    response.getStatusCode(),
+                    response.getBody() != null);
+
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+                log.error("[Gemini] Invalid response. status={}, hasBody={}",
+                        response.getStatusCode(),
+                        response.getBody() != null);
+                throw new AiExceptionHandler(AiErrorCode.AI_INVALID_RESPONSE);
+            }
+
+            String base64 = extractImageBase64(response.getBody());
+
+            byte[] decoded = Base64.getDecoder().decode(base64);
+            log.info("[Gemini] Decoded image bytes={}", decoded.length);
+
+            if (decoded.length == 0) {
+                throw new AiExceptionHandler(AiErrorCode.AI_INVALID_RESPONSE);
+            }
+
+            return base64;
+
+        } catch (Exception e) {
+            log.error("[Gemini] callGeminiForImage failed. model={}, imageParts={}, promptLength={}",
+                    props.model(),
+                    imageParts == null ? null : imageParts.size(),
+                    prompt == null ? null : prompt.length(),
+                    e);
+            throw e;
         }
-
-        String base64 = extractImageBase64(response.getBody());
-
-        byte[] decoded = Base64.getDecoder().decode(base64);
-        if (decoded.length == 0) {
-            throw new AiExceptionHandler(AiErrorCode.AI_INVALID_RESPONSE);
-        }
-
-        return base64;
     }
 
     private GeminiGenerateRequest.Part imagePart(String base64Image) {
@@ -204,19 +249,48 @@ public class GeminiChatClient {
 
     private String extractImageBase64(GeminiGenerateResponse response) {
         if (response.candidates() == null || response.candidates().isEmpty()) {
+            log.error("[Gemini] No candidates in response.");
             throw new AiExceptionHandler(AiErrorCode.AI_INVALID_RESPONSE);
         }
 
-        List<GeminiGenerateResponse.Part> parts = response.candidates().get(0).content().parts();
-        if (parts == null) {
+        var candidate = response.candidates().get(0);
+
+        if (candidate.content() == null) {
+            log.error("[Gemini] Candidate content is null. candidate={}", candidate);
             throw new AiExceptionHandler(AiErrorCode.AI_INVALID_RESPONSE);
+        }
+
+        List<GeminiGenerateResponse.Part> parts = candidate.content().parts();
+
+        if (parts == null || parts.isEmpty()) {
+            log.error("[Gemini] Parts is null or empty. candidate={}", candidate);
+            throw new AiExceptionHandler(AiErrorCode.AI_INVALID_RESPONSE);
+        }
+
+        log.info("[Gemini] parts count={}", parts.size());
+
+        for (int i = 0; i < parts.size(); i++) {
+            GeminiGenerateResponse.Part part = parts.get(i);
+
+            log.info("[Gemini] part[{}] text={}", i, part.text());
+            log.info("[Gemini] part[{}] hasInlineData={}", i, part.inlineData() != null);
+
+            if (part.inlineData() != null) {
+                log.info("[Gemini] part[{}] inlineData mimeType={}", i, part.inlineData().mimeType());
+                log.info("[Gemini] part[{}] inlineData data length={}",
+                        i,
+                        part.inlineData().data() == null ? null : part.inlineData().data().length());
+            }
         }
 
         return parts.stream()
-                .filter(part -> part.inline_data() != null)
-                .map(part -> part.inline_data().data())
+                .filter(part -> part.inlineData() != null)
+                .map(part -> part.inlineData().data())
                 .filter(data -> data != null && !data.isBlank())
                 .findFirst()
-                .orElseThrow(() -> new AiExceptionHandler(AiErrorCode.AI_INVALID_RESPONSE));
+                .orElseThrow(() -> {
+                    log.error("[Gemini] No image inline_data found in response.");
+                    return new AiExceptionHandler(AiErrorCode.AI_INVALID_RESPONSE);
+                });
     }
 }

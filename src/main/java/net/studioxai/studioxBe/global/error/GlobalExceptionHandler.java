@@ -1,6 +1,7 @@
 package net.studioxai.studioxBe.global.error;
 
 import net.studioxai.studioxBe.global.dto.ErrorReason;
+import net.studioxai.studioxBe.global.lock.DistributedLockException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -112,6 +113,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         final ErrorResponse errorResponse = ErrorResponse.from(errorReason);
         return ResponseEntity.status(HttpStatus.valueOf(errorReason.getStatus()))
                 .body(errorResponse);
+    }
+
+    // 분산 락 획득 실패 (중복 요청)
+    @ExceptionHandler(DistributedLockException.class)
+    public ResponseEntity<ErrorResponse> handleDistributedLockException(
+            DistributedLockException e, HttpServletRequest request) {
+
+        log.warn("DistributedLockException - uri: {}, method: {}, message: {}",
+                request.getRequestURI(),
+                request.getMethod(),
+                e.getMessage());
+
+        final GlobalErrorCode globalErrorCode = GlobalErrorCode.DUPLICATE_REQUEST;
+        final ErrorReason errorReason = globalErrorCode.getErrorReason();
+        final ErrorResponse errorResponse = ErrorResponse.from(errorReason);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
     // 전역 오류 관리
