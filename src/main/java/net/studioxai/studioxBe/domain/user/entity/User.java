@@ -54,8 +54,12 @@ public class User extends BaseEntity {
     @Column(name = "email_verified_at", nullable = true)
     private LocalDateTime emailVerifiedAt;
 
+    @Column(name = "customer_key", nullable = false)
+    private String customerKey;
+
     @Builder(access = AccessLevel.PRIVATE)
     private User(RegisterPath registerPath, String email, String googleSub, String password, String profileImage, String username, boolean isEmailVerified, LocalDateTime emailVerifiedAt) {
+        this.customerKey = java.util.UUID.randomUUID().toString();
         this.registerPath = registerPath;
         this.email = email;
         this.googleSub = googleSub;
@@ -90,6 +94,10 @@ public class User extends BaseEntity {
         this.password = encodedPassword;
     }
 
+    public boolean equalsCustomerKey(String customerKey) {
+        return this.customerKey.equals(customerKey);
+    }
+
     public static User createGoogleUser(String googleSub, String email, String username, String encodedPassword, String profileImage) {
         return User.builder()
                 .registerPath(RegisterPath.GOOGLE)
@@ -102,5 +110,6 @@ public class User extends BaseEntity {
                 .emailVerifiedAt(LocalDateTime.now())
                 .build();
     }
+
 
 }
