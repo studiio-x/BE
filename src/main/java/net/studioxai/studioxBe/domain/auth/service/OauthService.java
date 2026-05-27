@@ -89,6 +89,7 @@ public class OauthService {
                     userRepository.saveAndFlush(user);
                     authService.provisioningFolder(user);
                     authService.provisionPlan(user);
+                    authService.provisionSubscription(user);
                     return user;
                 });
     }

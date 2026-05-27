@@ -152,23 +152,27 @@ public class BillingKeyApprovalService {
                 .setScale(0, RoundingMode.HALF_UP)
                 .longValue();
 
-        BillingApprovalRequest request = BillingApprovalRequest.of(user, plan, amount, billingKey, paymentHistory, null, 0, 0);
+        if (!subscription.getPlan().isFree()){
+            BillingApprovalRequest request = BillingApprovalRequest.of(user, plan, amount, billingKey, paymentHistory, null, 0, 0);
 
-        PaymentApprovalResponse response = tossService.getResponse(request, PaymentApprovalResponse.class, "/v1/billing/"+billingKey.getBillingKey());
+            PaymentApprovalResponse response = tossService.getResponse(request, PaymentApprovalResponse.class, "/v1/billing/" + billingKey.getBillingKey());
 
-        updatePaymentHistory(paymentHistory, response);
+            updatePaymentHistory(paymentHistory, response);
 
-        if (paymentHistory.getStatus() == PaymentStatus.SUCCESS) {
-            if (subscription.getStatus() == SubscriptionStatus.CHANGE_SCHEDULED) {
-                userPlan.changePlan(plan);
+            if (paymentHistory.getStatus() == PaymentStatus.SUCCESS) {
+                if (subscription.getStatus() == SubscriptionStatus.CHANGE_SCHEDULED) {
+                    userPlan.changePlan(plan);
+                }
+                subscription.renew();
+                userPlan.montlyInitialize();
+
+            } else {
+                LocalDateTime now = LocalDateTime.now();
+                subscription.markBillingFailed(paymentHistory.getFailureMessage(), now);
             }
-            subscription.renew();
-            userPlan.montlyInitialize();
-
         }
         else {
-            LocalDateTime now = LocalDateTime.now();
-            subscription.markBillingFailed(paymentHistory.getFailureMessage(), now);
+            userPlan.montlyInitialize();
         }
 
 

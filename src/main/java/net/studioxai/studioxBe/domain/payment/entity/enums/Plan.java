@@ -34,5 +34,9 @@ public enum Plan {
         return value * 1024 * 1024;
     }
 
+    public boolean isFree() {
+        return this == FREE;
+    }
+
 
 }
