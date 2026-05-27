@@ -111,7 +111,7 @@ public class SubscriptionService {
         subscription.cancelAtPeriodEnd(reason);
     }
 
-    public void changeUserPlan() {
+    public void cancelUserPlan() {
         LocalDateTime now = LocalDateTime.now();
 
         List<Subscription> subscriptions =

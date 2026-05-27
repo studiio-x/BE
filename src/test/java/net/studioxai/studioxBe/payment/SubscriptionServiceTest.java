@@ -255,7 +255,7 @@ class SubscriptionServiceTest {
 
     @Test
     @DisplayName("changeUserPlan - 해지 예약 구독의 기간이 끝나면 구독을 만료시키고 유저 플랜을 FREE로 변경한다")
-    void changeUserPlan_expiredCancelScheduledSubscription_changeToFree() {
+    void changeUserPlan_expiredCancelScheduledSubscription_cancelToFree() {
         // given
         User user = mock(User.class);
         Subscription subscription = mock(Subscription.class);
@@ -270,7 +270,7 @@ class SubscriptionServiceTest {
         when(userPlanRepository.findByUser(user)).thenReturn(Optional.of(userPlan));
 
         // when
-        subscriptionService.changeUserPlan();
+        subscriptionService.cancelUserPlan();
 
         // then
         verify(subscription).expire();
