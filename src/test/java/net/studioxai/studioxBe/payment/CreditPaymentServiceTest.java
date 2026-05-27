@@ -190,9 +190,12 @@ class CreditPaymentServiceTest {
         }).when(billingKeyApprovalService)
                 .updatePaymentHistory(any(PaymentHistory.class), eq(response));
 
-        long expectedAmount = option.getPrice() * krwRate
+        long expectedAmount = BigDecimal.valueOf(option.getPrice())
+                .multiply(exchangeRateService.getKrwRate())
                 .setScale(0, RoundingMode.HALF_UP)
                 .longValue();
+
+
 
         ArgumentCaptor<CreditPaymentRequest> requestCaptor =
                 ArgumentCaptor.forClass(CreditPaymentRequest.class);

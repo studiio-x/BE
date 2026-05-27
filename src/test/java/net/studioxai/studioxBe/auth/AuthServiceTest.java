@@ -5,8 +5,10 @@ import net.studioxai.studioxBe.domain.auth.dto.request.SignUpRequest;
 import net.studioxai.studioxBe.domain.auth.dto.response.LoginResponse;
 import net.studioxai.studioxBe.domain.auth.dto.response.TokenResponse;
 import net.studioxai.studioxBe.domain.folder.service.FolderService;
+import net.studioxai.studioxBe.domain.payment.entity.Subscription;
 import net.studioxai.studioxBe.domain.payment.entity.UserPlan;
 import net.studioxai.studioxBe.domain.payment.entity.enums.Plan;
+import net.studioxai.studioxBe.domain.payment.repository.SubscriptionRepository;
 import net.studioxai.studioxBe.domain.payment.repository.UserPlanRepository;
 import net.studioxai.studioxBe.domain.user.entity.enums.RegisterPath;
 import net.studioxai.studioxBe.domain.user.entity.User;
@@ -52,6 +54,9 @@ public class AuthServiceTest {
     private TokenService tokenService;
 
     @Mock
+    private SubscriptionRepository subscriptionRepository;
+
+    @Mock
     private EmailVerificationService emailVerificationService;
 
     @InjectMocks
@@ -62,6 +67,9 @@ public class AuthServiceTest {
 
     @Captor
     private ArgumentCaptor<UserPlan> userPlanCaptor;
+
+    @Captor
+    private ArgumentCaptor<Subscription> subscriptionCaptor;
 
     @Mock
     private FolderService folderService;
@@ -205,6 +213,7 @@ public class AuthServiceTest {
         String encodedPassword = "Encoded12341234";
         Long newUserId = 10L;
         Long newUserPlanId = 10L;
+        Long newSubscriptionId = 10L;
         String accessToken = "new-access";
         String refreshToken = "new-refresh";
 
@@ -225,6 +234,13 @@ public class AuthServiceTest {
                 .willAnswer(invocation -> {
                     UserPlan saved = invocation.getArgument(0);
                     ReflectionTestUtils.setField(saved, "id", newUserPlanId);
+                    return saved;
+                });
+
+        BDDMockito.given(subscriptionRepository.save(any(Subscription.class)))
+                .willAnswer(invocation -> {
+                    Subscription saved = invocation.getArgument(0);
+                    ReflectionTestUtils.setField(saved, "id", newSubscriptionId);
                     return saved;
                 });
 
@@ -261,8 +277,14 @@ public class AuthServiceTest {
 
         UserPlan savedUserPlan = userPlanCaptor.getValue();
 
+        Mockito.verify(subscriptionRepository).save(subscriptionCaptor.capture());
+        Subscription savedSubscription = subscriptionCaptor.getValue();
+
         Assertions.assertThat(savedUserPlan.getId()).isEqualTo(newUserPlanId);
         Assertions.assertThat(savedUserPlan.getUser()).isEqualTo(savedUser);
+
+        Assertions.assertThat(savedSubscription.getId()).isEqualTo(newSubscriptionId);
+        Assertions.assertThat(savedSubscription.getUser()).isEqualTo(savedUser);
     }
 
     @Test
