@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -81,7 +82,8 @@ public class BillingKeyApprovalService {
                 () -> new UserPlanExceptionHandler(UserPlanErrorCode.USER_PLAN_NOT_FOUNT)
         );
 
-        long amount = plan.getPrice() * exchangeRateService.getKrwRate()
+        long amount = BigDecimal.valueOf(plan.getPrice())
+                .multiply(exchangeRateService.getKrwRate())
                 .setScale(0, RoundingMode.HALF_UP)
                 .longValue();
 
@@ -145,7 +147,8 @@ public class BillingKeyApprovalService {
 
         PaymentHistory paymentHistory = savePaymentHistory(user, plan);
 
-        long amount = plan.getPrice() * exchangeRateService.getKrwRate()
+        long amount = BigDecimal.valueOf(plan.getPrice())
+                .multiply(exchangeRateService.getKrwRate())
                 .setScale(0, RoundingMode.HALF_UP)
                 .longValue();
 

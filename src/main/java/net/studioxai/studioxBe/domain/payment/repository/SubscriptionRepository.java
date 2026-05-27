@@ -39,6 +39,7 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Long
         select s
         from Subscription s
         where s.user = :user
+        and s.status in :statuses
         order by s.createdAt desc
         limit 1
         """)
