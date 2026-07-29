@@ -1,5 +1,6 @@
 package net.studioxai.studioxBe.domain.template.repository;
 
+import net.studioxai.studioxBe.domain.template.dto.response.TemplateByCategoryResponse;
 import net.studioxai.studioxBe.domain.template.entity.Template;
 import net.studioxai.studioxBe.global.entity.enums.Category;
 import org.springframework.data.domain.Page;
@@ -19,5 +20,5 @@ public interface TemplateRepository extends JpaRepository<Template, Long> {
         where t.category = :category
         order by t.createdAt desc
     """)
-    Page<Template> findByCategoryOrderByCreatedAtDesc(@Param("category") Category category, Pageable pageable);
+    Page<TemplateByCategoryResponse> findByCategoryOrderByCreatedAtDesc(@Param("category") Category category, Pageable pageable);
 }

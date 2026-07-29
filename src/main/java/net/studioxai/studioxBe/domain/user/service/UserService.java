@@ -37,7 +37,7 @@ public class UserService {
 
     public MypageResponse findUserDetail(Long userId) {
         User user = getUserByIdOrThrow(userId);
-        return MypageResponse.create(user.getId(), user.getUsername(), user.getEmail(), user.getProfileImage());
+        return MypageResponse.create(user.getId(), user.getUsername(), user.getEmail(), user.getProfileImage(), user.getCustomerKey());
 
     }
 

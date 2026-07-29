@@ -134,7 +134,7 @@ class OauthServiceTest {
         given(userRepository.findByEmail("google@test.com")).willReturn(Optional.empty());
         given(passwordEncoder.encode(anyString())).willReturn("encoded-password");
 
-        given(userRepository.save(any(User.class)))
+        given(userRepository.saveAndFlush(any(User.class)))
                 .willAnswer(invocation -> {
                     User saved = invocation.getArgument(0);
                     ReflectionTestUtils.setField(saved, "id", userId);
@@ -156,7 +156,7 @@ class OauthServiceTest {
         assertThat(result.accessToken()).isEqualTo("access-token");
         assertThat(result.refreshToken()).isEqualTo("refresh-token");
 
-        verify(userRepository).save(any(User.class));
+        verify(userRepository).saveAndFlush(any(User.class));
         verify(passwordEncoder).encode(anyString());
         verify(authService).issueTokens(userId);
     }

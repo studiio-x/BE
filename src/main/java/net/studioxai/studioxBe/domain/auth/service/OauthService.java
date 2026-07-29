@@ -86,8 +86,10 @@ public class OauthService {
                             passwordEncoder.encode(UUID.randomUUID().toString()),
                             resolveProfileImage(userInfo)
                     );
-                    userRepository.save(user);
+                    userRepository.saveAndFlush(user);
                     authService.provisioningFolder(user);
+                    authService.provisionPlan(user);
+                    authService.provisionSubscription(user);
                     return user;
                 });
     }
