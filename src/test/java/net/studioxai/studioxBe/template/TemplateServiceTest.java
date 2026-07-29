@@ -1,6 +1,7 @@
 package net.studioxai.studioxBe.template;
 
 import net.studioxai.studioxBe.domain.template.dto.response.KeywordTemplatesResponse;
+import net.studioxai.studioxBe.domain.template.dto.response.TemplateByCategoryResponse;
 import net.studioxai.studioxBe.domain.template.dto.response.TemplateByKeywordResponse;
 import net.studioxai.studioxBe.domain.template.dto.response.TemplateCategoryGet;
 import net.studioxai.studioxBe.domain.template.entity.Template;
@@ -46,11 +47,11 @@ class TemplateServiceTest {
         int pageNum = 0;
         int limit = 10;
 
-        Template template = mock(Template.class);
-        given(template.getId()).willReturn(1L);
-        given(template.getImageObjectKey()).willReturn("image-url");
+        TemplateByCategoryResponse template = mock(TemplateByCategoryResponse.class);
+        given(template.templateId()).willReturn(1L);
+        given(template.imageUrl()).willReturn("image-url");
 
-        Page<Template> page = new PageImpl<>(
+        Page<TemplateByCategoryResponse> page = new PageImpl<>(
                 List.of(template),
                 PageRequest.of(pageNum, limit),
                 1
@@ -82,7 +83,7 @@ class TemplateServiceTest {
         // given
         Category category = Category.IMAGE;
 
-        Page<Template> emptyPage =
+        Page<TemplateByCategoryResponse> emptyPage =
                 new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
 
         given(templateRepository.findByCategoryOrderByCreatedAtDesc(
