@@ -38,19 +38,12 @@ public class TemplateService {
 
         Pageable pageable = PageRequest.of(pageNum, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Template> templates = templateRepository.findByCategoryOrderByCreatedAtDesc(category, pageable);
+        Page<TemplateByCategoryResponse> templates = templateRepository.findByCategoryOrderByCreatedAtDesc(category, pageable);
 
         if (templates.isEmpty()) {
             throw new TemplateManagerExceptionHandler(TemplateManagerErrorCode.TEMPLATE_NOT_FOUND_BY_CATEGORY);
         }
 
-        List<TemplateByCategoryResponse> contents =
-                templates.getContent().stream()
-                        .map(t -> new TemplateByCategoryResponse(
-                                t.getId(),
-                                t.getImageObjectKey()
-                        ))
-                        .toList();
 
         PageInfo pageInfo = PageInfo.of(
                 pageNum,
@@ -59,7 +52,7 @@ public class TemplateService {
                 templates.getTotalElements()
         );
 
-        return new TemplateCategoryGet(contents, pageInfo);
+        return new TemplateCategoryGet(templates.stream().toList(), pageInfo);
     }
 
     public List<TemplateKeywordResponse> getAllTemplateKeywords() {
