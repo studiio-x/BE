@@ -2,6 +2,7 @@ package net.studioxai.studioxBe.domain.image.controller;
 
 import lombok.RequiredArgsConstructor;
 import net.studioxai.studioxBe.domain.image.dto.request.ProjectTitleUpdateRequest;
+import net.studioxai.studioxBe.domain.image.dto.response.ProjectImagesResponse;
 import net.studioxai.studioxBe.domain.image.dto.response.ProjectMoveResponse;
 import net.studioxai.studioxBe.domain.image.dto.response.ProjectTitleUpdateResponse;
 import net.studioxai.studioxBe.domain.image.dto.response.ProjectsResponse;
@@ -22,11 +23,22 @@ public class ProjectController {
     public ProjectsResponse projectsByFolderId(
             @AuthenticationPrincipal JwtUserPrincipal principal,
             @PathVariable Long folderId,
-            @RequestParam(required = false, defaultValue = "desc") Sort.Direction sort,
+            @RequestParam(required = false, defaultValue = "DESC") Sort.Direction sort,
             @RequestParam(required = true) int pageNum,
             @RequestParam(required = true) int limit
     ) {
         return projectService.getProjectsByFolderId(principal.userId(), folderId, sort, pageNum, limit);
+    }
+
+    @GetMapping("/v1/project/{projectId}/images")
+    public ProjectImagesResponse getImagesByProjectId(
+            @AuthenticationPrincipal JwtUserPrincipal principal,
+            @PathVariable Long projectId,
+            @RequestParam(required = false) Sort.Direction sort,
+            @RequestParam(required = true) int pageNum,
+            @RequestParam(required = true) int limit
+    ) {
+        return projectService.getImagesByProjectId(principal.userId(), projectId, sort, pageNum, limit);
     }
 
     @PatchMapping("/v1/project/{projectId}/title")

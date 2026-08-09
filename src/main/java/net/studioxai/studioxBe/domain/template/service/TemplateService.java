@@ -15,6 +15,8 @@ import net.studioxai.studioxBe.domain.template.repository.TemplateKeywordReposit
 import net.studioxai.studioxBe.domain.template.repository.TemplateRepository;
 import net.studioxai.studioxBe.global.dto.PageInfo;
 import net.studioxai.studioxBe.global.entity.enums.Category;
+import net.studioxai.studioxBe.infra.s3.S3Url;
+import net.studioxai.studioxBe.infra.s3.S3UrlHandler;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -33,6 +35,7 @@ public class TemplateService {
 
     private final TemplateRepository templateRepository;
     private final TemplateKeywordRepository templateKeywordRepository;
+    private final S3UrlHandler s3UrlHandler;
 
     public TemplateCategoryGet getTemplatesByCategory(Category category, int pageNum, int limit) {
 
@@ -102,6 +105,10 @@ public class TemplateService {
                 );
 
         return templateKeywordRepository.searchByKeyword(keywordType);
+    }
+
+    public S3Url getCustomBackgroundUrl(Long userId) {
+        return s3UrlHandler.handle("custom-template/" + userId);
     }
 
 }
