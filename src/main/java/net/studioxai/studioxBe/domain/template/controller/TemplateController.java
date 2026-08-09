@@ -9,7 +9,11 @@ import net.studioxai.studioxBe.domain.template.dto.response.TemplateKeywordRespo
 import net.studioxai.studioxBe.domain.template.entity.TemplateKeywordType;
 import net.studioxai.studioxBe.domain.template.service.TemplateService;
 import net.studioxai.studioxBe.global.entity.enums.Category;
+import net.studioxai.studioxBe.global.jwt.JwtUserPrincipal;
+import net.studioxai.studioxBe.infra.s3.S3Url;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -41,6 +45,13 @@ public class TemplateController {
     public List<TemplateByKeywordResponse> searchTemplates(@RequestParam String keyword) {
         return templateService.searchTemplatesByKeyword(keyword);
     }
+
+    @GetMapping("/v1/custom-template")
+    public S3Url createCustomTemplate(@AuthenticationPrincipal JwtUserPrincipal principal) {
+        return templateService.getCustomBackgroundUrl(principal.userId());
+    }
+
+
 
 
 }

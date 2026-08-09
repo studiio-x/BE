@@ -9,10 +9,12 @@ import net.studioxai.studioxBe.domain.folder.exception.FolderExceptionHandler;
 import net.studioxai.studioxBe.domain.folder.repository.FolderRepository;
 import net.studioxai.studioxBe.domain.folder.service.FolderManagerService;
 import net.studioxai.studioxBe.domain.image.dto.request.CutoutImageGenerateRequest;
+import net.studioxai.studioxBe.domain.image.dto.request.ImageCustomGenerateRequest;
 import net.studioxai.studioxBe.domain.image.dto.request.ImageGenerateRequest;
 import net.studioxai.studioxBe.domain.image.dto.response.*;
 import net.studioxai.studioxBe.domain.image.entity.Image;
 import net.studioxai.studioxBe.domain.image.entity.Project;
+import net.studioxai.studioxBe.domain.image.entity.enums.FileType;
 import net.studioxai.studioxBe.domain.image.exception.ImageErrorCode;
 import net.studioxai.studioxBe.domain.image.exception.ImageExceptionHandler;
 import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
@@ -79,7 +81,7 @@ public class ImageService {
         Folder folder = folderRepository.findById(request.folderId())
                 .orElseThrow(() -> new FolderExceptionHandler(FolderErrorCode.FOLDER_NOT_FOUND));
 
-        Project project = Project.create(null, null, folder);
+        Project project = Project.create(null, null, folder, FileType.IMAGE);
         projectRepository.save(project);
 
         String cutoutImageObjectKey = "images/" + project.getId() + "/cutout/" + UUID.randomUUID() + ".png";
@@ -115,6 +117,33 @@ public class ImageService {
         s3ImageUploader.upload(imageObjectKey, imageBytes);
 
         project.updateTemplate(template);
+        project.updateThumbnailObjectKey(imageObjectKey);
+
+        Image image = Image.create(project, imageObjectKey);
+        imageRepository.save(image);
+
+        return ImageGenerateResponse.of(image);
+    }
+    @DistributedLock(key = "'ai:image:user:' + #userId")
+    @Transactional
+    public ImageGenerateResponse generateCustomImage(Long userId, ImageCustomGenerateRequest request) {
+
+        //TODO: 결제 검증 로직 추가
+
+        Project project = projectService.getProjectById(request.projectId());
+
+        folderManagerService.isUserWritable(userId, project.getFolder().getId());
+
+
+        String cutoutBase64 = s3ImageLoader.loadAsBase64(request.cutoutImageObjectKey());
+        String templateBase64 = s3ImageLoader.loadAsBase64(request.customBackgroundImageObjectKey());
+
+        String compositeBase64 = geminiImageClient.generateCompositeImage(cutoutBase64, templateBase64);
+        byte[] imageBytes = Base64.getDecoder().decode(compositeBase64);
+
+        String imageObjectKey = "images/" + project.getId() + "/result/" + UUID.randomUUID() + ".png";
+        s3ImageUploader.upload(imageObjectKey, imageBytes);
+
         project.updateThumbnailObjectKey(imageObjectKey);
 
         Image image = Image.create(project, imageObjectKey);

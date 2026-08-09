@@ -7,10 +7,13 @@ import net.studioxai.studioxBe.domain.folder.exception.FolderErrorCode;
 import net.studioxai.studioxBe.domain.folder.exception.FolderExceptionHandler;
 import net.studioxai.studioxBe.domain.folder.repository.FolderRepository;
 import net.studioxai.studioxBe.domain.folder.service.FolderManagerService;
+import net.studioxai.studioxBe.domain.image.dto.ImagesDto;
 import net.studioxai.studioxBe.domain.image.dto.ProjectsDto;
+import net.studioxai.studioxBe.domain.image.dto.response.ProjectImagesResponse;
 import net.studioxai.studioxBe.domain.image.dto.response.ProjectMoveResponse;
 import net.studioxai.studioxBe.domain.image.dto.response.ProjectTitleUpdateResponse;
 import net.studioxai.studioxBe.domain.image.dto.response.ProjectsResponse;
+import net.studioxai.studioxBe.domain.image.entity.Image;
 import net.studioxai.studioxBe.domain.image.entity.Project;
 import net.studioxai.studioxBe.domain.image.exception.ProjectErrorCode;
 import net.studioxai.studioxBe.domain.image.exception.ProjectExceptionHandler;
@@ -67,7 +70,8 @@ public class ProjectService {
                         .map(p -> ProjectsDto.create(
                                 p.getId(),
                                 p.getTitle(),
-                                p.getThumbnailObjectKey()
+                                p.getThumbnailObjectKey(),
+                                p.getFileType()
                         ))
                         .toList();
 
@@ -79,6 +83,34 @@ public class ProjectService {
         );
 
         return ProjectsResponse.create(projectDtos, pageInfo);
+    }
+
+    public ProjectImagesResponse getImagesByProjectId(Long userId, Long projectId, Sort.Direction sort, int pageNum, int limit) {
+
+        Project project = getProjectWithFolderById(projectId);
+
+        folderManagerService.isUserReadable(userId, project.getFolder().getId());
+
+        PageRequest pageRequest = PageRequest.of(pageNum, limit, Sort.by(sort, "createdAt"));
+
+        Page<Image> images = imageRepository.findByProject(project, pageRequest);
+
+        PageInfo pageInfo = PageInfo.of(
+                pageNum,
+                limit,
+                images.getTotalPages(),
+                images.getTotalElements()
+        );
+
+        List<ImagesDto> imageDtos = images.stream()
+                .map(i -> ImagesDto.create(
+                        i.getId(),
+                        i.getImageObjectKey(),
+                        i.getImageObjectKey()
+                ))
+                .toList();
+
+        return ProjectImagesResponse.create(imageDtos, pageInfo);
     }
 
     @Transactional

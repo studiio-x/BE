@@ -21,6 +21,7 @@ import net.studioxai.studioxBe.domain.image.entity.Project;
 import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
 import net.studioxai.studioxBe.domain.image.service.ProjectService;
 import net.studioxai.studioxBe.infra.ai.gemini.GeminiChatClient;
+import net.studioxai.studioxBe.infra.ai.gemini.GeminiOmniVideoClient;
 import net.studioxai.studioxBe.infra.s3.S3ImageLoader;
 import net.studioxai.studioxBe.infra.s3.S3ImageUploader;
 import net.studioxai.studioxBe.infra.s3.S3Url;
@@ -49,6 +50,7 @@ public class ChatService {
     private final FolderManagerService folderManagerService;
 
     private final GeminiChatClient geminiChatClient;
+    private final GeminiOmniVideoClient geminiOmniVideoClient;
     private final S3ImageUploader s3ImageUploader;
     private final S3ImageLoader s3ImageLoader;
     private final S3UrlHandler s3UrlHandler;
@@ -95,13 +97,23 @@ public class ChatService {
             throw new ChatExceptionHandler(ChatErrorCode.CONCEPT_SELECTION_PENDING);
         }
 
-        validateImageObjectKeys(projectId, request);
+
 
         ChatMessage userMessage = saveUserMessage(chatRoom, request);
         List<ChatMessage> contextMessages = buildAiContext(chatRoom);
+
+        if (mode == ChatMode.VIDEO_REFINE) {
+            String currentImageObjectKey = loadCurrentImageObjectKey(project, request);// 또는 ChatMode.VIDEO
+            return handleVideoRefineMode(project, chatRoom, request);
+        }
+
+        validateImageObjectKeys(projectId, userId, request);
+
         String currentImageBase64 = loadCurrentImageBase64(project, request);
         String referenceBase64 = loadOptionalImageBase64(request.referenceImageObjectKey());
         String maskBase64 = loadOptionalImageBase64(request.maskImageObjectKey());
+
+
 
         if (mode == ChatMode.REFINE) {
             return handleRefineMode(project, chatRoom, request.content(),
@@ -109,6 +121,38 @@ public class ChatService {
         }
         return handleConceptMode(project, chatRoom, request.content(), contextMessages,
                 currentImageBase64, referenceBase64, maskBase64);
+    }
+
+    private ChatSendResponse handleVideoRefineMode(
+            Project project,
+            ChatRoom chatRoom,
+            ChatSendRequest request
+    ) {
+        // 1. 수정할 원본 비디오 엔티티 및 S3 Object Key 조회
+        String inputVideoObjectKey = loadCurrentImageObjectKey(project, request);
+
+        // 2. 새로 저장될 S3 Target Key 경로 생성
+        String targetVideoObjectKey = "videos/" + project.getId() + "/chat/refine/" + UUID.randomUUID() + ".mp4";
+
+        // 3. S3 원본 비디오 URL/Key 기반으로 Gemini 수정 호출 및 S3 업로드
+        geminiOmniVideoClient.refineVideoFromS3Url(
+                inputVideoObjectKey,
+                request.content(),
+                targetVideoObjectKey
+        );
+
+        // 4. 수정 완료된 비디오 엔티티 DB 저장
+        Image newVideo = Image.create(project, targetVideoObjectKey);
+        imageRepository.save(newVideo);
+
+        // 5. ChatMessage 저장 및 응답 반환
+        ChatMessage aiMessage = ChatMessage.createVideoRefine(
+                chatRoom,
+                "요청하신 내용을 반영하여 영상 편집을 완료했습니다.",
+                targetVideoObjectKey);
+        chatMessageRepository.save(aiMessage);
+
+        return ChatSendResponse.videoRefine(aiMessage.getId(), aiMessage.getContent(), targetVideoObjectKey);
     }
 
     private ChatSendResponse handleConceptMode(Project project, ChatRoom chatRoom, String prompt,
@@ -222,10 +266,16 @@ public class ChatService {
         project.updateThumbnailObjectKey(finalImageKey);
     }
 
-    private void validateImageObjectKeys(Long projectId, ChatSendRequest request) {
+    private void saveVideo(Project project, String videoObjectKey) {
+        Image video = Image.create(project, videoObjectKey);
+        imageRepository.save(video);
+    }
+
+    private void validateImageObjectKeys(Long projectId, Long userId, ChatSendRequest request) {
         String allowedPrefix = "images/" + projectId + "/";
+        String allowedVideoPrefix = "videos/generated/" + userId + "/";
         if (request.referenceImageObjectKey() != null && !request.referenceImageObjectKey().isBlank()
-                && !request.referenceImageObjectKey().startsWith(allowedPrefix)) {
+                && !request.referenceImageObjectKey().startsWith(allowedPrefix) && !request.referenceImageObjectKey().startsWith(allowedVideoPrefix)) {
             throw new ChatExceptionHandler(ChatErrorCode.INVALID_IMAGE_OBJECT_KEY);
         }
         if (request.maskImageObjectKey() != null && !request.maskImageObjectKey().isBlank()
@@ -274,6 +324,21 @@ public class ChatService {
                     .orElseThrow(() -> new ChatExceptionHandler(ChatErrorCode.IMAGE_NOT_FOUND));
         }
         return s3ImageLoader.loadAsBase64(currentImage.getImageObjectKey());
+    }
+
+    private String loadCurrentImageObjectKey(Project project, ChatSendRequest request) {
+        Image currentImage;
+        if (request.imageId() != null) {
+            currentImage = imageRepository.findById(request.imageId())
+                    .orElseThrow(() -> new ChatExceptionHandler(ChatErrorCode.IMAGE_NOT_FOUND));
+            if (!currentImage.getProject().getId().equals(project.getId())) {
+                throw new ChatExceptionHandler(ChatErrorCode.IMAGE_NOT_IN_PROJECT);
+            }
+        } else {
+            currentImage = imageRepository.findTopByProjectOrderByCreatedAtDesc(project)
+                    .orElseThrow(() -> new ChatExceptionHandler(ChatErrorCode.IMAGE_NOT_FOUND));
+        }
+        return currentImage.getImageObjectKey();
     }
 
     private String loadOptionalImageBase64(String objectKey) {

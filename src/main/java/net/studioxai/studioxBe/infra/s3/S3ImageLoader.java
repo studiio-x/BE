@@ -21,6 +21,22 @@ public class S3ImageLoader {
     @Value("${BUCKET_NAME}")
     private String bucket;
 
+    public byte[] loadAsBytes(String objectKey) {
+        try {
+            GetObjectRequest request = GetObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(objectKey)
+                    .build();
+
+            try (ResponseInputStream<GetObjectResponse> s3Object = s3Client.getObject(request)) {
+                return s3Object.readAllBytes();
+            }
+
+        } catch (Exception e) {
+            throw new ImageExceptionHandler(ImageErrorCode.S3_DOWNLOAD_FAILED);
+        }
+    }
+
     public String loadAsBase64(String objectKey) {
         try {
             GetObjectRequest request = GetObjectRequest.builder()

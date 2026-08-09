@@ -191,7 +191,7 @@ public class GeminiChatClient {
                 + props.model()
                 + ":generateContent";
 
-        GeminiGenerateRequest requestBody = GeminiGenerateRequest.of(prompt, imageParts);
+        GeminiGenerateRequest requestBody = GeminiGenerateRequest.ofImage(prompt, imageParts);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

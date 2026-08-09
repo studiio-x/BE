@@ -18,4 +18,8 @@ public record ChatSendResponse(
     public static ChatSendResponse refine(Long messageId, String aiText, String imageKey) {
         return new ChatSendResponse(ChatMode.REFINE, messageId, aiText, List.of(imageKey));
     }
+
+    public static ChatSendResponse videoRefine(Long messageId, String aiText, String videoObjectKey) {
+        return new ChatSendResponse(ChatMode.VIDEO_REFINE, messageId, aiText, List.of(videoObjectKey));
+    }
 }
