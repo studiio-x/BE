@@ -67,7 +67,8 @@ public class ProjectService {
                         .map(p -> ProjectsDto.create(
                                 p.getId(),
                                 p.getTitle(),
-                                p.getThumbnailObjectKey()
+                                p.getThumbnailObjectKey(),
+                                p.getFileType()
                         ))
                         .toList();
 

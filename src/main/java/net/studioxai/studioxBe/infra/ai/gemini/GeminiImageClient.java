@@ -85,7 +85,7 @@ public class GeminiImageClient {
                 + ":generateContent";
 
         GeminiGenerateRequest requestBody =
-                GeminiGenerateRequest.of(prompt, imageParts);
+                GeminiGenerateRequest.ofImage(prompt, imageParts);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

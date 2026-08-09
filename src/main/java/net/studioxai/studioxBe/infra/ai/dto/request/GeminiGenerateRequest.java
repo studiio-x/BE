@@ -1,7 +1,6 @@
 package net.studioxai.studioxBe.infra.ai.dto.request;
 
-import com.google.genai.types.GenerationConfig;
-
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -10,7 +9,7 @@ public record GeminiGenerateRequest(
         GenerationConfig generationConfig
         ) {
 
-    public static GeminiGenerateRequest of(
+    public static GeminiGenerateRequest ofImage(
             String prompt,
             List<Part> imageParts
     ) {
@@ -24,13 +23,27 @@ public record GeminiGenerateRequest(
         );
     }
 
+    public static GeminiGenerateRequest ofVideo(
+            String prompt,
+            List<Part> inputParts
+    ) {
+        return new GeminiGenerateRequest(
+                List.of(new Content(buildParts(prompt, inputParts))),
+                new GenerationConfig(List.of("video")) // 비디오 생성 modality
+        );
+    }
+
     private static List<Part> buildParts(
             String prompt,
             List<Part> imageParts
     ) {
-        List<Part> parts = new java.util.ArrayList<>();
-        parts.add(new Part(prompt, null));
-        parts.addAll(imageParts);
+        List<Part> parts = new ArrayList<>();
+        if (prompt != null && !prompt.isBlank()) {
+            parts.add(Part.fromText(prompt));
+        }
+        if (imageParts != null) {
+            parts.addAll(imageParts);
+        }
         return parts;
     }
 
@@ -39,7 +52,16 @@ public record GeminiGenerateRequest(
     public record Part(
             String text,
             InlineData inline_data
-    ) {}
+                ) {
+        public static Part fromText(String text) {
+            return new Part(text, null);
+        }
+
+        public static Part fromImageBase64(String base64Image, String mimeType) {
+            return new Part(null, new InlineData(mimeType, base64Image));
+        }
+
+    }
 
     public record InlineData(
             String mime_type,

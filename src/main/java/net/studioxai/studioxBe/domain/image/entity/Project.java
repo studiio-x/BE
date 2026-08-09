@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import net.studioxai.studioxBe.domain.folder.entity.Folder;
+import net.studioxai.studioxBe.domain.image.entity.enums.FileType;
 import net.studioxai.studioxBe.domain.template.entity.Template;
 import net.studioxai.studioxBe.global.entity.BaseEntity;
 
@@ -27,6 +28,10 @@ public class Project extends BaseEntity {
     @JoinColumn(name = "template_id", nullable = true)
     private Template template;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "file_type")
+    private FileType fileType;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "folder_id", nullable = false)
     private Folder folder;
@@ -40,13 +45,15 @@ public class Project extends BaseEntity {
     public static Project create(
             String cutoutImageObjectKey,
             Template template,
-            Folder folder
+            Folder folder,
+            FileType fileType
     ) {
         return Project.builder()
                 .cutoutImageObjectKey(cutoutImageObjectKey)
                 .template(template)
                 .folder(folder)
                 .thumbnailObjectKey(null)
+                .fileType(fileType)
                 .build();
     }
 
@@ -74,13 +81,15 @@ public class Project extends BaseEntity {
             String cutoutImageObjectKey,
             Template template,
             Folder folder,
-            String thumbnailObjectKey
+            String thumbnailObjectKey,
+            FileType fileType
     ) {
         this.cutoutImageObjectKey = cutoutImageObjectKey;
         this.template = template;
         this.folder = folder;
         this.title = "제목을 입력하세요.";
         this.thumbnailObjectKey = thumbnailObjectKey;
+        this.fileType = fileType;
     }
 }
 

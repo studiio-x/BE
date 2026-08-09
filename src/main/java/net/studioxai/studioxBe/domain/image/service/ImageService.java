@@ -13,6 +13,7 @@ import net.studioxai.studioxBe.domain.image.dto.request.ImageGenerateRequest;
 import net.studioxai.studioxBe.domain.image.dto.response.*;
 import net.studioxai.studioxBe.domain.image.entity.Image;
 import net.studioxai.studioxBe.domain.image.entity.Project;
+import net.studioxai.studioxBe.domain.image.entity.enums.FileType;
 import net.studioxai.studioxBe.domain.image.exception.ImageErrorCode;
 import net.studioxai.studioxBe.domain.image.exception.ImageExceptionHandler;
 import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
@@ -79,7 +80,7 @@ public class ImageService {
         Folder folder = folderRepository.findById(request.folderId())
                 .orElseThrow(() -> new FolderExceptionHandler(FolderErrorCode.FOLDER_NOT_FOUND));
 
-        Project project = Project.create(null, null, folder);
+        Project project = Project.create(null, null, folder, FileType.IMAGE);
         projectRepository.save(project);
 
         String cutoutImageObjectKey = "images/" + project.getId() + "/cutout/" + UUID.randomUUID() + ".png";
