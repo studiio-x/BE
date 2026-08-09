@@ -3,6 +3,7 @@ package net.studioxai.studioxBe.domain.image.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import net.studioxai.studioxBe.domain.image.dto.request.CutoutImageGenerateRequest;
+import net.studioxai.studioxBe.domain.image.dto.request.ImageCustomGenerateRequest;
 import net.studioxai.studioxBe.domain.image.dto.request.ImageGenerateRequest;
 import net.studioxai.studioxBe.domain.image.dto.response.*;
 import net.studioxai.studioxBe.domain.image.service.ImageService;
@@ -33,6 +34,12 @@ public class ImageController {
     public ResponseEntity<ImageGenerateResponse> generateImage(@AuthenticationPrincipal JwtUserPrincipal principal, @RequestBody @Valid ImageGenerateRequest request) {
 
         return ResponseEntity.ok(imageService.generateImage(principal.userId(), request));
+    }
+
+    @PostMapping("/v1/image/custom-background")
+    public ResponseEntity<ImageGenerateResponse> generateCustomImage(@AuthenticationPrincipal JwtUserPrincipal principal, @RequestBody @Valid ImageCustomGenerateRequest request) {
+
+        return ResponseEntity.ok(imageService.generateCustomImage(principal.userId(), request));
     }
 
     @GetMapping("/v1/image/{imageId}")
