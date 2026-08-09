@@ -11,6 +11,7 @@ import net.studioxai.studioxBe.domain.image.dto.request.VideoGenerateRequestDto;
 import net.studioxai.studioxBe.domain.image.dto.response.VideoGenerateResponseDto;
 import net.studioxai.studioxBe.domain.image.entity.Image;
 import net.studioxai.studioxBe.domain.image.entity.Project;
+import net.studioxai.studioxBe.domain.image.entity.enums.FileType;
 import net.studioxai.studioxBe.domain.image.entity.enums.MotionType;
 import net.studioxai.studioxBe.domain.image.entity.enums.QualityType;
 import net.studioxai.studioxBe.domain.image.repository.ImageRepository;
@@ -71,11 +72,13 @@ public class VideoService {
         // 5. Gemini Omni 비디오 생성 및 S3 업로드
         geminiOmniVideoClient.generateAndUploadToS3(base64Image, prompt, videoS3Key);
 
-        Project project = Project.create(null, null, folder);
+        Project project = Project.create(null, null, folder, FileType.VIDEO);
         projectRepository.save(project);
 
         Image image = Image.create(project, videoS3Key);
         imageRepository.save(image);
+
+        project.updateThumbnailObjectKey(request.imageObjectKey());
 
         return new VideoGenerateResponseDto(videoS3Key, requiredCredits, "SUCCESS");
     }

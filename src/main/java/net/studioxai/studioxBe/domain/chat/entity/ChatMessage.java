@@ -93,6 +93,16 @@ public class ChatMessage extends BaseEntity {
                 .build();
     }
 
+    public static ChatMessage createVideoRefine(ChatRoom chatRoom, String textResponse, String videoObjectKey) {
+        return ChatMessage.builder()
+                .chatRoom(chatRoom)
+                .role(MessageRole.ASSISTANT)
+                .messageType(MessageType.REFINE_VIDEO) // MessageType.VIDEO 또는 동급 Enum
+                .content(textResponse)
+                .imageKeys(videoObjectKey)
+                .build();
+    }
+
     @Builder(access = AccessLevel.PRIVATE)
     private ChatMessage(
             ChatRoom chatRoom,
