@@ -80,7 +80,7 @@ public class VideoService {
 
         project.updateThumbnailObjectKey(request.imageObjectKey());
 
-        return new VideoGenerateResponseDto(videoS3Key, requiredCredits, "SUCCESS");
+        return new VideoGenerateResponseDto(videoS3Key, image.getId(), requiredCredits, "SUCCESS");
     }
 
     private String selectTargetObjectKey(VideoGenerateRequestDto request) {
